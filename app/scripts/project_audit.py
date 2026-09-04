@@ -143,7 +143,7 @@ def build_audit() -> str:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     metrics = get_python_metrics()
 
-    return f"""# PROJECT AUDIT — LinkedIn Agent System
+    return f"""# PROJECT AUDIT — LinkedIn Agentic AI System
 
 Generated: {timestamp}
 

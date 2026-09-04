@@ -1,4 +1,4 @@
-# LinkedIn Agent System
+# LinkedIn Agentic AI System
 
 Sistema agentic para identificar oportunidades relevantes no LinkedIn,
 pesquisar evidências, gerar comentários alinhados ao estilo do Rodrigo,
