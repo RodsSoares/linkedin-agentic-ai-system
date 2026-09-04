@@ -186,7 +186,7 @@ Generated: {timestamp}
 ## Development Context
 
 This audit is an automated snapshot of the current technical
-state of the LinkedIn Agent System project.
+state of the LinkedIn Agentic AI System project.
 
 It is intended to support development continuity, technical
 review, debugging, and context recovery between development sessions.
