@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime data
+data/checkpoint/*
+data/input/*
+data/output/*
+
+# Preserve directory structure
+!data/checkpoint/.gitkeep
+!data/input/.gitkeep
+!data/output/.gitkeep
+
+# Project audits
+docs/project_audit/*.md
+!docs/project_audit/.gitkeep
