@@ -26,11 +26,17 @@ def main():
 
     final_state = workflow.invoke(initial_state)
 
+    evaluation = final_state["quality_evaluation"]
+
     print("\n=== FINAL STATE ===")
     print(f"Status: {final_state['status']}")
     print(f"Iterations: {final_state['iteration']}")
     print(f"Draft: {final_state['current_draft']}")
-    print(f"Decision: {final_state['quality_evaluation'].decision}")
+    print(f"Factual accuracy: {evaluation.factual_accuracy}")
+    print(f"Relevance: {evaluation.relevance}")
+    print(f"Voice match: {evaluation.voice_match}")
+    print(f"Decision: {evaluation.decision}")
+    print(f"Revision instruction: {evaluation.revision_instruction}")
 
 
 if __name__ == "__main__":
