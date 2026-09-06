@@ -786,8 +786,12 @@ def main() -> None:
     audit = build_audit()
     AUDIT_FILE.write_text(audit, encoding="utf-8")
 
+    print()
     print("Project context snapshot generated successfully:")
     print(AUDIT_FILE)
+    print()
+    print("You may have to update the PROJECT_CONTEXT.md to reflect the current state of the project.")
+    print()
 
 
 if __name__ == "__main__":
