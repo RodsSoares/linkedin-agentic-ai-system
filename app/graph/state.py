@@ -1,13 +1,13 @@
 from typing import TypedDict
 
-from app.schemas.post import PostCandidate
-
 from app.schemas.evaluator import QualityEvaluation
+from app.schemas.opportunity import OpportunityEvaluation
+from app.schemas.post import PostCandidate
 
 
 class LinkedInAgentState(TypedDict):
     post: PostCandidate | None
-    opportunity_score: int | None
+    opportunity_evaluation: OpportunityEvaluation | None
     research_result: dict | None
     current_draft: str | None
     quality_evaluation: QualityEvaluation | None

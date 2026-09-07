@@ -4,6 +4,32 @@ from app.graph.state import LinkedInAgentState
 MAX_ITERATIONS = 3
 
 
+def route_after_opportunity_evaluation(
+    state: LinkedInAgentState,
+) -> str:
+    evaluation = state["opportunity_evaluation"]
+
+    if evaluation is None:
+        raise ValueError(
+            "Routing requires an opportunity evaluation."
+        )
+
+    classification = evaluation.classification
+
+    if classification == "HIGH":
+        return "continue"
+
+    if classification == "MEDIUM":
+        return "queue"
+
+    if classification == "LOW":
+        return "end"
+
+    raise ValueError(
+        f"Unknown opportunity classification: {classification}"
+    )
+
+
 def route_after_evaluation(state: LinkedInAgentState) -> str:
     evaluation = state["quality_evaluation"]
 
