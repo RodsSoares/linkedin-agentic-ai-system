@@ -20,11 +20,11 @@ Human publication authority is mandatory.
 
 Previous committed checkpoint:
 
-`23bdb7c`
+`0f842fa`
 
 Commit description:
 
-`feat: add opportunity evaluation and bounded scout agent`
+`feat: integrate opportunity evaluation workflow`
 
 The development increment documented in this file was built on top of
 
@@ -42,13 +42,13 @@ development checkpoint.
 
 The current completed and validated increment introduces:
 
-`Opportunity Evaluation Workflow Integration`
+`Scout → Opportunity Workflow Integration`
 
-This increment connects Opportunity Evaluation to a controlled
+This increment connects the bounded Scout Agent to the existing
 
-LangGraph workflow and introduces deterministic routing based on the
+Opportunity Evaluation workflow through an explicit LangGraph adapter,
 
-final opportunity classification.
+deterministic routing, and shared typed workflow state.
 
 The validated routing behavior is:
 
@@ -86,12 +86,12 @@ and unchanged.
 
 The complete project test suite currently passes:
 
-50 passed
+59 passed
 ```
 
-## Current Active LangGraph Workflow
+## Current Active LangGraph Workflows
 
-The project currently preserves two compiled LangGraph workflows.
+The project currently preserves three compiled LangGraph workflows.
 
 ### Content Workflow
 
@@ -143,8 +143,47 @@ MEDIUM is preserved as a distinct queued state.
 
 LOW terminates the Opportunity Workflow.
 
-Scout remains implemented independently as a bounded Python agent loop
-and is not yet connected to this LangGraph workflow.
+Scout remains internally implemented as a bounded Python agent loop.
+
+It is now connected to Opportunity Evaluation through a dedicated
+LangGraph integration workflow while preserving the standalone
+Opportunity Workflow.
+
+### Scout → Opportunity Workflow
+
+Scout is now integrated with Opportunity Evaluation through a dedicated
+compiled LangGraph workflow:
+
+``` text
+START
+  ↓
+Scout
+  ↓
+Scout Routing
+  ├── no candidate → END
+  └── one candidate
+          ↓
+     Opportunity Evaluator
+          ↓
+     Controlled Routing
+       ├── HIGH   → ACCEPTED_FOR_RESEARCH → END
+       ├── MEDIUM → QUEUED                → END
+       └── LOW                           → END
+```
+
+The Scout itself remains a bounded Python agent loop. LangGraph does not
+replace its internal perceive → decide → act → observe loop; instead,
+`scout_node` adapts the Scout result into shared workflow state.
+
+The current integration contract is deliberately narrow:
+
+-   zero candidates → `NO_CANDIDATE_FOUND` → END;
+-   exactly one candidate → Opportunity Evaluation;
+-   more than one candidate → explicit `ValueError`.
+
+The multi-candidate case remains unresolved by design. The system must
+not silently choose a first candidate, invent ranking logic, or encode a
+queueing policy without an explicit architectural decision.
 
 ## Planned Workflow Direction
 
@@ -269,6 +308,57 @@ Implemented:
 -   preservation of the existing Writer / Quality Evaluator workflow.
 
 Research is not executed by this workflow yet.
+
+### Scout → Opportunity Workflow Integration
+
+Implemented:
+
+-   `scout_node` as the explicit adapter between the bounded Scout runtime
+    and `LinkedInAgentState`;
+-   `scout_objective` added to shared workflow state;
+-   deterministic `route_after_scout()` routing;
+-   dedicated `build_scout_opportunity_workflow()` graph;
+-   automatic transfer of one validated `PostCandidate` from Scout into
+    Opportunity Evaluation;
+-   explicit early termination when Scout finds no candidate;
+-   prevention of unnecessary Opportunity Evaluation when no candidate
+    exists;
+-   explicit failure when Scout returns multiple candidates because
+    multi-candidate ranking / queueing remains intentionally unresolved;
+-   isolated Scout-node tests;
+-   Scout-routing tests;
+-   systemic Scout → Opportunity integration tests;
+-   preservation of the standalone Opportunity Workflow and existing
+    Writer / Quality Evaluator workflow.
+
+The validated integrated path is:
+
+``` text
+START
+  ↓
+Scout
+  ↓
+PostCandidate
+  ↓
+Opportunity Evaluator
+  ↓
+Controlled Routing
+  ├── HIGH   → ACCEPTED_FOR_RESEARCH → END
+  ├── MEDIUM → QUEUED                → END
+  └── LOW                           → END
+```
+
+If Scout returns no candidate:
+
+``` text
+Scout
+  ↓
+NO_CANDIDATE_FOUND
+  ↓
+END
+```
+
+Research is still not executed by this workflow.
 
 ## Opportunity Evaluation Principle
 
@@ -916,7 +1006,7 @@ clear value.
 Full project suite:
 
 ``` text
-50 passing tests
+59 passing tests
 ```
 
 The current test suite covers:
@@ -950,6 +1040,15 @@ The current test suite covers:
 -   blocked-action recovery
 -   PostCandidate creation from Scout selection
 -   structured SELECT action behavior
+-   Scout node candidate-to-workflow adaptation
+-   Scout node no-candidate termination
+-   Scout node objective validation
+-   explicit rejection of multiple Scout candidates
+-   deterministic routing after Scout
+-   integrated Scout → Opportunity HIGH path
+-   integrated Scout no-candidate early termination
+-   verification that Opportunity Evaluation is not called when Scout
+    produces no candidate
 
 Live OpenAI calls are not required by the automated test suite.
 
@@ -969,7 +1068,7 @@ READY FOR CHECKPOINT COMMIT
 Full test suite result:
 
 ``` text
-50 passed
+59 passed
 ```
 
 Project Context Snapshot integrity:
@@ -983,63 +1082,10 @@ during audit collection.
 
 ## Current Development Objective
 
-The current increment integrated Opportunity Evaluation into a
-controlled LangGraph workflow.
+The current increment integrated the bounded Scout Agent with the
+existing Opportunity Evaluation workflow.
 
 The implemented flow is:
-
-``` text
-PostCandidate
-  ↓
-Opportunity Evaluation
-  ↓
-Controlled Routing
-```
-
-The routing behavior is:
-
-``` text
-HIGH   → ACCEPTED_FOR_RESEARCH → END
-MEDIUM → QUEUED                → END
-LOW                            → END
-```
-
-The integration validates the system boundary between semantic
-Opportunity Evaluation, deterministic scoring, explicit workflow state,
-deterministic routing, and LangGraph execution.
-
-Research remains intentionally unimplemented in this workflow.
-
-Scout remains independently implemented and has not yet been connected
-to the Opportunity Workflow.
-
-The existing Writer / Quality Evaluator workflow remains preserved.
-
-## Current WIP
-
-No new capability should be started before the current validated
-increment is committed and pushed.
-
-The working tree currently contains the validated Opportunity Evaluation
-Workflow Integration together with its routing logic, workflow nodes,
-state changes, automated tests, and this context update.
-
-## Next Planned Capability
-
-After the current checkpoint commit, development should continue with:
-
-``` text
-Scout → Opportunity Workflow Integration
-```
-
-The next increment should connect validated `PostCandidate` objects
-selected by Scout to the existing Opportunity Workflow.
-
-The integration should remain incremental. It should not attempt to
-implement Research at the same time unless the Scout-to-Opportunity
-boundary is first validated and stable.
-
-Initial target:
 
 ``` text
 Scout
@@ -1051,8 +1097,76 @@ Opportunity Evaluation
 Controlled Routing
 ```
 
-The existing Opportunity Workflow and Writer / Quality Evaluator
-workflow must remain stable while this integration is introduced.
+The routing behavior after Opportunity Evaluation remains:
+
+``` text
+HIGH   → ACCEPTED_FOR_RESEARCH → END
+MEDIUM → QUEUED                → END
+LOW                            → END
+```
+
+The integration validates the system boundary between bounded semantic
+Scout behavior, factual `PostCandidate` construction, explicit workflow
+state, deterministic Scout routing, semantic Opportunity Evaluation,
+deterministic scoring, deterministic opportunity routing, and LangGraph
+execution.
+
+Zero Scout candidates terminate the integrated workflow before
+Opportunity Evaluation.
+
+The current integration supports exactly one Scout candidate per
+workflow execution. Multiple candidates fail explicitly rather than
+silently encoding an unresolved ranking or queueing policy.
+
+Research remains intentionally unimplemented.
+
+The standalone Opportunity Workflow and existing Writer / Quality
+Evaluator workflow remain preserved.
+
+## Current WIP
+
+No new capability should be started before the current validated
+increment is committed and pushed.
+
+The working tree currently contains the validated Scout → Opportunity
+Workflow Integration together with its adapter node, routing logic,
+workflow/state changes, automated tests, README update, and this context
+update.
+
+## Next Planned Capability
+
+After the current checkpoint commit, development should continue with:
+
+``` text
+Research Capability v0.1 — Contract and Bounded Architecture
+```
+
+The next increment should define and implement the smallest useful
+Research capability for HIGH opportunities already marked
+`ACCEPTED_FOR_RESEARCH`.
+
+The Research increment should begin with explicit contracts and bounded
+responsibility before workflow integration.
+
+Initial target:
+
+``` text
+ACCEPTED_FOR_RESEARCH
+  ↓
+Research
+  ↓
+Structured Research Result
+  ↓
+END
+```
+
+Research should gather evidence and context required for a factual and
+defensible contribution. It must not become unrestricted autonomous
+browsing.
+
+The existing Scout → Opportunity integration, standalone Opportunity
+Workflow, and Writer / Quality Evaluator workflow must remain stable
+while Research is introduced.
 
 ## Opportunity Routing Direction
 
@@ -1272,6 +1386,23 @@ Tools perform the actual external or simulated operation.
 State records observations.
 
 max_steps limits exploration.
+
+### Scout → Opportunity Integration
+
+The integration boundary between Scout and Opportunity Evaluation is now
+established.
+
+`scout_node` owns adaptation from `ScoutState` into
+`LinkedInAgentState`.
+
+The current v0.1 cardinality contract is:
+
+-   zero candidates → terminate without Opportunity Evaluation;
+-   one candidate → continue to Opportunity Evaluation;
+-   multiple candidates → fail explicitly.
+
+This is a temporary boundary contract, not a final product rule for
+multi-opportunity handling.
 
 ### Opportunity Routing
 

@@ -3,6 +3,22 @@ from app.graph.state import LinkedInAgentState
 
 MAX_ITERATIONS = 3
 
+def route_after_scout(
+    state: LinkedInAgentState,
+) -> str:
+    post = state.get("post")
+
+    if post is not None:
+        return "opportunity_evaluation"
+
+    if state.get("status") == "NO_CANDIDATE_FOUND":
+        return "end"
+
+    raise ValueError(
+        "Scout routing requires either a selected post "
+        "or NO_CANDIDATE_FOUND status."
+    )
+
 
 def route_after_opportunity_evaluation(
     state: LinkedInAgentState,

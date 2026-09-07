@@ -6,6 +6,7 @@ from app.schemas.post import PostCandidate
 
 
 class LinkedInAgentState(TypedDict):
+    scout_objective: str | None
     post: PostCandidate | None
     opportunity_evaluation: OpportunityEvaluation | None
     research_result: dict | None
