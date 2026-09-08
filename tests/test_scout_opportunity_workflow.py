@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from app.graph.workflow import build_scout_opportunity_workflow
@@ -60,7 +61,18 @@ def fake_writer_node(state):
     }
 
 
-def test_scout_candidate_high_opportunity_routes_through_research_to_writer():
+def fake_evaluator_node(state):
+    return {
+        "quality_evaluation": SimpleNamespace(
+            decision="PASS",
+            revision_instruction=None,
+        ),
+        "next_step": "PASS",
+        "status": "EVALUATED",
+    }
+
+
+def test_scout_candidate_high_opportunity_routes_through_full_quality_path():
     scout_state = make_scout_state([make_candidate()])
 
     signals = OpportunitySignals(
@@ -88,6 +100,10 @@ def test_scout_candidate_high_opportunity_routes_through_research_to_writer():
             "app.graph.workflow.writer_node",
             side_effect=fake_writer_node,
         ),
+        patch(
+            "app.graph.workflow.evaluator_node",
+            side_effect=fake_evaluator_node,
+        ),
     ):
         workflow = build_scout_opportunity_workflow()
         result = workflow.invoke(
@@ -100,8 +116,9 @@ def test_scout_candidate_high_opportunity_routes_through_research_to_writer():
     assert result["opportunity_evaluation"].classification == "HIGH"
     assert result["research_result"] == make_research_brief()
     assert result["current_draft"] == "Grounded draft."
-    assert result["next_step"] == "evaluator"
-    assert result["status"] == "DRAFT_READY"
+    assert result["quality_evaluation"].decision == "PASS"
+    assert result["next_step"] == "PASS"
+    assert result["status"] == "EVALUATED"
 
 
 def test_scout_without_candidate_ends_before_evaluation():
@@ -115,7 +132,10 @@ def test_scout_without_candidate_ends_before_evaluation():
         patch(
             "app.graph.nodes.opportunity_evaluator_node."
             "evaluate_opportunity_semantics"
-        ) as evaluator_mock,
+        ) as opportunity_evaluator_mock,
+        patch(
+            "app.graph.workflow.evaluator_node"
+        ) as quality_evaluator_mock,
     ):
         workflow = build_scout_opportunity_workflow()
         result = workflow.invoke(
@@ -129,5 +149,5 @@ def test_scout_without_candidate_ends_before_evaluation():
     assert result["next_step"] == "end"
     assert result.get("research_result") is None
     assert result.get("current_draft") is None
-    evaluator_mock.assert_not_called()
-    
+    opportunity_evaluator_mock.assert_not_called()
+    quality_evaluator_mock.assert_not_called()

@@ -19,16 +19,10 @@ from app.graph.routing import (
 from app.graph.state import LinkedInAgentState
 
 
-def build_workflow():
-    graph = StateGraph(LinkedInAgentState)
-
-    graph.add_node("writer", writer_node)
+def _add_quality_evaluation_loop(graph: StateGraph) -> None:
     graph.add_node("evaluator", evaluator_node)
 
-    graph.set_entry_point("writer")
-
     graph.add_edge("writer", "evaluator")
-
     graph.add_conditional_edges(
         "evaluator",
         route_after_evaluation,
@@ -38,6 +32,15 @@ def build_workflow():
             "end": END,
         },
     )
+
+
+def build_workflow():
+    graph = StateGraph(LinkedInAgentState)
+
+    graph.add_node("writer", writer_node)
+    _add_quality_evaluation_loop(graph)
+
+    graph.set_entry_point("writer")
 
     return graph.compile()
 
@@ -65,6 +68,7 @@ def build_opportunity_workflow():
         "queued",
         queued_opportunity_node,
     )
+    _add_quality_evaluation_loop(graph)
 
     graph.set_entry_point("opportunity_evaluator")
     graph.add_conditional_edges(
@@ -84,10 +88,6 @@ def build_opportunity_workflow():
     graph.add_edge(
         "research",
         "writer",
-    )
-    graph.add_edge(
-        "writer",
-        END,
     )
     graph.add_edge(
         "queued",
@@ -124,6 +124,7 @@ def build_scout_opportunity_workflow():
         "queued",
         queued_opportunity_node,
     )
+    _add_quality_evaluation_loop(graph)
 
     graph.set_entry_point("scout")
     graph.add_conditional_edges(
@@ -152,10 +153,6 @@ def build_scout_opportunity_workflow():
     graph.add_edge(
         "research",
         "writer",
-    )
-    graph.add_edge(
-        "writer",
-        END,
     )
     graph.add_edge(
         "queued",

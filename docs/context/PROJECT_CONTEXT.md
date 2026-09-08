@@ -20,11 +20,11 @@ Baseline Lineage
 
 Previous committed checkpoint:
 
-0594a3d
+6f3ebbe
 
 Commit description:
 
-feat: add bounded research capability
+feat: integrate research and writer into opportunity workflow
 
 The development increment documented in this file was built on top of
 
@@ -42,11 +42,11 @@ Last Completed Development Increment
 
 The current completed and validated increment introduces:
 
-Research Workflow + Writer Integration v0.1
+Quality Evaluator Integration v0.1
 
-This increment connects the previously validated bounded Research specialist to the active HIGH-opportunity LangGraph path and connects ResearchBrief to Writer through a typed boundary. An approved opportunity can now be researched and transformed into a grounded draft inside the integrated workflow.
+This increment connects the previously validated Quality Evaluator to the active HIGH-opportunity LangGraph path after Writer, establishing the first bounded end-to-end quality path across Scout, Opportunity Evaluation, Research, Writer, and Quality Evaluator.
 
-Research Capability v0.1 is now integrated into the active HIGH-opportunity LangGraph path and its structured ResearchBrief is passed directly into Writer through a typed contract. The validated HIGH path now executes Research and produces a grounded draft.
+Research Capability v0.1 and its structured ResearchBrief → Writer boundary remain preserved. The validated HIGH path now executes Research, produces a grounded draft, evaluates that draft, and applies deterministic PASS / REVISE / REJECT routing. REVISE returns to Writer without rerunning Research and remains bounded by the existing iteration limit.
 
 The validated Research action vocabulary is:
 
@@ -57,7 +57,7 @@ FINISH
 
 The complete project test suite currently passes:
 
-147 passed
+150 passed
 
 Real-LLM smoke validation also passed and demonstrated conservative INSUFFICIENT termination when available evidence did not fully support the research objective.
 
@@ -93,7 +93,7 @@ START
 Opportunity Evaluator
 ↓
 Controlled Routing
-├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → END
+├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT
 ├── MEDIUM → QUEUED → END
 └── LOW → END
 
@@ -130,7 +130,7 @@ Scout Routing
 Opportunity Evaluator
 ↓
 Controlled Routing
-├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → END
+├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT
 ├── MEDIUM → QUEUED → END
 └── LOW → END
 
@@ -223,6 +223,16 @@ controlled revision loop
 bounded retries
 
 isolated automated tests
+
+integration into the active HIGH-opportunity workflow after Writer
+
+PASS → Human / END routing
+
+REVISE → Writer → Quality Evaluator bounded revision routing
+
+REJECT → END routing
+
+systemic tests confirming that REVISE does not rerun Research
 
 Opportunity Evaluation v0.1
 
@@ -322,7 +332,7 @@ PostCandidate
 Opportunity Evaluator
 ↓
 Controlled Routing
-├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → END
+├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT
 ├── MEDIUM → QUEUED → END
 └── LOW → END
 
@@ -338,7 +348,7 @@ Research and Writer are now executed for HIGH opportunities in this workflow.
 
 Research Workflow + Writer Integration v0.1
 
-Implemented:
+Implemented and preserved:
 
 research_node as the LangGraph adapter for the bounded Research runtime;
 
@@ -348,13 +358,31 @@ explicit ResearchBrief serialization for Writer-facing LLM context;
 
 HIGH Opportunity routing extended from ACCEPTED_FOR_RESEARCH into Research and Writer;
 
-DRAFT_READY becomes the terminal state of the currently integrated HIGH path;
-
 systemic tests proving Opportunity → Research → Writer and Scout → Opportunity → Research → Writer;
 
-preservation of MEDIUM → QUEUED and LOW → END behavior;
+preservation of MEDIUM → QUEUED and LOW → END behavior.
 
-preservation of the standalone Writer → Quality Evaluator controlled workflow.
+Quality Evaluator Integration v0.1
+
+Implemented:
+
+the existing Quality Evaluator is now connected after Writer in the integrated HIGH-opportunity workflow;
+
+PASS terminates the automated quality path at the Human / END boundary;
+
+REVISE returns only to Writer and then back to Quality Evaluator;
+
+Research is not repeated during draft revision;
+
+REJECT terminates the workflow;
+
+the existing maximum iteration limit bounds the Writer ↔ Quality Evaluator revision loop;
+
+systemic tests validate PASS, REVISE, REJECT, and revision-limit behavior;
+
+Scout → Opportunity Evaluation → Research → Writer → Quality Evaluator is validated as an integrated path;
+
+MEDIUM → QUEUED and LOW → END behavior remains preserved.
 
 The current integrated HIGH path is:
 
@@ -372,11 +400,12 @@ ResearchBrief
 ↓
 Writer
 ↓
-DRAFT_READY
-↓
-END
+Quality Evaluator
+├── PASS → Human / END
+├── REVISE → Writer → Quality Evaluator
+└── REJECT → END
 
-Quality Evaluator integration into this path remains the next capability.
+The revision loop remains bounded by the existing iteration limit, and REVISE does not rerun Research.
 
 Research Capability v0.1
 
@@ -593,19 +622,19 @@ The current pattern is:
 
 PostCandidate
 
-  ↓
+↓
 LLM Semantic Evaluation
 
-  ↓
+↓
 OpportunitySignals
 
-  ↓
+↓
 Python Deterministic Scoring
 
-  ↓
+↓
 Guardrails
 
-  ↓
+↓
 HIGH / MEDIUM / LOW
 
 The LLM currently evaluates:
@@ -638,10 +667,12 @@ The intended future data path is:
 
 Scout / Metadata Collection
 
-    ↓
+↓
+
 Objective Engagement Signals
 
-    ↓
+↓
+
 Deterministic Engagement Calculation
 
 Potential objective signals include:
@@ -1006,7 +1037,7 @@ Current Test Baseline
 
 Full project suite:
 
-147 passing tests
+150 passing tests
 
 The suite covers the previously established Writer, Quality Evaluator, Opportunity Evaluation, Scout, routing, and workflow contracts plus Research v0.1 schemas, SEARCH / READ / EXTRACT / FINISH behavior, provenance guardrails, local action-budget recovery, global step and decision limits, semantic FINISH statuses, ResearchBrief trust boundaries, evidence-only synthesis, source deduplication, and bounded research-loop behavior.
 
@@ -1023,7 +1054,7 @@ READY FOR CHECKPOINT COMMIT
 
 Full test suite result:
 
-147 passed
+150 passed
 
 Project Context Snapshot integrity:
 
@@ -1033,7 +1064,7 @@ The automated audit confirmed that repository content remained stable during aud
 
 Current Development Objective
 
-The current increment integrates the previously validated bounded Research capability into the HIGH-opportunity LangGraph path and connects its structured ResearchBrief directly to Writer. WriterInput now accepts ResearchBrief rather than a generic dictionary, and Writer serializes the research context explicitly before invoking the LLM.
+The current increment integrates the existing Quality Evaluator into the active HIGH-opportunity path after Writer. The integrated workflow now preserves the ResearchBrief → Writer typed boundary and continues from the resulting draft into semantic quality evaluation and deterministic PASS / REVISE / REJECT routing.
 
 The validated integrated path is now:
 
@@ -1051,42 +1082,52 @@ ResearchBrief
 ↓
 Writer
 ↓
-Draft / DRAFT_READY
-↓
-END
+Quality Evaluator
+├── PASS → Human / END
+├── REVISE → Writer → Quality Evaluator
+└── REJECT → END
 
-The standalone Writer → Quality Evaluator workflow remains preserved and validated separately. Quality Evaluator is not yet connected to the Scout → Opportunity → Research → Writer workflow.
+REVISE returns only to Writer; Research is not repeated. The revision loop remains bounded by the existing iteration limit.
 
 Current WIP
 
-The Research Workflow + Writer Integration v0.1 increment is implemented, tested, and audited and is ready for checkpoint commit.
+Quality Evaluator Integration v0.1 is implemented, tested, and audited and is ready for checkpoint commit.
 
-The working tree contains the Research LangGraph adapter, typed ResearchBrief → Writer boundary, explicit research-context serialization, workflow routing changes, and systemic integration tests validated by the current audit.
+The current working tree contains the workflow routing changes and systemic integration tests required to connect Quality Evaluator to the integrated HIGH-opportunity path. No additional capability should be mixed into this checkpoint before commit.
 
 Next Planned Capability
 
 After this checkpoint commit, development should continue with:
 
-Quality Evaluator Integration v0.1 — Draft → Quality Evaluator → Revision Loop → Human-in-the-loop
+Real Web Tooling v0.1 — Contract and Bounded Integration
 
-The next increment should connect the existing Quality Evaluator workflow to the integrated Scout → Opportunity Evaluation → Research → Writer path without redesigning the already validated components. The objective is to establish the first complete bounded end-to-end workflow.
+The next increment should replace the current deterministic fake search/read environment with bounded real-world search and reading while preserving the already validated Scout and Research responsibility boundaries.
 
-The target path is:
+Concept and responsibility should be decided before code. The increment should explicitly define:
 
-Scout
-↓
-Opportunity Evaluation
-↓
-Research
-↓
-Writer
-↓
-Quality Evaluator
-├── PASS → Human / END
-├── REVISE → Writer, bounded by the existing iteration limit
-└── REJECT → END
+which real search mechanism Scout may use;
 
-Human publication authority remains mandatory.
+which real search mechanism Research may use;
+
+which reading/fetch mechanism may access discovered URLs;
+
+allowed source/domain behavior;
+
+provenance requirements;
+
+timeouts and external-tool failure handling;
+
+rate, tool, and cost limits;
+
+deduplication and content-size limits;
+
+how failures are represented in agent state;
+
+whether Scout and Research share infrastructure while retaining separate contracts;
+
+mocked external-response tests before real-network smoke validation.
+
+The objective is not unrestricted browsing. It is to make the existing bounded agents operate against real external information without weakening their current guardrails, evidence boundaries, or deterministic runtime ownership.
 
 Opportunity Routing Direction
 
@@ -1096,7 +1137,13 @@ HIGH
 ↓
 ACCEPTED_FOR_RESEARCH
 ↓
-END
+Research
+↓
+Writer
+↓
+Quality Evaluator
+↓
+PASS / REVISE / REJECT
 
 MEDIUM
 ↓
@@ -1108,9 +1155,8 @@ LOW
 ↓
 END
 
-HIGH means the opportunity is approved to proceed to Research when that
-capability becomes integrated. It does not mean Research has already
-executed.
+HIGH means the opportunity is approved to proceed into the integrated
+Research → Writer → Quality Evaluator path.
 
 MEDIUM opportunities remain distinct from LOW opportunities. They are
 preserved in a lower-priority queued state without incurring Research
@@ -1118,11 +1164,7 @@ cost.
 
 LOW opportunities terminate the Opportunity Workflow.
 
-When Research is implemented, the intended HIGH path becomes:
-
-HIGH
-↓
-Research
+Research is already integrated for HIGH opportunities, and Quality Evaluator now follows Writer in that path.
 
 The lifecycle of queued MEDIUM opportunities may be revisited later
 using real operational evidence, but the current v0.1 routing behavior
@@ -1311,7 +1353,7 @@ Opportunity Routing
 
 Current v0.1 routing is deterministic:
 
-HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → END;
+HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT;
 
 MEDIUM → QUEUED → END;
 
@@ -1471,15 +1513,11 @@ The combination of:
 
 code
 
-
 tests
-
 
 audit
 
-
 PROJECT_CONTEXT.md
-
 
 Git checkpoint
 
