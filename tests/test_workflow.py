@@ -3,6 +3,11 @@ from unittest.mock import patch
 from app.graph.workflow import build_opportunity_workflow
 from app.schemas.opportunity import OpportunitySignals
 from app.schemas.post import PostCandidate
+from app.schemas.research import (
+    ResearchBrief,
+    ResearchObjective,
+    ResearchStatus,
+)
 
 
 def make_post() -> PostCandidate:
@@ -14,7 +19,40 @@ def make_post() -> PostCandidate:
     )
 
 
-def test_high_opportunity_routes_to_research():
+def make_research_brief() -> ResearchBrief:
+    return ResearchBrief(
+        research_objective=ResearchObjective(
+            question="What evidence supports this opportunity?",
+            focus_areas=["agentic planning"],
+        ),
+        summary="Research produced sufficient support.",
+        key_findings=["One supported finding."],
+        evidence=[],
+        counterpoints=[],
+        unresolved_questions=[],
+        sources=[],
+        status=ResearchStatus.SUFFICIENT,
+    )
+
+
+def fake_research_node(state):
+    return {
+        "research_result": make_research_brief(),
+        "next_step": "writer",
+        "status": "RESEARCH_COMPLETED",
+    }
+
+
+def fake_writer_node(state):
+    return {
+        "current_draft": "Grounded draft.",
+        "iteration": state.get("iteration", 0) + 1,
+        "next_step": "evaluator",
+        "status": "DRAFT_READY",
+    }
+
+
+def test_high_opportunity_routes_through_research_to_writer():
     signals = OpportunitySignals(
         topic_relevance=95,
         positioning_fit=95,
@@ -22,22 +60,29 @@ def test_high_opportunity_routes_to_research():
         research_cost=35,
     )
 
-    with patch(
-        "app.graph.nodes.opportunity_evaluator_node."
-        "evaluate_opportunity_semantics",
-        return_value=signals,
+    with (
+        patch(
+            "app.graph.nodes.opportunity_evaluator_node."
+            "evaluate_opportunity_semantics",
+            return_value=signals,
+        ),
+        patch(
+            "app.graph.workflow.research_node",
+            side_effect=fake_research_node,
+        ),
+        patch(
+            "app.graph.workflow.writer_node",
+            side_effect=fake_writer_node,
+        ),
     ):
         workflow = build_opportunity_workflow()
-
-        result = workflow.invoke(
-            {
-                "post": make_post(),
-            }
-        )
+        result = workflow.invoke({"post": make_post()})
 
     assert result["opportunity_evaluation"].classification == "HIGH"
-    assert result["next_step"] == "research"
-    assert result["status"] == "ACCEPTED_FOR_RESEARCH"
+    assert result["research_result"] == make_research_brief()
+    assert result["current_draft"] == "Grounded draft."
+    assert result["next_step"] == "evaluator"
+    assert result["status"] == "DRAFT_READY"
 
 
 def test_medium_opportunity_routes_to_queue():
@@ -54,16 +99,13 @@ def test_medium_opportunity_routes_to_queue():
         return_value=signals,
     ):
         workflow = build_opportunity_workflow()
-
-        result = workflow.invoke(
-            {
-                "post": make_post(),
-            }
-        )
+        result = workflow.invoke({"post": make_post()})
 
     assert result["opportunity_evaluation"].classification == "MEDIUM"
     assert result["next_step"] == "queue"
     assert result["status"] == "QUEUED"
+    assert result.get("research_result") is None
+    assert result.get("current_draft") is None
 
 
 def test_low_opportunity_ends_workflow():
@@ -80,12 +122,10 @@ def test_low_opportunity_ends_workflow():
         return_value=signals,
     ):
         workflow = build_opportunity_workflow()
-
-        result = workflow.invoke(
-            {
-                "post": make_post(),
-            }
-        )
+        result = workflow.invoke({"post": make_post()})
 
     assert result["opportunity_evaluation"].classification == "LOW"
     assert result.get("next_step") is None
+    assert result.get("research_result") is None
+    assert result.get("current_draft") is None
+    

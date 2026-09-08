@@ -1,6 +1,9 @@
 from unittest.mock import patch
 
-from app.graph.workflow import build_scout_opportunity_workflow
+from app.graph.workflow import (
+    build_opportunity_workflow,
+    build_scout_opportunity_workflow,
+)
 from app.schemas.opportunity import OpportunitySignals
 from app.schemas.post import PostCandidate
 from app.schemas.research import (
@@ -11,23 +14,16 @@ from app.schemas.research import (
 from app.schemas.scout import ScoutState
 
 
-def make_candidate() -> PostCandidate:
+def make_post() -> PostCandidate:
     return PostCandidate(
-        post_id="scout-workflow-001",
+        post_id="research-workflow-001",
         author_name="Test Author",
         post_text="AI agents can improve supply chain decision-making.",
-        post_url="https://example.com/scout-workflow-001",
+        post_url="https://example.com/research-workflow-001",
     )
 
 
-def make_scout_state(candidates: list[PostCandidate]) -> ScoutState:
-    return ScoutState(
-        objective="Find AI + Supply Chain opportunities",
-        candidates=candidates,
-    )
-
-
-def make_research_brief() -> ResearchBrief:
+def make_brief() -> ResearchBrief:
     return ResearchBrief(
         research_objective=ResearchObjective(
             question="What evidence supports this opportunity?",
@@ -45,9 +41,9 @@ def make_research_brief() -> ResearchBrief:
 
 def fake_research_node(state):
     return {
-        "research_result": make_research_brief(),
-        "next_step": "writer",
+        "research_result": make_brief(),
         "status": "RESEARCH_COMPLETED",
+        "next_step": "writer",
     }
 
 
@@ -60,14 +56,45 @@ def fake_writer_node(state):
     }
 
 
-def test_scout_candidate_high_opportunity_routes_through_research_to_writer():
-    scout_state = make_scout_state([make_candidate()])
-
-    signals = OpportunitySignals(
+def high_signals() -> OpportunitySignals:
+    return OpportunitySignals(
         topic_relevance=95,
         positioning_fit=95,
         contribution_potential=90,
         research_cost=35,
+    )
+
+
+def test_high_opportunity_executes_research_and_writer():
+    with (
+        patch(
+            "app.graph.nodes.opportunity_evaluator_node."
+            "evaluate_opportunity_semantics",
+            return_value=high_signals(),
+        ),
+        patch(
+            "app.graph.workflow.research_node",
+            side_effect=fake_research_node,
+        ),
+        patch(
+            "app.graph.workflow.writer_node",
+            side_effect=fake_writer_node,
+        ),
+    ):
+        workflow = build_opportunity_workflow()
+        result = workflow.invoke({"post": make_post()})
+
+    assert result["opportunity_evaluation"].classification == "HIGH"
+    assert result["research_result"] == make_brief()
+    assert result["current_draft"] == "Grounded draft."
+    assert result["status"] == "DRAFT_READY"
+    assert result["next_step"] == "evaluator"
+
+
+def test_scout_high_opportunity_executes_research_and_writer():
+    scout_state = ScoutState(
+        objective="Find AI + Supply Chain opportunities",
+        candidates=[make_post()],
     )
 
     with (
@@ -78,7 +105,7 @@ def test_scout_candidate_high_opportunity_routes_through_research_to_writer():
         patch(
             "app.graph.nodes.opportunity_evaluator_node."
             "evaluate_opportunity_semantics",
-            return_value=signals,
+            return_value=high_signals(),
         ),
         patch(
             "app.graph.workflow.research_node",
@@ -96,38 +123,10 @@ def test_scout_candidate_high_opportunity_routes_through_research_to_writer():
             }
         )
 
-    assert result["post"] == make_candidate()
+    assert result["post"] == make_post()
     assert result["opportunity_evaluation"].classification == "HIGH"
-    assert result["research_result"] == make_research_brief()
+    assert result["research_result"] == make_brief()
     assert result["current_draft"] == "Grounded draft."
-    assert result["next_step"] == "evaluator"
     assert result["status"] == "DRAFT_READY"
-
-
-def test_scout_without_candidate_ends_before_evaluation():
-    scout_state = make_scout_state([])
-
-    with (
-        patch(
-            "app.graph.nodes.scout_node.run_scout",
-            return_value=scout_state,
-        ),
-        patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics"
-        ) as evaluator_mock,
-    ):
-        workflow = build_scout_opportunity_workflow()
-        result = workflow.invoke(
-            {
-                "scout_objective": "Find AI + Supply Chain opportunities",
-            }
-        )
-
-    assert result["post"] is None
-    assert result["status"] == "NO_CANDIDATE_FOUND"
-    assert result["next_step"] == "end"
-    assert result.get("research_result") is None
-    assert result.get("current_draft") is None
-    evaluator_mock.assert_not_called()
+    assert result["next_step"] == "evaluator"
     

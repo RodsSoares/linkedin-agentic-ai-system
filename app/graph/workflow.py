@@ -8,6 +8,7 @@ from app.graph.nodes.opportunity_routing_nodes import (
     accepted_for_research_node,
     queued_opportunity_node,
 )
+from app.graph.nodes.research_node import research_node
 from app.graph.nodes.scout_node import scout_node
 from app.graph.nodes.writer_node import writer_node
 from app.graph.routing import (
@@ -53,12 +54,19 @@ def build_opportunity_workflow():
         accepted_for_research_node,
     )
     graph.add_node(
+        "research",
+        research_node,
+    )
+    graph.add_node(
+        "writer",
+        writer_node,
+    )
+    graph.add_node(
         "queued",
         queued_opportunity_node,
     )
 
     graph.set_entry_point("opportunity_evaluator")
-
     graph.add_conditional_edges(
         "opportunity_evaluator",
         route_after_opportunity_evaluation,
@@ -71,6 +79,14 @@ def build_opportunity_workflow():
 
     graph.add_edge(
         "accepted_for_research",
+        "research",
+    )
+    graph.add_edge(
+        "research",
+        "writer",
+    )
+    graph.add_edge(
+        "writer",
         END,
     )
     graph.add_edge(
@@ -97,12 +113,19 @@ def build_scout_opportunity_workflow():
         accepted_for_research_node,
     )
     graph.add_node(
+        "research",
+        research_node,
+    )
+    graph.add_node(
+        "writer",
+        writer_node,
+    )
+    graph.add_node(
         "queued",
         queued_opportunity_node,
     )
 
     graph.set_entry_point("scout")
-
     graph.add_conditional_edges(
         "scout",
         route_after_scout,
@@ -124,6 +147,14 @@ def build_scout_opportunity_workflow():
 
     graph.add_edge(
         "accepted_for_research",
+        "research",
+    )
+    graph.add_edge(
+        "research",
+        "writer",
+    )
+    graph.add_edge(
+        "writer",
         END,
     )
     graph.add_edge(
