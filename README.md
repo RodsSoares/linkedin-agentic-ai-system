@@ -1,22 +1,23 @@
-LinkedIn Agentic AI System
+# LinkedIn Agentic AI System
 
 A controlled agentic AI system for discovering high-value LinkedIn interaction opportunities, gathering evidence, drafting contributions, evaluating quality, and preserving human publication authority.
 
-Current stage: active development. Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 are implemented and validated with a 189-test automated baseline. The next planned increment is End-to-End Real Workflow Validation v0.1 — Controlled Live Path.
+**Current stage:** active development. Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 are implemented and validated with a **189-test automated baseline**. The next planned increment is **End-to-End Real Workflow Validation v0.1 — Controlled Live Path**.
 
-Architecture Overview
+## Architecture Overview
 
-
+![LinkedIn Agentic AI System — Architecture Overview](docs/images/architecture-overview.png)
 
 The architecture overview presents the main components, responsibilities, technology boundaries, and relationships that compose the solution.
 
-End-to-End Agentic Solution Flow
+## End-to-End Agentic Solution Flow
 
-
+![LinkedIn Agentic AI System — End-to-End Agentic Solution Flow](docs/images/end-to-end-agentic-solution-flow.png)
 
 The end-to-end flow shows how an opportunity moves through the agentic solution, from discovery and evaluation to research, writing, quality evaluation, and the final human decision boundary.
 
-Why This Project Exists
+
+## Why This Project Exists
 
 Strategic interaction on LinkedIn involves much more than generating text.
 
@@ -44,7 +45,7 @@ This project explores that problem as a controlled agentic AI system, not as a s
 
 The goal is to reduce the manual effort required to discover and prepare high-value professional interactions while preserving human publication authority.
 
-Product Principle
+## Product Principle
 
 The system is designed around a simple rule:
 
@@ -56,10 +57,11 @@ The system should prioritize situations where the user can make a relevant, diff
 
 Engagement matters, but it must not dominate contribution potential, professional positioning, topic relevance, evidence quality, or responsible research effort.
 
-Current Architecture
+## Current Architecture
 
 The active architecture is built around a controlled pipeline:
 
+```text
 Candidate Sources / Web
         │
         ▼
@@ -98,6 +100,7 @@ OPPORTUNITY EVALUATION
           HUMAN / END             │
                                   ▼
                                  END
+```
 
 The HIGH path is integrated through Research and Writer.
 
@@ -105,10 +108,11 @@ The quality revision loop is bounded. A revision returns to Writer rather than r
 
 Publication remains outside autonomous execution.
 
-Responsibility Model
+## Responsibility Model
 
 A central architectural decision is to separate semantic reasoning from deterministic operational control.
 
+```text
 LLM
 ├── semantic interpretation
 ├── bounded action selection
@@ -134,6 +138,7 @@ LangGraph
 
 Human
 └── final publication authority
+```
 
 The guiding principle is:
 
@@ -143,12 +148,13 @@ The LLM is used where semantic understanding adds material value.
 
 Deterministic application logic owns decisions that can be expressed reliably as rules.
 
-Scout Agent
+## Scout Agent
 
 Scout is a bounded agentic loop responsible for discovering potentially valuable professional interaction opportunities.
 
 Its action vocabulary is:
 
+```text
 ```text
 `SEARCH` · `READ` · `SELECT` · `FINISH`
 
@@ -168,8 +174,9 @@ Tool executes
 Observation updates State
   ↓
 Next bounded decision
+```
 
-Semantic Autonomy
+### Semantic Autonomy
 
 The LLM may:
 
@@ -189,7 +196,7 @@ It does not control the runtime directly.
 
 Every requested action must pass through a typed contract and deterministic authorization.
 
-Deterministic Guardrails
+### Deterministic Guardrails
 
 Python enforces rules including:
 
@@ -215,20 +222,20 @@ exploration is bounded by operational limits.
 
 Recoverable tool failures can become part of agent state so the LLM can make another bounded decision rather than crashing the entire agent loop.
 
-Candidate Selection
+### Candidate Selection
 
 Validated content can be promoted into a PostCandidate:
 
 SEARCH
-↓
+  ↓
 READ
-↓
+  ↓
 SELECT
-↓
+  ↓
 Python validation
-↓
+  ↓
 PostCandidate
-
+```
 
 The semantic decision to select belongs to the LLM.
 
@@ -248,6 +255,7 @@ ReadTool
 (url: str)
     ↓
 str
+```
 
 This allows Scout and Research to operate independently from a specific search or reading provider.
 
@@ -264,6 +272,7 @@ Real Mode
 
 The current real adapters include:
 
+```text
 Search
   ↓
 Brave Search adapter
@@ -271,6 +280,7 @@ Brave Search adapter
 Read
   ↓
 HTTP reader
+```
 
 The real tooling layer includes bounded network behavior and controlled failure handling.
 
@@ -350,6 +360,7 @@ External content is normalized and bounded before it enters LLM-facing context.
 
 The Context Preparation layer:
 
+```text
 Raw external text
         │
         ▼
@@ -366,6 +377,7 @@ Apply component budget
         │
         ▼
 PreparedContext
+```
 
 PreparedContext records:
 
@@ -377,18 +389,19 @@ truncated
 Current configured read-context budgets include:
 
 Scout read context
-max 1800 tokens
+    max 1800 tokens
 
 Research read context
-max 2500 tokens per read
+    max 2500 tokens per read
 
 Research cumulative stored read context
-max 8000 tokens
+    max 8000 tokens
 
 The cumulative Research budget applies to stored read content rather than the entire serialized prompt.
 
 This boundary exists for cost, latency, predictability, context hygiene, and protection against accidentally injecting arbitrarily large external pages into LLM calls.
 
+```text
 ## Opportunity Evaluation
 
 Opportunity Evaluation answers:
@@ -436,8 +449,9 @@ Opportunity Score =
   + Topic Relevance        × 0.20
   + Engagement Potential   × 0.15
   + Research Efficiency    × 0.10
+```
 
-Semantic vs Deterministic Evaluation
+### Semantic vs Deterministic Evaluation
 
 The LLM evaluates semantic signals:
 
@@ -455,7 +469,7 @@ final HIGH / MEDIUM / LOW classification
 
 The LLM therefore does not silently own the final operational routing decision.
 
-Guardrails
+### Guardrails
 
 The current guardrails force LOW when:
 
@@ -471,7 +485,7 @@ LOW    = score < 60
 
 These weights and thresholds are initial product hypotheses and should eventually be calibrated using real opportunities and observed outcomes.
 
-Engagement Potential
+### Engagement Potential
 
 Objective engagement scoring is intentionally not invented.
 
@@ -481,10 +495,11 @@ DEFAULT_ENGAGEMENT_POTENTIAL = 50
 
 This is not a production engagement formula.
 
-Opportunity Routing
+## Opportunity Routing
 
 Opportunity routing is deterministic:
 
+```text
 HIGH
   ↓
 ACCEPTED_FOR_RESEARCH
@@ -496,9 +511,10 @@ MEDIUM
 QUEUED
   ↓
 END
+```
 
 LOW
-↓
+  ↓
 END
 
 ACCEPTED_FOR_RESEARCH represents an explicit workflow transition and leads into the integrated Research capability.
@@ -507,7 +523,7 @@ MEDIUM is intentionally distinct from LOW so potentially useful opportunities ca
 
 The longer-term lifecycle of queued MEDIUM opportunities remains an open calibration decision.
 
-Research Capability
+## Research Capability
 
 Research is a bounded evidence-gathering agent.
 
@@ -517,20 +533,20 @@ Transform an approved opportunity into the minimum evidence package required for
 
 Its action vocabulary is:
 
-SEARCH · READ · EXTRACT · FINISH
+`SEARCH` · `READ` · `EXTRACT` · `FINISH`
 
 The evidence chain is deliberately explicit:
 
 SEARCH
-↓
+  ↓
 READ
-↓
+  ↓
 EXTRACT
-↓
+  ↓
 EvidenceItem
-↓
+  ↓
 ResearchBrief
-
+```
 
 Only extracted evidence is allowed to support Writer-facing factual findings.
 
@@ -618,6 +634,7 @@ EvidenceItem
     │
     ▼
 ResearchBrief
+```
 
 This is intentional.
 
@@ -656,17 +673,17 @@ Quality Evaluator
 Opportunity Evaluation and Quality Evaluation solve different problems:
 
 Opportunity Evaluation
-│
-▼
+        │
+        ▼
 "Should we contribute here?"
 
-        vs.
+            vs.
 
 Quality Evaluator
-│
-▼
+        │
+        ▼
 "Is this generated contribution good enough?"
-
+```
 
 Quality routing is deterministic:
 
@@ -684,17 +701,19 @@ Quality Evaluator
 REJECT
   ↓
 END
+```
 
 Revision loops are bounded by a maximum iteration limit.
 
 A Writer revision does not automatically rerun Research.
 
-Human-in-the-loop
+## Human-in-the-loop
 
 Human publication authority is mandatory.
 
 The system is designed to assist with:
 
+```text
 discovery
     ↓
 prioritization
@@ -704,6 +723,7 @@ research
 writing
     ↓
 quality evaluation
+```
 
 but not autonomous publication.
 
@@ -715,7 +735,7 @@ Human decides
 
 Autonomous LinkedIn publication and autonomous commenting are explicit non-goals.
 
-Structured Outputs and Data Contracts
+## Structured Outputs and Data Contracts
 
 Typed contracts are used at AI and component boundaries where practical.
 
@@ -752,10 +772,11 @@ Pydantic is used to make component boundaries explicit and machine-validatable.
 
 The architecture favors component-specific inputs over passing the complete orchestration state directly into every specialist component.
 
-State and Routing
+## State and Routing
 
 The LangGraph layer is intentionally kept thin.
 
+```text
 Schemas
   ↓
 define data contracts
@@ -775,10 +796,11 @@ chooses controlled paths
 Graph
   ↓
 connects the workflow
+```
 
 Business intelligence, semantic reasoning, scoring, evidence rules, and tool behavior should remain in their responsible components rather than being duplicated inside graph nodes.
 
-Real-World Validation
+## Real-World Validation
 
 The system has moved beyond fake-tool-only validation.
 
@@ -838,7 +860,7 @@ These smoke validations demonstrate real tool integration.
 
 They are not equivalent to production readiness or exhaustive end-to-end validation.
 
-Engineering Principles
+## Engineering Principles
 
 human-in-the-loop before publication;
 
@@ -874,7 +896,7 @@ security boundaries must be applied to agent-accessible network tools;
 
 complexity is added only when it provides clear product or behavioral value.
 
-Cost-Aware Orchestration
+## Cost-Aware Orchestration
 
 LLM consumption is treated as computational infrastructure.
 
@@ -896,7 +918,7 @@ Deterministic logic, bounded context, and cheaper models should be preferred whe
 
 This principle is expected to evolve into broader token governance and model-routing capabilities as the system matures.
 
-Tech Stack
+## Tech Stack
 
 Current core technologies include:
 
@@ -920,7 +942,7 @@ environment-based configuration.
 
 The architecture intentionally keeps search and read interfaces provider-neutral so infrastructure can evolve without rewriting Scout or Research contracts.
 
-Testing
+## Testing
 
 The current automated baseline is:
 
@@ -976,9 +998,9 @@ Automated tests are designed not to depend on live OpenAI or live web calls wher
 
 Real smoke tests complement the automated suite for infrastructure boundaries that require actual external services.
 
-Current Status
+## Current Status
 
-Implemented and validated
+### Implemented and validated
 
 Bounded Scout Agent
 Scout → Opportunity Integration
@@ -986,33 +1008,24 @@ Opportunity Evaluation v0.1
 Deterministic Opportunity Routing
 Bounded Research Capability
 Research → Writer Integration
-
-Writer
-
-Quality Evaluator
-
+## Writer
+## Quality Evaluator
 Controlled Quality Revision Loop
 Structured AI Contracts
 Real/Fake Web Tool Selection
 Brave Search Adapter
 Bounded HTTP Reader
 Web Tool Failure Recovery
-
-Main Content Extraction
-
+## Main Content Extraction
 Content Density Extraction
-
-Context Preparation
-
+## Context Preparation
 Per-component Token Budgets
 Research Evidence Provenance
-
-Deterministic Guardrails
-
+### Deterministic Guardrails
 Human Publication Boundary
 Project Audit / Recovery Discipline
 
-Intentionally incomplete
+### Intentionally incomplete
 
 Full production LinkedIn discovery
 Reliable LinkedIn engagement metadata
@@ -1025,7 +1038,7 @@ Calibration from real-world outcomes
 Fully validated real end-to-end workflow
 Autonomous publication — intentionally excluded
 
-Next Development Increment
+## Next Development Increment
 
 The next planned capability is:
 
@@ -1035,6 +1048,7 @@ The objective is to validate the integrated path with real external tooling and 
 
 Conceptually:
 
+```text
 Real discovery
     ↓
 Scout
@@ -1050,10 +1064,11 @@ Writer
 Quality Evaluation
     ↓
 Human / END boundary
+```
 
 The validation should preserve all existing guardrails and make failures observable rather than bypassing them for the sake of a successful demo.
 
-Known Limitations
+## Known Limitations
 
 real web search is available, but production LinkedIn-specific discovery remains unresolved;
 
@@ -1079,7 +1094,7 @@ the complete real workflow still requires explicit end-to-end validation.
 
 These limitations are documented rather than hidden because the project is being developed as a sequence of validated capabilities.
 
-Explicit Non-Goals
+## Explicit Non-Goals
 
 autonomous LinkedIn publication;
 
@@ -1103,10 +1118,11 @@ hiding infrastructure failures behind fabricated results;
 
 prematurely optimizing scoring weights without operational evidence.
 
-Development Discipline
+## Development Discipline
 
 Relevant increments are closed through a recoverable checkpoint process:
 
+```text
 Implement
   ↓
 Run full test suite
@@ -1122,9 +1138,11 @@ Stage
 Commit
   ↓
 Push
+```
 
 The repository uses:
 
+```text
 code
 +
 tests
@@ -1134,6 +1152,7 @@ project audit
 PROJECT_CONTEXT.md
 +
 Git checkpoints
+```
 
 as a development recovery mechanism.
 
@@ -1141,7 +1160,7 @@ The audit is the factual repository snapshot.
 
 PROJECT_CONTEXT.md is the human-maintained interpretation of that state and records baseline lineage, current WIP, established decisions, limitations, and the next planned capability.
 
-Documentation Structure
+## Documentation Structure
 
 Architecture documentation is maintained under:
 
@@ -1150,22 +1169,22 @@ docs/architecture/
 Its intended responsibilities are:
 
 01_system_overview.md
-high-level architectural model
+    high-level architectural model
 
 02_current_architecture.md
-factual implemented architecture
+    factual implemented architecture
 
 03_data_model.md
-schemas, contracts, and state relationships
+    schemas, contracts, and state relationships
 
 04_decision_log.md
-established architectural decisions
+    established architectural decisions
 
 05_cloud_deployment.md
-deployment/runtime architecture when established
+    deployment/runtime architecture when established
 
 06_opportunity_evaluation.md
-deep-dive specification of Opportunity Evaluation
+    deep-dive specification of Opportunity Evaluation
 
 Development recovery context is maintained separately in:
 
@@ -1173,7 +1192,7 @@ docs/context/PROJECT_CONTEXT.md
 
 This separation prevents the README from becoming the sole source of architectural truth while keeping the repository understandable to a new reader.
 
-Project Philosophy
+## Project Philosophy
 
 This project is not intended to demonstrate that an LLM can generate a LinkedIn comment.
 
