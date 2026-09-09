@@ -1,16 +1,20 @@
-## Architecture Overview
+LinkedIn Agentic AI System
 
-![LinkedIn Agentic AI System — Architecture Overview](docs/images/architecture-overview.png)
+A controlled agentic AI system for discovering high-value LinkedIn interaction opportunities, gathering evidence, drafting contributions, evaluating quality, and preserving human publication authority.
+
+Current stage: active development. Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 are implemented and validated with a 189-test automated baseline. The next planned increment is End-to-End Real Workflow Validation v0.1 — Controlled Live Path.
+
+Architecture Overview
+
+
 
 The architecture overview presents the main components, responsibilities, technology boundaries, and relationships that compose the solution.
 
-## End-to-End Agentic Solution Flow
+End-to-End Agentic Solution Flow
 
-![LinkedIn Agentic AI System — End-to-End Agentic Solution Flow](docs/images/end-to-end-agentic-solution-flow.png)
+
 
 The end-to-end flow shows how an opportunity moves through the agentic solution, from discovery and evaluation to research, writing, quality evaluation, and the final human decision boundary.
-
-
 
 Why This Project Exists
 
@@ -145,13 +149,12 @@ Scout is a bounded agentic loop responsible for discovering potentially valuable
 
 Its action vocabulary is:
 
-SEARCH
-READ
-SELECT
-FINISH
+```text
+`SEARCH` · `READ` · `SELECT` · `FINISH`
 
 The internal loop follows:
 
+```text
 State
   ↓
 LLM chooses next allowed action
@@ -217,14 +220,15 @@ Candidate Selection
 Validated content can be promoted into a PostCandidate:
 
 SEARCH
-  ↓
+↓
 READ
-  ↓
+↓
 SELECT
-  ↓
+↓
 Python validation
-  ↓
+↓
 PostCandidate
+
 
 The semantic decision to select belongs to the LLM.
 
@@ -234,6 +238,7 @@ Real Web Tooling
 
 The project supports a provider-neutral web tool contract:
 
+```text
 SearchTool
 (query: str)
     ↓
@@ -372,19 +377,19 @@ truncated
 Current configured read-context budgets include:
 
 Scout read context
-    max 1800 tokens
+max 1800 tokens
 
 Research read context
-    max 2500 tokens per read
+max 2500 tokens per read
 
 Research cumulative stored read context
-    max 8000 tokens
+max 8000 tokens
 
 The cumulative Research budget applies to stored read content rather than the entire serialized prompt.
 
 This boundary exists for cost, latency, predictability, context hygiene, and protection against accidentally injecting arbitrarily large external pages into LLM calls.
 
-Opportunity Evaluation
+## Opportunity Evaluation
 
 Opportunity Evaluation answers:
 
@@ -410,7 +415,7 @@ Topic Relevance
 
 20%
 
-Engagement Potential
+### Engagement Potential
 
 15%
 
@@ -424,6 +429,7 @@ Research Efficiency = 100 - Research Cost
 
 The deterministic score is:
 
+```text
 Opportunity Score =
     Contribution Potential × 0.30
   + Positioning Fit        × 0.25
@@ -492,7 +498,7 @@ QUEUED
 END
 
 LOW
-  ↓
+↓
 END
 
 ACCEPTED_FOR_RESEARCH represents an explicit workflow transition and leads into the integrated Research capability.
@@ -511,22 +517,20 @@ Transform an approved opportunity into the minimum evidence package required for
 
 Its action vocabulary is:
 
-SEARCH
-READ
-EXTRACT
-FINISH
+SEARCH · READ · EXTRACT · FINISH
 
 The evidence chain is deliberately explicit:
 
 SEARCH
-  ↓
+↓
 READ
-  ↓
+↓
 EXTRACT
-  ↓
+↓
 EvidenceItem
-  ↓
+↓
 ResearchBrief
+
 
 Only extracted evidence is allowed to support Writer-facing factual findings.
 
@@ -600,6 +604,7 @@ Research separates discovered sources, read sources, and extracted evidence.
 
 Conceptually:
 
+```text
 Search result
     │
     ▼
@@ -651,19 +656,21 @@ Quality Evaluator
 Opportunity Evaluation and Quality Evaluation solve different problems:
 
 Opportunity Evaluation
-        │
-        ▼
+│
+▼
 "Should we contribute here?"
 
-            vs.
+        vs.
 
 Quality Evaluator
-        │
-        ▼
+│
+▼
 "Is this generated contribution good enough?"
+
 
 Quality routing is deterministic:
 
+```text
 PASS
   ↓
 Human / END
@@ -979,20 +986,29 @@ Opportunity Evaluation v0.1
 Deterministic Opportunity Routing
 Bounded Research Capability
 Research → Writer Integration
+
 Writer
+
 Quality Evaluator
+
 Controlled Quality Revision Loop
 Structured AI Contracts
 Real/Fake Web Tool Selection
 Brave Search Adapter
 Bounded HTTP Reader
 Web Tool Failure Recovery
+
 Main Content Extraction
+
 Content Density Extraction
+
 Context Preparation
+
 Per-component Token Budgets
 Research Evidence Provenance
+
 Deterministic Guardrails
+
 Human Publication Boundary
 Project Audit / Recovery Discipline
 
@@ -1134,22 +1150,22 @@ docs/architecture/
 Its intended responsibilities are:
 
 01_system_overview.md
-    high-level architectural model
+high-level architectural model
 
 02_current_architecture.md
-    factual implemented architecture
+factual implemented architecture
 
 03_data_model.md
-    schemas, contracts, and state relationships
+schemas, contracts, and state relationships
 
 04_decision_log.md
-    established architectural decisions
+established architectural decisions
 
 05_cloud_deployment.md
-    deployment/runtime architecture when established
+deployment/runtime architecture when established
 
 06_opportunity_evaluation.md
-    deep-dive specification of Opportunity Evaluation
+deep-dive specification of Opportunity Evaluation
 
 Development recovery context is maintained separately in:
 
