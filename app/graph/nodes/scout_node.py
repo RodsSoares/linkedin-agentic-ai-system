@@ -1,5 +1,6 @@
 from app.agents.scout import run_scout
 from app.graph.state import LinkedInAgentState
+from app.tools.web_tools import get_web_tools
 
 
 def scout_node(state: LinkedInAgentState) -> dict:
@@ -10,7 +11,13 @@ def scout_node(state: LinkedInAgentState) -> dict:
             "Scout workflow requires a scout_objective."
         )
 
-    scout_state = run_scout(objective=objective)
+    search_tool, read_tool = get_web_tools()
+
+    scout_state = run_scout(
+        objective=objective,
+        search_tool=search_tool,
+        read_tool=read_tool,
+    )
 
     if not scout_state.candidates:
         return {

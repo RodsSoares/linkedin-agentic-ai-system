@@ -12,36 +12,10 @@ from app.agents.research_llm import (
 from app.config.settings import OPENAI_API_KEY
 from app.graph.state import LinkedInAgentState
 from app.schemas.research import ResearchState
-from app.schemas.tools import SearchResult
-from app.tools.web_reader import web_reader
-from app.tools.web_search import web_search
+from app.tools.web_tools import get_web_tools
 
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-
-
-def research_search(query: str) -> list[SearchResult]:
-    return web_search(query)
-
-
-def research_read(url: str) -> str:
-    results = web_search("research-reader-adapter")
-
-    result = next(
-        (
-            candidate
-            for candidate in results
-            if candidate.url == url
-        ),
-        None,
-    )
-
-    if result is None:
-        raise ValueError(
-            f"Research reader could not resolve discovered URL: {url}"
-        )
-
-    return web_reader(result)
 
 
 def research_node(
@@ -65,6 +39,8 @@ def research_node(
             "Research may only execute for HIGH opportunities."
         )
 
+    search_tool, read_tool = get_web_tools()
+
     research_state = ResearchState(
         post=post,
         opportunity_evaluation=opportunity_evaluation,
@@ -84,8 +60,8 @@ def research_node(
                 llm=client,
             )
         ),
-        search_tool=research_search,
-        read_tool=research_read,
+        search_tool=search_tool,
+        read_tool=read_tool,
     )
 
     research_brief = build_research_brief(

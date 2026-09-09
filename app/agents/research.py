@@ -1,5 +1,10 @@
 from collections.abc import Callable
 
+from app.config.settings import (
+    RESEARCH_READ_CONTEXT_MAX_TOKENS,
+    RESEARCH_TOTAL_READ_CONTEXT_MAX_TOKENS,
+)
+from app.context_preparation import count_tokens, prepare_context
 from app.schemas.research import (
     ReadSource,
     ResearchAction,
@@ -10,7 +15,8 @@ from app.schemas.research import (
     ResearchState,
     ResearchStatus,
 )
-from app.schemas.tools import SearchResult
+from app.schemas.tools import ReadTool, SearchResult, SearchTool
+from app.tools.errors import WebToolError
 
 
 MAX_RESEARCH_STEPS = 10
@@ -20,8 +26,6 @@ MAX_RESEARCH_READS = 5
 MAX_RESEARCH_EVIDENCE_ITEMS = 6
 
 
-SearchTool = Callable[[str], list[SearchResult]]
-ReadTool = Callable[[str], str]
 ObjectiveBuilder = Callable[[ResearchState], ResearchObjective]
 ActionDecider = Callable[[ResearchState], ResearchAction]
 BriefBuilder = Callable[[ResearchState], ResearchBriefSynthesis]
@@ -161,7 +165,15 @@ def _execute_search(
         )
         return state
 
-    results = search_tool(query)
+    state.search_queries.append(query)
+    state.search_count += 1
+    state.steps += 1
+
+    try:
+        results = search_tool(query)
+    except WebToolError as error:
+        state.last_error = f"Web search failed: {error}"
+        return state
 
     known_urls = {result.url for result in state.search_results}
     unique_results = [
@@ -170,13 +182,17 @@ def _execute_search(
         if result.url not in known_urls
     ]
 
-    state.search_queries.append(query)
     state.search_results.extend(unique_results)
-    state.search_count += 1
-    state.steps += 1
     state.last_error = None
 
     return state
+
+
+def _current_read_context_tokens(state: ResearchState) -> int:
+    return sum(
+        count_tokens(read_source.content)
+        for read_source in state.read_sources
+    )
 
 
 def _execute_read(
@@ -214,20 +230,49 @@ def _execute_read(
         )
         return state
 
-    content = read_tool(url)
+    used_context_tokens = _current_read_context_tokens(state)
+    remaining_context_tokens = (
+        RESEARCH_TOTAL_READ_CONTEXT_MAX_TOKENS
+        - used_context_tokens
+    )
+
+    if remaining_context_tokens <= 0:
+        state.last_error = (
+            "Research read-context token budget is exhausted. "
+            "Choose EXTRACT or FINISH."
+        )
+        return state
 
     state.visited_urls.append(url)
+    state.read_count += 1
+    state.steps += 1
+
+    try:
+        raw_content = read_tool(url)
+    except WebToolError as error:
+        state.last_error = (
+            f"Web read failed for {url}: {error}"
+        )
+        return state
+
+    per_read_budget = min(
+        RESEARCH_READ_CONTEXT_MAX_TOKENS,
+        remaining_context_tokens,
+    )
+
+    prepared = prepare_context(
+        raw_content,
+        max_tokens=per_read_budget,
+    )
 
     state.read_sources.append(
         ReadSource(
             url=url,
             title=discovered_result.title,
-            content=content,
+            content=prepared.content,
         )
     )
 
-    state.read_count += 1
-    state.steps += 1
     state.last_error = None
 
     return state

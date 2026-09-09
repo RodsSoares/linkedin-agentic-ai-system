@@ -1,7 +1,10 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from app.agents.scout import execute_action, run_scout
+from app.agents.scout import decide_next_action, execute_action, run_scout
 from app.schemas.scout import ScoutAction, ScoutSelection, ScoutState
+from app.schemas.tools import SearchResult
+from app.tools.web_reader import web_reader
+from app.tools.web_search import web_search
 
 
 def test_scout_runs_search_read_finish_loop():
@@ -28,6 +31,8 @@ def test_scout_runs_search_read_finish_loop():
     ):
         state = run_scout(
             objective="Find opportunities about AI agents and Supply Chain.",
+            search_tool=web_search,
+            read_tool=web_reader,
             max_steps=5,
         )
 
@@ -47,10 +52,8 @@ def test_scout_runs_search_read_finish_loop():
     assert state.last_read_content is not None
     assert "supply chain" in state.last_read_content.lower()
 
-def test_scout_rejects_undiscovered_url():
-    from app.agents.scout import execute_action
-    from app.schemas.scout import ScoutState
 
+def test_scout_rejects_undiscovered_url():
     state = ScoutState(
         objective="Find relevant opportunities.",
     )
@@ -65,6 +68,8 @@ def test_scout_rejects_undiscovered_url():
         execute_action(
             action=action,
             state=state,
+            search_tool=web_search,
+            read_tool=web_reader,
         )
     except ValueError as error:
         assert str(error) == (
@@ -75,10 +80,8 @@ def test_scout_rejects_undiscovered_url():
             "Scout should reject an undiscovered URL."
         )
 
-def test_scout_rejects_repeated_search():
-    from app.agents.scout import execute_action
-    from app.schemas.scout import ScoutState
 
+def test_scout_rejects_repeated_search():
     state = ScoutState(
         objective="Find relevant opportunities.",
         search_queries=["AI agents supply chain"],
@@ -94,6 +97,8 @@ def test_scout_rejects_repeated_search():
         execute_action(
             action=action,
             state=state,
+            search_tool=web_search,
+            read_tool=web_reader,
         )
     except ValueError as error:
         assert str(error) == (
@@ -102,13 +107,10 @@ def test_scout_rejects_repeated_search():
     else:
         raise AssertionError(
             "Scout should reject a repeated search query."
-        )   
+        )
+
 
 def test_scout_rejects_revisited_url():
-    from app.agents.scout import execute_action
-    from app.schemas.scout import ScoutState
-    from app.schemas.tools import SearchResult
-
     url = "https://example.com/posts/ai-agents-supply-chain"
 
     state = ScoutState(
@@ -133,6 +135,8 @@ def test_scout_rejects_revisited_url():
         execute_action(
             action=action,
             state=state,
+            search_tool=web_search,
+            read_tool=web_reader,
         )
     except ValueError as error:
         assert str(error) == (
@@ -142,6 +146,7 @@ def test_scout_rejects_revisited_url():
         raise AssertionError(
             "Scout should reject a revisited URL."
         )
+
 
 def test_scout_stops_at_max_steps():
     actions = [
@@ -168,6 +173,8 @@ def test_scout_stops_at_max_steps():
     ) as mocked_decision:
         state = run_scout(
             objective="Find relevant opportunities.",
+            search_tool=web_search,
+            read_tool=web_reader,
             max_steps=2,
         )
 
@@ -176,12 +183,8 @@ def test_scout_stops_at_max_steps():
     assert len(state.search_queries) == 2
     assert mocked_decision.call_count == 2
 
+
 def test_decide_next_action_returns_structured_scout_action():
-    from unittest.mock import Mock
-
-    from app.agents.scout import decide_next_action
-    from app.schemas.scout import ScoutState
-
     state = ScoutState(
         objective="Find relevant opportunities about AI and Supply Chain.",
     )
@@ -207,6 +210,7 @@ def test_decide_next_action_returns_structured_scout_action():
 
     mocked_parse.assert_called_once()
 
+
 def test_scout_recovers_after_blocked_action():
     actions = [
         ScoutAction(
@@ -231,6 +235,8 @@ def test_scout_recovers_after_blocked_action():
     ):
         state = run_scout(
             objective="Find relevant opportunities.",
+            search_tool=web_search,
+            read_tool=web_reader,
             max_steps=5,
         )
 
@@ -240,6 +246,7 @@ def test_scout_recovers_after_blocked_action():
         "AI agents supply chain"
     ]
     assert state.last_error is None
+
 
 def test_scout_selects_last_read_content_as_candidate():
     state = ScoutState(
@@ -251,14 +258,24 @@ def test_scout_selects_last_read_content_as_candidate():
         query="AI agents supply chain",
         reason="Discover relevant content.",
     )
-    execute_action(search_action, state)
+    execute_action(
+        search_action,
+        state,
+        search_tool=web_search,
+        read_tool=web_reader,
+    )
 
     read_action = ScoutAction(
         action="READ",
         url="https://example.com/posts/ai-agents-supply-chain",
         reason="Inspect relevant content.",
     )
-    execute_action(read_action, state)
+    execute_action(
+        read_action,
+        state,
+        search_tool=web_search,
+        read_tool=web_reader,
+    )
 
     select_action = ScoutAction(
         action="SELECT",
@@ -267,7 +284,12 @@ def test_scout_selects_last_read_content_as_candidate():
             reason="Strong connection between AI agents and supply chain."
         ),
     )
-    execute_action(select_action, state)
+    execute_action(
+        select_action,
+        state,
+        search_tool=web_search,
+        read_tool=web_reader,
+    )
 
     assert len(state.candidates) == 1
 
@@ -279,11 +301,8 @@ def test_scout_selects_last_read_content_as_candidate():
     assert candidate.post_text == state.last_read_content
     assert candidate.author_name == "Unknown"
 
+
 def test_decide_next_action_can_return_select_action():
-    from unittest.mock import Mock
-
-    from app.agents.scout import decide_next_action
-
     state = ScoutState(
         objective="Find relevant opportunities.",
         last_read_url=(

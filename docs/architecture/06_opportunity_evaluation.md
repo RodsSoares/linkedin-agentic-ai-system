@@ -1,310 +1,311 @@
-# Opportunity Evaluation
+Opportunity Evaluation
 
-## 1. Purpose
+1. Purpose
 
-The Opportunity Evaluation capability determines whether a LinkedIn post represents a valuable opportunity for Rodrigo to comment on.
+The Opportunity Evaluation capability determines whether a discovered professional discussion represents a sufficiently valuable opportunity to justify further system effort.
 
-The objective is **not to evaluate whether a post is good or popular**.
+Its purpose is not to answer:
 
-The objective is to answer:
+"Is this post good?"
+"Is this post popular?"
+"Will this post maximize impressions?"
 
-> Is this a good opportunity for Rodrigo to contribute a relevant, differentiated, and professionally valuable comment?
+It answers:
 
-Opportunity Evaluation acts as a strategic prioritization gate between candidate discovery and research/comment generation.
+Is this a good opportunity for Rodrigo to contribute something relevant, differentiated, professionally valuable, and defensible?
 
-The planned workflow direction is:
+Opportunity Evaluation is the strategic resource-allocation gate between candidate discovery and deeper Research.
 
-```text
+The implemented HIGH path is now:
+
 Scout
   ↓
+PostCandidate
+  ↓
 Opportunity Evaluation
-  ↓
-Research
-  ↓
-Writer
-  ↓
-Quality Evaluator
-  ↓
-Human-in-the-loop
-```
+  ├── LOW    → END
+  ├── MEDIUM → QUEUED → END
+  └── HIGH   → ACCEPTED_FOR_RESEARCH
+                    ↓
+                 Research
+                    ↓
+              ResearchBrief
+                    ↓
+                  Writer
+                    ↓
+            Quality Evaluator
+              ├── PASS   → Human / END
+              ├── REVISE → Writer
+              └── REJECT → END
 
-The capability must prioritize opportunities where Rodrigo can add meaningful professional value rather than simply maximize engagement or visibility.
+Human publication authority remains mandatory.
 
----
+2. Current Capability Status
 
-## 2. Core Product Principle
+VERSION: v0.1
+DESIGN: IMPLEMENTED
+SCHEMAS: IMPLEMENTED
+DETERMINISTIC SCORING: IMPLEMENTED
+SEMANTIC EVALUATION: IMPLEMENTED
+WORKFLOW INTEGRATION: IMPLEMENTED
+HIGH → RESEARCH ROUTING: IMPLEMENTED
+MEDIUM → QUEUED → END: IMPLEMENTED
+LOW → END: IMPLEMENTED
+AUTOMATED TEST COVERAGE: IMPLEMENTED
 
-### Opportunity is not the same as popularity
+Opportunity Evaluation is no longer a design-only capability.
 
-A LinkedIn post with high reach, many reactions, or a well-known author is not automatically a high-value opportunity.
+The project has progressed from the original specification into an integrated workflow where HIGH opportunities lead into the bounded Research capability and then into Writer and Quality Evaluation.
 
-A high-value opportunity should combine:
+The broader project currently has:
 
-* relevance to Rodrigo's professional domains;
-* alignment with Rodrigo's intended professional positioning;
-* potential for a meaningful and differentiated contribution;
-* reasonable visibility or engagement potential;
-* acceptable research effort.
+189 passing tests
 
-Therefore:
+This document therefore describes the implemented v0.1 contract while preserving the original product rationale and calibration assumptions.
 
-```text
-High audience + low contribution potential
-                ↓
-        Limited opportunity
+3. Core Product Principle
 
-Relevant discussion + strong contribution potential
-                ↓
-          High opportunity
-```
+Opportunity is not popularity
 
-The system must avoid becoming an engagement bot that prioritizes posts only because they are popular.
+A LinkedIn post or professional discussion with high reach, many reactions, or a well-known author is not automatically a high-value opportunity.
 
-Audience and engagement matter, but they are secondary to professional relevance, positioning, and contribution potential.
+A valuable opportunity should combine:
 
----
+relevance to Rodrigo's professional domains;
 
-## 3. Design Principles
+alignment with the intended professional positioning;
 
-### 3.1 Hybrid Evaluation
+potential for a meaningful and differentiated contribution;
 
-Opportunity Evaluation follows the architectural principle of using:
+reasonable engagement potential;
 
-* LLM reasoning where semantic understanding adds material value;
-* deterministic logic where explicit rules, calculations, or objective signals provide sufficient reliability.
+acceptable research effort.
 
 Conceptually:
 
-```text
-Post Candidate
-      │
-      ▼
-Semantic Evaluation
-      │
-      │ LLM where necessary
-      ▼
-Structured Signals
-      │
-      │ + objective signals
-      ▼
-Deterministic Scoring
-      │
-      ▼
-Opportunity Classification
-```
+High audience
++
+low contribution potential
+        ↓
+limited opportunity
 
-The LLM evaluates semantic characteristics.
+while:
 
-The application owns the final scoring and classification logic.
+Relevant discussion
++
+strong positioning fit
++
+strong contribution potential
+        ↓
+high opportunity
 
----
+The system must not become an engagement bot that prioritizes content simply because it is popular.
 
-### 3.2 Structured Outputs
+4. Responsibility Model
 
-Semantic evaluation must return structured data rather than unrestricted natural-language decisions.
+Opportunity Evaluation uses the same responsibility split as the broader architecture.
 
-The LLM should produce evaluation signals.
-
-It should **not** have unrestricted authority to decide whether an opportunity proceeds through the workflow.
-
-The expected architectural pattern is:
-
-```text
 LLM
- │
- ▼
-Structured Output / Pydantic
- │
- ▼
-Deterministic Python Logic
- │
- ▼
-Opportunity Classification
-```
 
----
+The LLM owns semantic interpretation of:
 
-### 3.3 Deterministic Decision Ownership
+topic_relevance
+positioning_fit
+contribution_potential
+research_cost
 
-The final opportunity score and classification must be calculated by application logic.
+Python
 
-The LLM must not directly decide:
+Python owns:
 
-```text
-HIGH
-MEDIUM
-LOW
-```
+input validation
+Research Efficiency
+Engagement Potential operational input
+weighted Opportunity Score
+mandatory guardrails
+HIGH / MEDIUM / LOW classification
 
-Instead, it provides semantic signals that are consumed by deterministic scoring logic.
+LangGraph
 
-This preserves:
+LangGraph owns the workflow transition after classification.
 
-* predictability;
-* testability;
-* explainability;
-* calibration;
-* model independence;
-* cost control.
+Human
 
----
+The human retains final publication authority downstream.
 
-### 3.4 Bounded Autonomy
+The governing pattern is:
 
-Opportunity Evaluation is part of a controlled agentic workflow.
+LLM interprets semantically; Python scores and classifies deterministically; LangGraph controls what happens next.
 
-The component must not:
+The LLM does not directly own HIGH / MEDIUM / LOW.
 
-* autonomously publish content;
-* autonomously interact with LinkedIn;
-* initiate unbounded research;
-* create unbounded evaluation loops;
-* independently redefine evaluation criteria;
-* bypass deterministic routing rules.
+5. Evaluation Pipeline
 
----
+PostCandidate
+      │
+      ▼
+Semantic Opportunity Evaluation
+      │
+      ▼
+OpportunitySignals
+      │
+      ├── topic_relevance
+      ├── positioning_fit
+      ├── contribution_potential
+      └── research_cost
+      │
+      ▼
+Deterministic Application Logic
+      │
+      ├── engagement_potential
+      ├── research_efficiency
+      ├── weighted score
+      └── mandatory guardrails
+      │
+      ▼
+OpportunityEvaluation
+      │
+      ▼
+HIGH / MEDIUM / LOW
+      │
+      ▼
+Deterministic Workflow Routing
 
-### 3.5 Cost-Aware Orchestration
+This separation makes the capability:
 
-LLM inference is treated as computational infrastructure.
+predictable;
 
-Opportunity Evaluation should avoid expensive inference when deterministic rules can reliably resolve part of the evaluation.
+testable;
 
-Future implementations may route different evaluation tasks to different models according to:
+explainable;
 
-* complexity;
-* cost;
-* latency;
-* required quality;
-* semantic reasoning requirements.
+calibratable;
 
-The goal is not minimum token consumption at any cost.
+less dependent on a particular model;
 
-The goal is:
+easier to evolve without weakening operational control.
 
-> Minimum inference cost capable of satisfying the required quality contract.
+6. Evaluation Dimensions
 
----
+Opportunity Evaluation v0.1 uses five scoring dimensions:
 
-## 4. Evaluation Model
+Contribution Potential
 
-Opportunity Evaluation v0.1 contains five dimensions:
+Positioning Fit
 
-1. Contribution Potential
-2. Positioning Fit
-3. Topic Relevance
-4. Engagement Potential
-5. Research Cost
+Topic Relevance
 
-All dimensions use a conceptual range of:
+Engagement Potential
 
-```text
+Research Efficiency
+
+The semantic evaluator directly estimates Research Cost, which Python converts into Research Efficiency.
+
+All final positive scoring dimensions use:
+
 0–100
-```
-
-For the first four dimensions:
-
-```text
 higher = better
-```
 
-For Research Cost:
+Research Cost uses:
 
-```text
-higher = worse
-```
+0–100
+higher = more expensive
 
-Research Cost is therefore converted into Research Efficiency before final scoring.
+and is converted by:
 
----
+Research Efficiency = 100 - Research Cost
 
-# 5. Contribution Potential
+7. Contribution Potential
 
-## 5.1 Definition
+Definition
 
 Contribution Potential measures whether Rodrigo can add something meaningful, specific, and differentiated to the discussion.
 
 The core question is:
 
-> Do we actually have something worth adding?
+Do we actually have something worth adding?
 
-Potential contributions may include:
+Useful contributions may include:
 
-* professional experience;
-* practical examples;
-* technical or business insight;
-* a useful connection between concepts;
-* a defensible counterpoint;
-* an implementation perspective;
-* relevant evidence;
-* a question that meaningfully advances the discussion;
-* lessons from building real systems or tools.
+professional experience;
 
-The system should strongly penalize opportunities where the likely comment would merely repeat the original post or provide generic agreement.
+practical examples;
 
-Examples of low-value comments include:
+technical or business insight;
 
-```text
+connections between concepts;
+
+defensible counterpoints;
+
+implementation perspectives;
+
+relevant evidence;
+
+questions that materially advance the discussion;
+
+lessons from building real systems or tools.
+
+The system should penalize opportunities where the likely contribution would merely repeat the source or provide generic agreement.
+
+Examples of low-value contribution:
+
 "Great insight."
-
 "AI is definitely transforming business."
-
 "Very interesting perspective."
-
 "I completely agree."
-```
 
-The system should favor situations where the resulting comment can contribute additional information or perspective.
+Rubric
 
----
+Score
 
-## 5.2 Contribution Potential Rubric
+Interpretation
 
-| Score  | Interpretation                                                                                                  |
-| ------ | --------------------------------------------------------------------------------------------------------------- |
-| 0–20   | There is little to add beyond generic agreement or repetition.                                                  |
-| 21–40  | A comment is possible, but likely to provide limited differentiation.                                           |
-| 41–60  | Rodrigo has relevant knowledge or experience that can add some value.                                           |
-| 61–80  | Rodrigo can provide a concrete insight, example, connection, or useful perspective.                             |
-| 81–100 | Rodrigo has a strong, specific, and differentiated contribution capable of materially improving the discussion. |
+0–20
 
----
+Little can be added beyond generic agreement or repetition.
 
-## 5.3 Strategic Importance
+21–40
 
-Contribution Potential receives the highest weight in Opportunity Score.
+A contribution is possible but likely weakly differentiated.
 
-Rationale:
+41–60
 
-> If Rodrigo has nothing valuable to add, the system should generally not recommend commenting regardless of the size of the audience.
+Relevant knowledge or experience can add some value.
 
-Weight:
+61–80
 
-```text
+A concrete insight, example, connection, or useful perspective is available.
+
+81–100
+
+A strong, specific, differentiated contribution can materially improve the discussion.
+
+Weight
+
 30%
-```
 
----
+Contribution Potential receives the highest weight.
 
-# 6. Positioning Fit
+The rationale remains:
 
-## 6.1 Definition
+If there is nothing valuable to add, audience size should generally not justify commenting.
 
-Positioning Fit measures whether participating in the discussion reinforces the professional identity Rodrigo intends to build.
+8. Positioning Fit
+
+Definition
+
+Positioning Fit measures whether participating reinforces the professional identity the system is intended to build.
 
 The core question is:
 
-> Does commenting on this post help reinforce the professional positioning we want to establish?
+Does contributing here reinforce the professional positioning we want to establish?
 
-This dimension is intentionally different from Topic Relevance.
+This is intentionally different from Topic Relevance.
 
-A topic may involve technology while having limited connection to Rodrigo's desired positioning.
+A topic can be technically related to AI while having little relationship to the intended professional positioning.
 
-For example, a highly technical discussion about low-level software optimization may be technology-related but have limited Positioning Fit.
+High-fit discussions tend to connect areas such as:
 
-A discussion about implementing AI agents in corporate processes may have very high Positioning Fit because it connects:
-
-```text
 Business
 +
 Processes
@@ -316,229 +317,264 @@ Automation
 AI
 +
 Architecture
-```
 
-The evaluation should favor opportunities that strengthen Rodrigo's positioning at the intersection of business expertise and applied technology rather than opportunities requiring him to imitate a professional identity unrelated to his actual experience or development path.
+and may also connect those areas with Supply Chain, planning, operations, or decision support.
 
----
+Rubric
 
-## 6.2 Positioning Fit Rubric
+Score
 
-| Score  | Interpretation                                                                                                                         |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 0–20   | Participation provides little or no value to the intended professional positioning.                                                    |
-| 21–40  | The connection with the desired positioning is weak or indirect.                                                                       |
-| 41–60  | The discussion partially supports the desired positioning.                                                                             |
-| 61–80  | Participation clearly reinforces the desired professional positioning.                                                                 |
-| 81–100 | The discussion is an excellent opportunity to demonstrate the intended professional positioning and its differentiating intersections. |
+Interpretation
 
----
+0–20
 
-## 6.3 Weight
+Little or no value to the intended positioning.
 
-Positioning Fit weight:
+21–40
 
-```text
+Weak or indirect positioning connection.
+
+41–60
+
+Partially supports the intended positioning.
+
+61–80
+
+Clearly reinforces the intended professional positioning.
+
+81–100
+
+Excellent opportunity to demonstrate the intended positioning and its differentiating intersections.
+
+Weight
+
 25%
-```
 
-Rationale:
+Professional visibility is valuable only when it reinforces a useful and authentic positioning.
 
-Professional visibility is valuable only when it contributes to the professional identity the system is intended to reinforce.
+9. Topic Relevance
 
----
+Definition
 
-# 7. Topic Relevance
-
-## 7.1 Definition
-
-Topic Relevance measures how closely the subject of the post aligns with the professional areas in which Rodrigo wants to participate and build authority.
+Topic Relevance measures how closely the subject aligns with the professional areas in which Rodrigo intends to participate and build authority.
 
 The core question is:
 
-> Is this a subject Rodrigo wants to be seen discussing professionally?
+Is this a subject Rodrigo wants to be seen discussing professionally?
 
-High-relevance areas currently include, among others:
+High-relevance areas currently include:
 
-* Artificial Intelligence;
-* Generative AI;
-* AI agents and agentic systems;
-* automation;
-* data and analytics;
-* AI solution architecture;
-* digital transformation;
-* business applications of technology;
-* Supply Chain;
-* planning;
-* operations;
-* decision support;
-* intersections between business, processes, data, automation, and AI.
+Artificial Intelligence;
 
-Topic Relevance alone does not determine whether a post should be selected.
+Generative AI;
 
-A highly relevant topic may still represent a poor opportunity if Rodrigo has little meaningful contribution to add.
+AI agents and agentic systems;
 
----
+automation;
 
-## 7.2 Topic Relevance Rubric
+data and analytics;
 
-| Score  | Interpretation                                                                                                   |
-| ------ | ---------------------------------------------------------------------------------------------------------------- |
-| 0–20   | The topic is outside the target professional domains.                                                            |
-| 21–40  | The topic has only an indirect relationship with the target domains.                                             |
-| 41–60  | The topic is adjacent to the target positioning and has some professional relevance.                             |
-| 61–80  | The topic is directly related to one or more target professional domains.                                        |
-| 81–100 | The topic is central to Rodrigo's desired professional positioning or strongly connects multiple target domains. |
+AI solution architecture;
 
----
+digital transformation;
 
-## 7.3 Weight
+business applications of technology;
 
-Topic Relevance weight:
+Supply Chain;
 
-```text
+planning;
+
+operations;
+
+decision support;
+
+intersections between business, processes, data, automation, and AI.
+
+Topic Relevance alone is insufficient.
+
+A highly relevant topic can still be a poor opportunity when Contribution Potential or Positioning Fit is weak.
+
+Rubric
+
+Score
+
+Interpretation
+
+0–20
+
+Outside the target professional domains.
+
+21–40
+
+Only indirectly related.
+
+41–60
+
+Adjacent and somewhat professionally relevant.
+
+61–80
+
+Directly related to one or more target domains.
+
+81–100
+
+Central to the intended positioning or strongly connects multiple target domains.
+
+Weight
+
 20%
-```
 
-Rationale:
+10. Engagement Potential
 
-Topic relevance is important for maintaining thematic consistency, but relevance alone is insufficient if positioning or contribution potential is weak.
+Definition
 
----
-
-# 8. Engagement Potential
-
-## 8.1 Definition
-
-Engagement Potential estimates whether commenting on the post has a reasonable probability of producing useful professional visibility or interaction.
+Engagement Potential estimates whether a high-quality contribution has a reasonable opportunity to produce useful professional visibility or interaction.
 
 The core question is:
 
-> If Rodrigo contributes a high-quality comment here, is there a reasonable opportunity for relevant people to see or interact with it?
+If Rodrigo contributes something valuable here, is there a reasonable opportunity for relevant people to see or interact with it?
 
-Possible future signals include:
+Potential future objective signals include:
 
-* number of reactions;
-* number of comments;
-* post age;
-* engagement velocity;
-* author reach;
-* author relevance;
-* relationship to the author;
-* activity within the discussion;
-* timing of the opportunity;
-* audience relevance.
-
-Whenever reliable objective data is available, Engagement Potential should prefer deterministic calculation over LLM estimation.
-
-The LLM should not be asked to guess objective popularity metrics that can be obtained directly from available data.
-
----
-
-## 8.2 Engagement Potential Rubric
-
-| Score  | Interpretation                                                              |
-| ------ | --------------------------------------------------------------------------- |
-| 0–20   | Very limited expected professional visibility or interaction.               |
-| 21–40  | Low engagement opportunity.                                                 |
-| 41–60  | Moderate opportunity for relevant visibility or interaction.                |
-| 61–80  | Strong engagement opportunity with a relevant audience.                     |
-| 81–100 | Exceptional opportunity for relevant professional visibility or discussion. |
-
----
-
-## 8.3 Weight
-
-Engagement Potential weight:
-
-```text
-15%
-```
-
-Rationale:
-
-Visibility matters, but it must not dominate opportunity selection.
-
-A highly popular post should not compensate for very weak contribution potential, positioning fit, or topic relevance.
-
----
-
-## 8.4 Engagement Signals v0.1
-
-Engagement Potential should be based primarily on objective signals collected
-by Scout or another deterministic metadata collection mechanism.
-
-The initial data contract should consider the following signals:
-
-### Primary Signals
-
-```text
 reaction_count
 comment_count
-```
+post age
+engagement velocity
+author reach
+author relevance
+relationship to author
+discussion activity
+timing
+audience relevance
 
----
+Whenever reliable objective data is available, deterministic calculation should be preferred over LLM estimation.
 
-# 9. Research Cost
+The LLM must not invent popularity metrics.
 
-## 9.1 Definition
+Current v0.1 Limitation
 
-Research Cost estimates the effort required to produce a factual, defensible, and valuable comment.
+Reliable real-world LinkedIn engagement metadata is not yet established.
+
+Therefore the current implementation does not pretend to have reaction, comment, follower, or velocity data when those values are unavailable.
+
+The current operational approach uses a neutral Engagement Potential placeholder:
+
+50
+
+until a reliable metadata contract and normalization strategy are implemented.
+
+This is intentionally conservative.
+
+Rubric
+
+Score
+
+Interpretation
+
+0–20
+
+Very limited expected professional visibility or interaction.
+
+21–40
+
+Low engagement opportunity.
+
+41–60
+
+Moderate opportunity for relevant visibility or interaction.
+
+61–80
+
+Strong engagement opportunity with a relevant audience.
+
+81–100
+
+Exceptional opportunity for relevant professional visibility or discussion.
+
+Weight
+
+15%
+
+Visibility matters, but it must not dominate strategic contribution value.
+
+11. Research Cost
+
+Definition
+
+Research Cost estimates the effort required before the system can responsibly produce a strong and defensible contribution.
 
 The core question is:
 
-> How much additional work is required before the system can responsibly generate a strong comment?
+How much additional work is likely to be required before we can contribute responsibly?
 
 Potential factors include:
 
-* need for external research;
-* number of claims requiring verification;
-* technical complexity;
-* need to understand unfamiliar context;
-* need for current information;
-* availability of reliable sources;
-* amount of source material required;
-* expected LLM/tool usage.
+need for external research;
 
-Unlike the other dimensions, a higher Research Cost represents a cost or penalty.
+claims requiring verification;
 
-For example:
+technical complexity;
 
-```text
-Research Cost = 10
-→ little additional research required
+unfamiliar context;
 
-Research Cost = 90
-→ substantial research required
-```
+requirement for current information;
 
----
+availability of reliable sources;
 
-## 9.2 Research Cost Rubric
+expected source volume;
 
-| Score  | Interpretation                                                           |
-| ------ | ------------------------------------------------------------------------ |
-| 0–20   | Little or no additional research is required.                            |
-| 21–40  | Limited research or verification is required.                            |
-| 41–60  | Moderate research is necessary.                                          |
-| 61–80  | Significant research is required before commenting responsibly.          |
-| 81–100 | Extensive research is required and may make the opportunity inefficient. |
+expected LLM/tool usage.
 
----
+Research Cost is a penalty dimension:
 
-# 10. Research Efficiency
-
-Research Cost is converted into a positive scoring dimension called Research Efficiency.
-
-Formula:
-
-```text
-Research Efficiency = 100 - Research Cost
-```
+higher = worse
 
 Examples:
 
-```text
+Research Cost = 10
+→ little additional research expected
+
+Research Cost = 90
+→ substantial research expected
+
+Rubric
+
+Score
+
+Interpretation
+
+0–20
+
+Little or no additional research required.
+
+21–40
+
+Limited research or verification required.
+
+41–60
+
+Moderate research necessary.
+
+61–80
+
+Significant research required.
+
+81–100
+
+Extensive research likely, potentially making the opportunity inefficient.
+
+Research Cost is currently a semantic estimate made before the full Research capability executes.
+
+It is not yet a measured token/tool-cost metric.
+
+12. Research Efficiency
+
+Python converts Research Cost into a positive scoring dimension:
+
+Research Efficiency = 100 - Research Cost
+
+Examples:
+
 Research Cost = 10
 Research Efficiency = 90
 
@@ -547,48 +583,47 @@ Research Efficiency = 50
 
 Research Cost = 90
 Research Efficiency = 10
-```
 
-This transformation ensures that every input used by the weighted Opportunity Score follows the same interpretation:
+Weight:
 
-```text
-higher = better
-```
-
-Research Efficiency weight:
-
-```text
 10%
-```
 
-Rationale:
+Research effort matters, but strategically valuable opportunities should still be allowed to justify meaningful research.
 
-Research effort matters for efficiency and inference cost, but the system should still be willing to research strategically valuable opportunities.
+13. Opportunity Score v0.1
 
----
+Weights
 
-# 11. Opportunity Score v0.1
+Dimension
 
-## 11.1 Weights
+Weight
 
-The initial weights are:
+Contribution Potential
 
-| Dimension              |   Weight |
-| ---------------------- | -------: |
-| Contribution Potential |      30% |
-| Positioning Fit        |      25% |
-| Topic Relevance        |      20% |
-| Engagement Potential   |      15% |
-| Research Efficiency    |      10% |
-| **Total**              | **100%** |
+30%
 
----
+Positioning Fit
 
-## 11.2 Formula
+25%
 
-The Opportunity Score is calculated as:
+Topic Relevance
 
-```text
+20%
+
+Engagement Potential
+
+15%
+
+Research Efficiency
+
+10%
+
+Total
+
+100%
+
+Formula
+
 Opportunity Score =
 
     Contribution Potential × 0.30
@@ -596,50 +631,25 @@ Opportunity Score =
   + Topic Relevance        × 0.20
   + Engagement Potential   × 0.15
   + Research Efficiency    × 0.10
-```
 
-Where:
+where:
 
-```text
 Research Efficiency = 100 - Research Cost
-```
 
-The resulting Opportunity Score remains in the range:
+The resulting score remains in:
 
-```text
 0–100
-```
 
----
+The implementation rounds the final score according to the current application contract.
 
-## 11.3 Design Status
+14. Mandatory Guardrails
 
-This scoring model is:
+Weighted averages alone are insufficient.
 
-```text
-VERSION: v0.1
-STATUS: APPROVED FOR INITIAL IMPLEMENTATION
-```
+A strong score in one dimension must not completely compensate for a critical weakness in strategic contribution value.
 
-The weights are not considered permanently optimal.
+Current deterministic guardrails:
 
-They must be treated as an initial product hypothesis and may later be calibrated using real evaluated opportunities and observed outcomes.
-
-Changes to the weights must be explicit and documented.
-
----
-
-# 12. Guardrails
-
-Weighted averages alone are not sufficient.
-
-A very strong value in one dimension must not completely compensate for a critical weakness in another.
-
-Opportunity Evaluation v0.1 therefore applies deterministic guardrails.
-
-Initial guardrails:
-
-```text
 Contribution Potential < 30
 → LOW
 
@@ -648,240 +658,205 @@ Positioning Fit < 30
 
 Topic Relevance < 25
 → LOW
-```
 
-These guardrails are evaluated independently from the weighted Opportunity Score.
+If any mandatory guardrail is triggered:
 
-If any mandatory guardrail is triggered, the opportunity is classified as:
-
-```text
-LOW
-```
+classification = LOW
 
 regardless of the weighted score.
 
----
+Boundary Behavior
 
-## 12.1 Guardrail Rationale
+The guardrails use strict < comparisons.
 
-### Contribution Potential
+Therefore:
 
-If Rodrigo has almost nothing meaningful to add, large audience size should not justify commenting.
+Contribution Potential = 30
+→ guardrail not triggered
 
-### Positioning Fit
+Positioning Fit = 30
+→ guardrail not triggered
 
-If participating does not meaningfully support the intended professional positioning, visibility alone is insufficient.
+Topic Relevance = 25
+→ guardrail not triggered
 
-### Topic Relevance
+15. Classification
 
-If the discussion is substantially outside the intended professional domains, the system should avoid opportunistic engagement merely because the post is popular.
+If no mandatory guardrail is triggered:
 
----
-
-# 13. Opportunity Classification v0.1
-
-If no guardrail is triggered, classification follows the Opportunity Score.
-
-Initial thresholds:
-
-```text
-80–100
+score >= 80
 → HIGH
 
-60–79.99
+score >= 60 and < 80
 → MEDIUM
 
-0–59.99
+score < 60
 → LOW
-```
 
-Equivalent conceptual Python logic:
+Equivalent conceptual logic:
 
-```text
 if guardrail_triggered:
     classification = "LOW"
-
 elif opportunity_score >= 80:
     classification = "HIGH"
-
 elif opportunity_score >= 60:
     classification = "MEDIUM"
-
 else:
     classification = "LOW"
-```
 
-The exact implementation may differ syntactically but must preserve this behavior.
+The exact source implementation may differ syntactically, but this behavioral contract must remain stable unless explicitly recalibrated.
 
----
+16. Classification Semantics and Implemented Routing
 
-# 14. Interpretation of Classifications
-
-## HIGH
-
-A strong opportunity that combines professional relevance, positioning value, contribution potential, reasonable visibility, and acceptable research effort.
-
-Planned direction:
-
-```text
 HIGH
- ↓
+
+A HIGH opportunity combines sufficiently strong strategic value to justify Research.
+
+Implemented route:
+
+HIGH
+  ↓
+ACCEPTED_FOR_RESEARCH
+  ↓
 Research
-```
+  ↓
+ResearchBrief
+  ↓
+Writer
+  ↓
+Quality Evaluator
 
----
+ACCEPTED_FOR_RESEARCH records the approval transition before the Research capability executes.
 
-## MEDIUM
+MEDIUM
 
-A potentially useful opportunity that does not currently meet the HIGH threshold.
+A MEDIUM opportunity is potentially useful but does not currently justify the HIGH path.
 
-MEDIUM exists to prevent premature binary decisions while the system is still being calibrated.
+The original design left MEDIUM behavior open.
 
-Its final workflow behavior remains an open design decision.
+That decision has now been resolved for v0.1.
 
-Possible future behaviors include:
+Implemented route:
 
-* lower priority queue;
-* conditional research;
-* human review;
-* additional deterministic filtering.
-
----
-
-## LOW
-
-An opportunity with insufficient strategic value or one that triggers a mandatory guardrail.
-
-Planned direction:
-
-```text
-LOW
- ↓
+MEDIUM
+  ↓
+QUEUED
+  ↓
 END
-```
 
-LOW opportunities should not consume Research and Writer inference unless explicitly requested by a human.
+QUEUED records the semantic lifecycle status, but the current workflow does not yet implement persistent queue storage, later reprioritization, or automatic promotion.
 
----
+Those remain future capabilities.
 
-# 15. Semantic Evaluation vs. Deterministic Logic
+LOW
 
-The capability explicitly separates semantic interpretation from operational decision-making.
+A LOW opportunity either has insufficient score or violates a mandatory strategic guardrail.
+
+Implemented route:
+
+LOW
+  ↓
+END
+
+LOW opportunities do not consume Research and Writer inference in the normal workflow.
+
+17. Structured Contracts
+
+The original design proposed typed Pydantic contracts.
+
+Those contracts are now implemented.
+
+OpportunitySignals
 
 Conceptually:
 
-```text
-                    POST CANDIDATE
-                          │
-                          ▼
-               ┌────────────────────┐
-               │ SEMANTIC EVALUATION│
-               │                    │
-               │ LLM where necessary│
-               └──────────┬─────────┘
-                          │
-                          ▼
-                Structured Signals
-                          │
-                          │
-                + Objective Signals
-                          │
-                          ▼
-               ┌────────────────────┐
-               │ OPPORTUNITY SCORING│
-               │                    │
-               │ Python             │
-               │ deterministic      │
-               └──────────┬─────────┘
-                          │
-                          ▼
-                 Guardrails + Score
-                          │
-                          ▼
-                  HIGH / MEDIUM / LOW
-```
-
-Potential semantic dimensions include:
-
-```text
-Topic Relevance
-Positioning Fit
-Contribution Potential
-Research Cost
-```
-
-Potential objective signals include:
-
-```text
-Post age
-Reactions
-Comments
-Author information
-Engagement velocity
-Available evidence
-```
-
-The exact boundary between semantic and deterministic evaluation may evolve according to available Scout data.
-
----
-
-# 16. Structured Output
-
-The semantic evaluator should return typed structured data.
-
-The final Pydantic implementation has not yet been defined, but the conceptual contract is:
-
-```text
 OpportunitySignals
 
-topic_relevance: int
-positioning_fit: int
-contribution_potential: int
-research_cost: int
-```
-
-Possible supporting fields may include:
-
-```text
-reasoning
-contribution_angle
-research_need
-```
-
-Any score field must enforce:
-
-```text
-0 <= score <= 100
-```
-
-### Engagement Data Separation
-
-Engagement Potential must remain outside `OpportunitySignals`.
-
-`OpportunitySignals` represents only the semantic interpretation produced by
-the LLM:
-
-```text
 topic_relevance
 positioning_fit
 contribution_potential
 research_cost
 
-The LLM must not return the authoritative final Opportunity Score or classification.
+Each semantic score is constrained to the valid evaluation range.
 
-Those remain responsibilities of deterministic application logic.
+OpportunitySignals represents LLM semantic interpretation.
 
----
+It does not own:
 
-# 17. Explainability
+authoritative engagement metrics
+Research Efficiency
+weighted Opportunity Score
+mandatory guardrails
+final classification
+workflow routing
+
+OpportunityEvaluation
+
+The deterministic evaluation artifact carries the operational result required downstream.
+
+Conceptually it includes:
+
+semantic signals
+engagement_potential
+research_efficiency
+opportunity score
+classification
+
+The exact source schema remains authoritative if field names evolve.
+
+The architectural distinction is:
+
+OpportunitySignals
+    = semantic model output
+
+OpportunityEvaluation
+    = validated application decision artifact
+
+18. Engagement Data Separation
+
+Engagement Potential remains outside the LLM-owned OpportunitySignals contract.
+
+This is deliberate.
+
+LLM
+    ↓
+semantic opportunity signals
+
+Objective / deterministic application data
+    ↓
+engagement potential
+
+Python
+    ↓
+final score and classification
+
+This prevents the model from fabricating reaction counts, comment counts, author reach, or other objective metrics.
+
+Until reliable metadata exists:
+
+Engagement Potential = neutral placeholder
+
+rather than:
+
+Engagement Potential = model guess presented as fact
+
+19. Explainability
 
 Opportunity Evaluation must remain interpretable.
 
-The system should be able to explain why a post received a particular score and classification.
+A human or developer should be able to inspect:
+
+Contribution Potential
+Positioning Fit
+Topic Relevance
+Engagement Potential
+Research Cost
+Research Efficiency
+Opportunity Score
+Classification
 
 Example:
 
-```text
 Contribution Potential ...... 90
 Positioning Fit .............. 95
 Topic Relevance .............. 95
@@ -891,46 +866,45 @@ Research Efficiency .......... 65
 
 Opportunity Score ............ 88.25
 Classification ............... HIGH
-```
 
 Explainability supports:
 
-* human review;
-* debugging;
-* prompt calibration;
-* scoring calibration;
-* observability;
-* model comparison;
-* cost optimization;
-* future evaluation of prediction quality.
+human review;
 
----
+debugging;
 
-# 18. Example A — High-Value Opportunity
+prompt calibration;
+
+scoring calibration;
+
+observability;
+
+model comparison;
+
+cost optimization;
+
+later measurement of classification quality.
+
+20. Example A — High-Value Opportunity
 
 Scenario:
 
-> A senior executive publishes a post discussing how Generative AI can improve demand planning and decision-making in Supply Chain.
+A senior executive publishes a discussion about how Generative AI can improve demand planning and Supply Chain decision-making.
 
 Conceptual evaluation:
 
-```text
 Contribution Potential ...... 90
 Positioning Fit .............. 95
 Topic Relevance .............. 95
 Engagement Potential ......... 80
 Research Cost ................ 35
-```
 
 Therefore:
 
-```text
 Research Efficiency = 65
-```
 
 Score:
 
-```text
 90 × 0.30 = 27.00
 95 × 0.25 = 23.75
 95 × 0.20 = 19.00
@@ -938,90 +912,72 @@ Score:
 65 × 0.10 =  6.50
               -----
               88.25
-```
 
 No guardrail is triggered.
 
 Result:
 
-```text
 Opportunity Score = 88.25
 Classification = HIGH
-```
 
-Interpretation:
+Routing:
 
-* strong overlap with Rodrigo's target positioning;
-* strong connection between Supply Chain and applied AI;
-* meaningful contribution is possible;
-* professional visibility is useful;
-* research requirements are manageable.
+HIGH
+  ↓
+ACCEPTED_FOR_RESEARCH
+  ↓
+Research
 
----
-
-# 19. Example B — Popular but Low-Value Opportunity
+21. Example B — Popular but Low-Value Opportunity
 
 Scenario:
 
-> A famous executive publishes a generic announcement celebrating quarterly financial results.
+A famous executive publishes a generic announcement celebrating quarterly financial results.
 
 Conceptual evaluation:
 
-```text
 Contribution Potential ...... 20
 Positioning Fit .............. 25
 Topic Relevance .............. 20
 Engagement Potential ......... 95
 Research Cost ................ 50
-```
 
-Multiple guardrails are triggered:
+Mandatory guardrails trigger:
 
-```text
 Contribution Potential < 30
 Positioning Fit < 30
 Topic Relevance < 25
-```
 
 Result:
 
-```text
 Classification = LOW
-```
 
-The opportunity remains LOW regardless of the weighted score.
+The opportunity remains LOW regardless of its weighted score.
 
-This demonstrates the core principle:
+This demonstrates:
 
-> Audience size alone must not dominate opportunity selection.
+Audience size alone must not dominate opportunity selection.
 
----
-
-# 20. Example C — Relevant but Expensive Opportunity
+22. Example C — Relevant but Research-Expensive Opportunity
 
 Scenario:
 
-> A technical publication discusses a new AI architecture strongly related to Rodrigo's positioning, but understanding the claims requires substantial external research.
+A technical publication discusses a new AI architecture strongly related to the intended positioning, but understanding and verifying the claims requires substantial external research.
 
 Conceptual evaluation:
 
-```text
 Contribution Potential ...... 80
 Positioning Fit .............. 90
 Topic Relevance .............. 95
 Engagement Potential ......... 65
 Research Cost ................ 85
-```
 
 Therefore:
 
-```text
 Research Efficiency = 15
-```
 
 Score:
 
-```text
 80 × 0.30 = 24.00
 90 × 0.25 = 22.50
 95 × 0.20 = 19.00
@@ -1029,215 +985,180 @@ Score:
 15 × 0.10 =  1.50
               -----
               76.75
-```
 
 Result:
 
-```text
 Opportunity Score = 76.75
 Classification = MEDIUM
-```
 
-Interpretation:
+Current routing:
 
-The opportunity is strategically relevant, but its high research cost reduces priority.
+MEDIUM
+  ↓
+QUEUED
+  ↓
+END
 
-This demonstrates why Research Cost is part of the model without dominating the score.
+The example demonstrates why Research Cost can reduce priority without dominating strategic value.
 
----
-
-# 21. Relationship with Other Components
-
-## 21.1 Scout
-
-Scout is responsible for discovering candidate LinkedIn posts.
+23. Relationship with Scout
 
 Scout answers:
 
-> What opportunities exist?
+What candidate opportunities exist?
 
 Opportunity Evaluation answers:
 
-> Which of those opportunities are worth pursuing?
+Which candidate is strategically worth pursuing?
 
-The responsibilities must remain separate.
+The responsibilities remain separate.
 
----
+Current integration:
 
-## 21.2 Research
+Scout
+  ↓
+validated PostCandidate
+  ↓
+Opportunity Evaluation
 
-Research occurs after an opportunity has been selected.
+Current Scout cardinality behavior is:
+
+0 candidates
+→ END
+
+1 candidate
+→ Opportunity Evaluation
+
+>1 distinct candidates
+→ explicit unsupported-condition failure
+
+Multiple-candidate orchestration remains a future design problem rather than being hidden inside Opportunity Evaluation.
+
+24. Relationship with Research
+
+Research occurs only after a HIGH opportunity has been accepted.
 
 Research answers:
 
-> What evidence and context do we need to produce a defensible contribution?
+What evidence and context are required to make a defensible contribution?
 
 Opportunity Evaluation may estimate Research Cost before full research begins.
 
-It should not perform unbounded research itself.
+It does not itself become an unbounded Research agent.
 
----
+The boundary is:
 
-## 21.3 Writer
+Opportunity Evaluation
+        ↓
+HIGH
+        ↓
+ACCEPTED_FOR_RESEARCH
+        ↓
+Research
 
-Writer generates the actual LinkedIn comment.
+25. Relationship with Writer
 
-Opportunity Evaluation does not write the comment.
+Opportunity Evaluation does not generate the contribution.
 
-Its output may provide context to Writer, such as a potential contribution angle, but generation remains Writer's responsibility.
+Writer is responsible for transforming the approved opportunity and structured ResearchBrief into professional communication.
 
----
+Conceptually:
 
-## 21.4 Quality Evaluator
+Opportunity decision
+       +
+ResearchBrief
+       ↓
+Writer
+       ↓
+Draft
+
+This separation prevents strategic prioritization logic from becoming generation logic.
+
+26. Relationship with Quality Evaluator
 
 Opportunity Evaluation and Quality Evaluation solve different problems.
 
-```text
 Opportunity Evaluation
-        │
-        ▼
-"Should we comment here?"
-
-              vs.
+        ↓
+"Should we spend effort contributing here?"
 
 Quality Evaluator
-        │
-        ▼
-"Is this generated comment good enough?"
-```
+        ↓
+"Is the generated contribution good enough?"
 
-These responsibilities must remain separate.
+Current downstream quality routing:
 
-The intended architecture is therefore:
+PASS
+→ Human / END
 
-```text
-Evaluate the opportunity
-          ↓
-Research the opportunity
-          ↓
-Generate the comment
-          ↓
-Evaluate the comment
-```
+REVISE
+→ Writer
+→ Quality Evaluator
 
----
+REJECT
+→ END
 
-# 22. Planned Functional Workflow
+A Writer revision does not automatically rerun Research.
 
-The target workflow direction is:
+27. Current Functional Workflow
 
-```text
-LinkedIn / Candidate Sources
-            │
-            ▼
-          SCOUT
-            │
-            ▼
-     Post Candidates
-            │
-            ▼
+The original target workflow has now become an implemented integrated workflow.
+
+Candidate Sources / Web
+          │
+          ▼
+        SCOUT
+          │
+          ▼
+    PostCandidate
+          │
+          ▼
  OPPORTUNITY EVALUATION
-            │
-       ┌────┴───────────┐
-       │                │
-      LOW          MEDIUM / HIGH
-       │                │
-       ▼                ▼
-      END            RESEARCH
-                        │
-                        ▼
-                      WRITER
-                        │
-                        ▼
-                QUALITY EVALUATOR
-                        │
-                 ┌──────┼──────┐
-                 ▼      ▼      ▼
-               PASS   REVISE  REJECT
-                 │      │
-                 ▼      └──────► WRITER
-               HUMAN
-                 │
-                 ▼
-          Manual Publication
-```
+      ┌───┼────────────┐
+      │   │            │
+     LOW MEDIUM       HIGH
+      │   │            │
+      ▼   ▼            ▼
+     END QUEUED  ACCEPTED_FOR_RESEARCH
+          │            │
+          ▼            ▼
+         END        RESEARCH
+                       │
+                       ▼
+                 ResearchBrief
+                       │
+                       ▼
+                     WRITER
+                       │
+                       ▼
+               QUALITY EVALUATOR
+                  ┌────┼─────┐
+                  ▼    ▼     ▼
+                PASS REVISE REJECT
+                  │    │      │
+                  ▼    └──► WRITER
+             HUMAN / END      END
 
-The exact behavior of MEDIUM remains to be defined.
+Publication remains outside autonomous execution.
 
-Human-in-the-loop remains mandatory before publication.
+28. Testing Contract
 
-The system must never autonomously publish a LinkedIn comment.
+Opportunity Evaluation must remain independently testable without live OpenAI calls for deterministic behavior.
 
----
+The test surface should preserve the following contracts.
 
-# 23. Implementation Strategy
+Schema Validation
 
-Opportunity Evaluation must be implemented incrementally.
+Validate:
 
-Approved implementation sequence:
+scores within 0–100
+scores below 0 rejected
+scores above 100 rejected
+required fields enforced
+classification values constrained
 
-```text
-1. Define evaluation dimensions and rubric
-        ↓
-2. Define weights, formula, guardrails and thresholds
-        ↓
-3. Define Pydantic schemas
-        ↓
-4. Implement deterministic scoring
-        ↓
-5. Add isolated deterministic tests
-        ↓
-6. Implement semantic evaluation
-        ↓
-7. Add semantic component contracts/tests
-        ↓
-8. Validate representative evaluation examples
-        ↓
-9. Integrate Opportunity Evaluation into workflow
-        ↓
-10. Run complete test suite
-        ↓
-11. Run Project Context Snapshot / audit
-        ↓
-12. Validate audit
-        ↓
-13. Update PROJECT_CONTEXT.md
-        ↓
-14. Commit / push
-```
+Research Efficiency
 
-Steps 1 and 2 are complete at design level.
-
-The next implementation step is:
-
-```text
-Define Pydantic schemas
-```
-
-Opportunity Evaluation must be tested independently before being inserted into the active LangGraph workflow.
-
----
-
-# 24. Testing Strategy
-
-## 24.1 Schema Validation
-
-Tests should cover:
-
-* valid scores;
-* score below 0;
-* score above 100;
-* missing required fields;
-* valid classification values;
-* invalid classification values.
-
----
-
-## 24.2 Research Efficiency
-
-Tests should verify:
-
-```text
 Research Cost = 0
 → Research Efficiency = 100
 
@@ -1246,290 +1167,366 @@ Research Cost = 50
 
 Research Cost = 100
 → Research Efficiency = 0
-```
 
----
+Weighted Scoring
 
-## 24.3 Weighted Scoring
+Verify:
 
-Tests should verify:
+correct weights;
 
-* correct weights;
-* correct weighted sum;
-* correct 0–100 range;
-* expected behavior at boundary values.
+correct weighted sum;
 
----
+valid score range;
 
-## 24.4 Guardrails
+expected boundary behavior.
 
-Tests must verify independently:
-
-```text
-Contribution Potential < 30
-→ LOW
-
-Positioning Fit < 30
-→ LOW
-
-Topic Relevance < 25
-→ LOW
-```
-
-They must also verify the exact boundary:
-
-```text
-Contribution Potential = 30
-→ guardrail not triggered
-
-Positioning Fit = 30
-→ guardrail not triggered
-
-Topic Relevance = 25
-→ guardrail not triggered
-```
-
----
-
-## 24.5 Classification Thresholds
-
-Tests must verify:
-
-```text
-Score >= 80
-→ HIGH
-
-Score >= 60 and < 80
-→ MEDIUM
-
-Score < 60
-→ LOW
-```
-
-Boundary tests should explicitly include:
-
-```text
-80
-79.99
-60
-59.99
-```
-
-or equivalent precision according to the final numeric implementation.
-
----
-
-## 24.6 Behavioral Scenarios
-
-Tests should eventually include:
-
-* high-quality opportunity;
-* popular but strategically irrelevant opportunity;
-* high-engagement but low-contribution opportunity;
-* high-relevance but low-positioning opportunity;
-* high-relevance but high-research-cost opportunity;
-* opportunity triggering each individual guardrail;
-* opportunity triggering multiple guardrails.
-
----
-
-## 24.7 LLM Independence
-
-Deterministic scoring tests must not require live OpenAI API calls.
-
-The following logic must be independently testable:
-
-```text
-Structured Signals
-        ↓
-Research Efficiency
-        ↓
-Weighted Score
-        ↓
 Guardrails
-        ↓
+
+Verify independently:
+
+Contribution Potential < 30 → LOW
+Positioning Fit < 30        → LOW
+Topic Relevance < 25        → LOW
+
+and exact non-trigger boundaries:
+
+Contribution Potential = 30
+Positioning Fit = 30
+Topic Relevance = 25
+
 Classification
-```
 
-This separation is a formal behavioral contract of the capability.
+Verify:
 
----
+80       → HIGH
+79.99    → MEDIUM
+60       → MEDIUM
+59.99    → LOW
 
-# 25. Calibration Strategy
+or equivalent numeric precision according to the implementation.
 
-Opportunity Evaluation v0.1 is an initial product hypothesis.
+Workflow Routing
 
-Weights, guardrails, and thresholds must eventually be calibrated using real candidate posts and observed outcomes.
+Verify:
 
-Potential future calibration signals may include:
+HIGH   → ACCEPTED_FOR_RESEARCH → Research
+MEDIUM → QUEUED → END
+LOW    → END
 
-* human agreement with HIGH/MEDIUM/LOW classifications;
-* whether Rodrigo would actually choose to comment;
-* amount of manual correction required;
-* research cost actually incurred;
-* comment quality after Writer/Evaluator cycles;
-* resulting professional interaction;
-* false-positive opportunities;
-* false-negative opportunities.
+LLM Independence
+
+The deterministic chain must remain independently testable:
+
+OpportunitySignals
+      ↓
+Research Efficiency
+      ↓
+Weighted Score
+      ↓
+Guardrails
+      ↓
+Classification
+      ↓
+Routing
+
+Live model calls are not required to validate these deterministic contracts.
+
+29. Calibration Strategy
+
+Opportunity Evaluation v0.1 remains an initial product hypothesis even though it is implemented.
+
+Implementation does not mean the current weights and thresholds are permanently optimal.
+
+Future calibration should use real candidate opportunities and observed outcomes.
+
+Potential signals include:
+
+human agreement with HIGH/MEDIUM/LOW;
+
+whether Rodrigo would actually choose to contribute;
+
+false-positive opportunities;
+
+false-negative opportunities;
+
+actual Research effort;
+
+manual draft correction required;
+
+Writer/Evaluator revision behavior;
+
+resulting professional interaction;
+
+opportunity quality over time.
 
 Calibration must not optimize only for engagement.
 
 The primary objective remains:
 
-> Identify opportunities where Rodrigo can make a relevant and professionally valuable contribution.
+Identify opportunities where Rodrigo can make a relevant and professionally valuable contribution.
 
----
+30. Current Limitations
 
-# 26. Open Design Decisions
+Opportunity Evaluation v0.1 intentionally retains several limitations.
 
-The following decisions remain intentionally unresolved:
+Engagement Metadata
 
-1. Whether Scout can reliably collect `reaction_count`.
-2. Whether Scout can reliably collect `comment_count`.
-3. Whether `author_followers` is technically and consistently available.
-4. Exact Engagement Potential normalization and calculation.
-5. Handling of missing engagement data.
-6. Calibration of engagement and velocity thresholds from observed posts.
-7. Model selection for semantic Opportunity Evaluation.
-8. Whether all semantic dimensions should be produced by a single LLM call.
-9. Final Pydantic schema structure.
-10. Exact supporting explanation fields.
-11. MEDIUM opportunity routing behavior.
-12. Calibration dataset design.
-13. Long-term calibration methodology.
-14. Whether Research Cost should later incorporate measured token/tool cost.
-15. Whether author relevance should become a separate dimension or remain part of Engagement Potential / Positioning Fit.
+Reliable LinkedIn-native values are not yet established for:
 
-These items must be resolved incrementally.
+reaction_count
+comment_count
+author follower/reach data
+engagement velocity
+post timing normalization
 
-They must not be silently encoded into implementation without an explicit design decision.
+Therefore objective Engagement Potential remains incomplete.
 
----
+Neutral Engagement Placeholder
 
-# 27. Decisions Already Established
+The current neutral value avoids fabrication but reduces discrimination between opportunities where real engagement differs materially.
 
-The following decisions are established for Opportunity Evaluation v0.1:
+Research Cost
 
-### Product
+Research Cost is currently a semantic estimate.
 
-* Opportunity is not equivalent to popularity.
-* Contribution value has priority over audience size.
-* Opportunity Evaluation evaluates the post/opportunity, not the generated comment.
+It does not yet incorporate measured:
 
-### Architecture
+tokens
+tool calls
+latency
+financial cost
+source-access difficulty
 
-* Semantic interpretation may use an LLM.
-* Semantic outputs must be structured.
-* Final scoring is deterministic.
-* Final classification is deterministic.
-* LLMs do not directly own HIGH/MEDIUM/LOW routing.
-* Objective data should use deterministic logic whenever practical.
-* Human-in-the-loop remains mandatory before publication.
+Calibration
 
-### Scoring
+Weights, guardrails, and thresholds have not yet been calibrated on a sufficiently large real-world labeled opportunity dataset.
 
-```text
+Multiple Candidates
+
+The workflow does not yet rank or schedule multiple distinct Scout candidates.
+
+MEDIUM Lifecycle
+
+MEDIUM now has a defined immediate route:
+
+QUEUED → END
+
+but no persistent queue or later promotion lifecycle exists yet.
+
+31. Open Design Decisions
+
+The following remain intentionally unresolved:
+
+how reliable LinkedIn-native candidate content and metadata will be collected;
+
+whether reaction_count is consistently available;
+
+whether comment_count is consistently available;
+
+whether author follower/reach data is consistently available;
+
+exact Engagement Potential normalization;
+
+handling and calibration of partial engagement metadata;
+
+engagement-velocity thresholds;
+
+model selection for semantic Opportunity Evaluation;
+
+whether semantic dimensions should remain in one model call or later be separated;
+
+long-term Opportunity Evaluation calibration methodology;
+
+design of a real-world labeled calibration dataset;
+
+whether measured token/tool/latency cost should influence Research Cost;
+
+whether author relevance should become an independent dimension;
+
+how queued MEDIUM opportunities should later be revisited, prioritized, or promoted;
+
+how multiple candidate opportunities should be ranked and represented in workflow state.
+
+These must be resolved explicitly rather than silently encoded into implementation.
+
+32. Decisions Already Established
+
+Product
+
+Opportunity is not equivalent to popularity.
+
+Contribution value has priority over audience size.
+
+Opportunity Evaluation evaluates the opportunity, not the generated draft.
+
+Human publication authority remains mandatory.
+
+Architecture
+
+Semantic interpretation may use an LLM.
+
+Semantic outputs use typed structured contracts.
+
+Final scoring is deterministic.
+
+Final classification is deterministic.
+
+The LLM does not directly own HIGH/MEDIUM/LOW routing.
+
+Objective data should use deterministic logic whenever practical.
+
+Opportunity Evaluation remains separate from Research, Writer, and Quality Evaluation.
+
+Scoring
+
 Contribution Potential = 30%
 Positioning Fit        = 25%
 Topic Relevance        = 20%
 Engagement Potential   = 15%
 Research Efficiency    = 10%
-```
 
-### Research Efficiency
+Research Efficiency
 
-```text
 Research Efficiency = 100 - Research Cost
-```
 
-### Guardrails
+Guardrails
 
-```text
 Contribution Potential < 30 → LOW
 Positioning Fit < 30        → LOW
 Topic Relevance < 25        → LOW
-```
 
-### Classification
+Classification
 
-```text
 HIGH   >= 80
 MEDIUM >= 60 and < 80
 LOW    < 60
-```
 
-These decisions are approved for initial implementation but remain subject to future evidence-based calibration.
+Routing
 
----
+HIGH
+→ ACCEPTED_FOR_RESEARCH
+→ Research
 
-# 28. Current Status
+MEDIUM
+→ QUEUED
+→ END
 
-Status:
+LOW
+→ END
 
-```text
-DESIGN v0.1 COMPLETE
-IMPLEMENTATION NOT STARTED
-```
+These are the current v0.1 behavioral contracts.
 
-Completed at design level:
+They remain subject to explicit evidence-based future calibration.
 
-* capability purpose;
-* core product principle;
-* evaluation dimensions;
-* rubrics;
-* dimension weights;
-* Research Efficiency transformation;
-* Opportunity Score formula;
-* deterministic guardrails;
-* classification thresholds;
-* semantic vs. deterministic separation;
-* explainability requirement;
-* component responsibilities;
-* implementation sequence;
-* initial testing strategy;
-* calibration principle.
+33. Implementation Evolution
 
-Next planned implementation step:
+The original implementation sequence was:
 
-```text
-Pydantic schema design
+Define dimensions/rubrics
         ↓
-app/schemas/opportunity.py
-```
-
----
-
-# 29. Design Summary
-
-Opportunity Evaluation exists to ensure that the LinkedIn Agentic AI System does not merely find popular posts and generate comments.
-
-It must identify situations where Rodrigo has a meaningful professional reason to participate.
-
-The intended behavior is:
-
-```text
-Find opportunities
+Define weights/formula/guardrails
         ↓
-Evaluate strategic value
+Define Pydantic schemas
         ↓
-Apply deterministic prioritization
+Implement deterministic scoring
         ↓
-Research selectively
+Test deterministic behavior
         ↓
-Generate meaningful contribution
+Implement semantic evaluation
         ↓
-Evaluate comment quality
+Test semantic contracts
         ↓
-Human decides whether to publish
-```
+Integrate into workflow
+        ↓
+Connect HIGH to Research
 
-The guiding principle is:
+That sequence has now been completed.
 
-> Select the conversations where Rodrigo can add professional value — not simply the conversations with the largest audience.
+Opportunity Evaluation is currently integrated with:
 
-The architectural pattern is:
+Scout upstream
+Research downstream
+Writer downstream of Research
+Quality Evaluator downstream of Writer
 
-```text
+The next project increment is not additional basic Opportunity Evaluation implementation.
+
+It is:
+
+End-to-End Real Workflow Validation v0.1
+
+34. Current Status Summary
+
+Opportunity Evaluation v0.1
+
+Purpose ...................... ESTABLISHED
+Product principle ............ ESTABLISHED
+Dimensions ................... IMPLEMENTED
+Rubrics ...................... ESTABLISHED
+Pydantic contracts ........... IMPLEMENTED
+Semantic evaluator ........... IMPLEMENTED
+Research Efficiency .......... IMPLEMENTED
+Weighted scoring ............. IMPLEMENTED
+Guardrails ................... IMPLEMENTED
+Classification ............... IMPLEMENTED
+HIGH routing ................. IMPLEMENTED
+MEDIUM routing ............... IMPLEMENTED
+LOW routing .................. IMPLEMENTED
+Research integration ......... IMPLEMENTED
+Writer downstream path ....... IMPLEMENTED
+Quality downstream path ...... IMPLEMENTED
+Human publication boundary ... PRESERVED
+Real-world calibration ....... FUTURE
+Objective engagement model ... FUTURE
+
+35. Design Summary
+
+Opportunity Evaluation exists to prevent the LinkedIn Agentic AI System from merely finding visible discussions and generating comments.
+
+Its role is to identify conversations where there is a meaningful professional reason to participate.
+
+The implemented decision chain is:
+
+Find candidate
+      ↓
+Evaluate semantic value
+      ↓
+Produce structured signals
+      ↓
+Calculate deterministically
+      ↓
+Apply mandatory guardrails
+      ↓
+HIGH / MEDIUM / LOW
+      ↓
+Allocate workflow resources
+
+The full product logic is:
+
+Scout
+"Find a possible opportunity"
+        ↓
+Opportunity Evaluation
+"Is it strategically worth pursuing?"
+        ↓
+Research
+"What evidence do we need?"
+        ↓
+Writer
+"What should we contribute?"
+        ↓
+Quality Evaluator
+"Is the contribution good enough?"
+        ↓
+Human
+"Do I want to publish it?"
+
+The guiding product principle remains:
+
+Select the conversations where Rodrigo can add professional value — not simply the conversations with the largest audience.
+
+And the architectural pattern remains:
+
 LLM
 "Interpret what requires semantic understanding"
         ↓
@@ -1544,4 +1541,3 @@ LangGraph
         ↓
 Human
 "Retain final publication authority"
-```

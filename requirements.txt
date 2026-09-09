@@ -3,3 +3,5 @@ pydantic
 langgraph
 python-dotenv
 pytest
+httpx
+tiktoken

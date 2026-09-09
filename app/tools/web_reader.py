@@ -1,6 +1,3 @@
-from app.schemas.tools import SearchResult
-
-
 FAKE_PAGE_CONTENT = {
     "https://example.com/posts/ai-agents-supply-chain": (
         "AI agents are being explored as a way to support supply chain "
@@ -20,8 +17,8 @@ FAKE_PAGE_CONTENT = {
 }
 
 
-def web_reader(result: SearchResult) -> str:
+def web_reader(url: str) -> str:
     return FAKE_PAGE_CONTENT.get(
-        result.url,
+        url,
         "No content available for this page.",
     )

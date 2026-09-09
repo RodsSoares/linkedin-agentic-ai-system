@@ -1,11 +1,15 @@
 from openai import OpenAI
 
-from app.config.settings import MODEL_NAME, OPENAI_API_KEY
+from app.config.settings import (
+    MODEL_NAME,
+    OPENAI_API_KEY,
+    SCOUT_READ_CONTEXT_MAX_TOKENS,
+)
+from app.context_preparation import prepare_context
 from app.schemas.post import PostCandidate
 from app.schemas.scout import ScoutAction, ScoutState
-from app.schemas.tools import SearchResult
-from app.tools.web_reader import web_reader
-from app.tools.web_search import web_search
+from app.schemas.tools import ReadTool, SearchResult, SearchTool
+from app.tools.errors import WebToolError
 
 
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -70,6 +74,8 @@ def decide_next_action(state: ScoutState) -> ScoutAction:
 def execute_action(
     action: ScoutAction,
     state: ScoutState,
+    search_tool: SearchTool,
+    read_tool: ReadTool,
 ) -> str | list[SearchResult] | None:
 
     if state.steps >= state.max_steps:
@@ -90,7 +96,7 @@ def execute_action(
         state.status = "SEARCHING"
         state.search_queries.append(action.query)
 
-        results = web_search(action.query)
+        results = search_tool(action.query)
         state.search_results = results
 
         return results
@@ -125,12 +131,16 @@ def execute_action(
         state.status = "READING"
         state.visited_urls.append(action.url)
 
-        content = web_reader(result)
+        raw_content = read_tool(result.url)
+        prepared = prepare_context(
+            raw_content,
+            max_tokens=SCOUT_READ_CONTEXT_MAX_TOKENS,
+        )
 
         state.last_read_url = result.url
-        state.last_read_content = content
+        state.last_read_content = prepared.content
 
-        return content
+        return prepared.content
 
     if action.action == "SELECT":
         if not state.last_read_url:
@@ -154,6 +164,15 @@ def execute_action(
             if result.url == state.last_read_url
         )
 
+        already_selected = any(
+            candidate.post_id == result.url
+            or candidate.post_url == result.url
+            for candidate in state.candidates
+        )
+
+        if already_selected:
+            return None
+
         candidate = PostCandidate(
             post_id=result.url,
             author_name="Unknown",
@@ -176,6 +195,8 @@ def execute_action(
 
 def run_scout(
     objective: str,
+    search_tool: SearchTool,
+    read_tool: ReadTool,
     max_steps: int = 5,
 ) -> ScoutState:
     state = ScoutState(
@@ -194,11 +215,16 @@ def run_scout(
             execute_action(
                 action=action,
                 state=state,
+                search_tool=search_tool,
+                read_tool=read_tool,
             )
             state.last_error = None
 
         except ValueError as error:
             state.last_error = str(error)
+
+        except WebToolError as error:
+            state.last_error = f"Web tool failure: {error}"
 
         state.steps += 1
 

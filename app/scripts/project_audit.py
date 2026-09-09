@@ -463,11 +463,17 @@ def get_context_section(
     heading: str,
 ) -> str | None:
     """
-    Extrai o conteúdo de uma seção Markdown de nível 2.
+    Extrai o conteúdo de uma seção por heading Markdown ou heading simples.
     """
+    # PROJECT_CONTEXT.md historically uses plain-text headings, while
+    # some versions may use Markdown headings. Accept both forms so the
+    # audit validates semantic sections instead of coupling recovery to
+    # one presentation style.
+    heading_pattern = rf"^(?:##\s+)?{re.escape(heading)}\s*$"
+    next_heading_pattern = r"^(?:(?:##\s+)[^\n]+|[A-Z][A-Za-z0-9 /+→().:_-]{2,})\s*$"
+
     pattern = re.compile(
-        rf"^##\s+{re.escape(heading)}\s*$"
-        rf"(.*?)(?=^##\s+|\Z)",
+        rf"{heading_pattern}\n(.*?)(?={next_heading_pattern}|\Z)",
         re.MULTILINE | re.DOTALL,
     )
 
@@ -482,48 +488,66 @@ def get_context_section(
 
 def extract_declared_baseline(context: str) -> str | None:
     """
-    Extrai o primeiro hash Git curto/longo da seção
-    Current Stable Baseline.
+    Extrai o hash Git declarado para o stable baseline.
+
+    Primeiro tenta a seção estruturada. Se o formato do documento
+    não delimitar a seção de forma confiável, usa um fallback textual
+    ancorado em "Stable baseline commit:".
     """
     section = get_context_section(
         context,
         "Current Stable Baseline",
     )
 
-    if section is None:
+    if section is not None:
+        match = re.search(r"\b[0-9a-fA-F]{7,40}\b", section)
+        if match is not None:
+            return match.group(0)
+
+    fallback = re.search(
+        r"Stable\s+baseline\s+commit:\s*\n+\s*([0-9a-fA-F]{7,40})\b",
+        context,
+        re.IGNORECASE,
+    )
+
+    if fallback is None:
         return None
 
-    match = re.search(r"\b[0-9a-fA-F]{7,40}\b", section)
-
-    if match is None:
-        return None
-
-    return match.group(0)
+    return fallback.group(1)
 
 
 def extract_declared_test_baseline(context: str) -> int | None:
     """
-    Extrai a contagem declarada de testes da seção
-    Current Development Status.
+    Extrai a contagem declarada de testes.
+
+    Primeiro tenta a seção Current Development Status. Se necessário,
+    usa fallback textual ancorado em "Current automated test baseline:".
     """
     section = get_context_section(
         context,
         "Current Development Status",
     )
 
-    if section is None:
-        return None
+    if section is not None:
+        match = re.search(
+            r"(\d+)\s+(?:passing\s+)?tests?\b",
+            section,
+            re.IGNORECASE,
+        )
+        if match is not None:
+            return int(match.group(1))
 
-    match = re.search(
+    fallback = re.search(
+        r"Current\s+automated\s+test\s+baseline:\s*\n+\s*"
         r"(\d+)\s+(?:passing\s+)?tests?\b",
-        section,
+        context,
         re.IGNORECASE,
     )
 
-    if match is None:
+    if fallback is None:
         return None
 
-    return int(match.group(1))
+    return int(fallback.group(1))
 
 
 def get_context_consistency_checks(

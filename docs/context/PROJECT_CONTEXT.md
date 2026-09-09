@@ -16,50 +16,115 @@ not autonomous social-media engagement.
 
 Human publication authority is mandatory.
 
-Baseline Lineage
+Current Stable Baseline
 
-Previous committed checkpoint:
+Stable baseline commit:
 
-6f3ebbe
+156aa07
 
 Commit description:
 
-feat: integrate research and writer into opportunity workflow
+feat: integrate quality evaluator into opportunity workflow
 
-The development increment documented in this file was built on top of
+The current Real Web Tooling / Context Preparation increment was developed on top of this committed baseline.
 
-that checkpoint.
+The working tree intentionally contains the validated implementation described below. The commit containing this increment will become the next recoverable stable baseline.
 
-This file is intended to be committed together with the validated
+Baseline lineage remains:
 
-increment described below.
+156aa07
+← 6f3ebbe
+← 0594a3d
+← acff344
+← 0f842fa
+← 23bdb7c
+← 80bd89a
 
-The commit containing this validated state becomes the next recoverable
-
-development checkpoint.
+The official checkpoint mechanism remains code + tests + audit + PROJECT_CONTEXT.md + Git commit.
 
 Last Completed Development Increment
 
 The current completed and validated increment introduces:
 
-Quality Evaluator Integration v0.1
+Real Web Tooling v0.1 — Contract and Bounded Integration
 
-This increment connects the previously validated Quality Evaluator to the active HIGH-opportunity LangGraph path after Writer, establishing the first bounded end-to-end quality path across Scout, Opportunity Evaluation, Research, Writer, and Quality Evaluator.
+together with:
 
-Research Capability v0.1 and its structured ResearchBrief → Writer boundary remain preserved. The validated HIGH path now executes Research, produces a grounded draft, evaluates that draft, and applies deterministic PASS / REVISE / REJECT routing. REVISE returns to Writer without rerunning Research and remains bounded by the existing iteration limit.
+Context Preparation v0.1 — Bounded LLM Input
 
-The validated Research action vocabulary is:
+and:
 
-SEARCH
-READ
-EXTRACT
-FINISH
+Main Content Extraction v0.2.1 — Content Density Extraction
 
-The complete project test suite currently passes:
+This increment replaces the previously fake-only execution environment with a provider-neutral web-tool contract and an explicit runtime selector between deterministic fake tools and bounded real tools.
 
-150 passed
+Implemented real infrastructure includes:
 
-Real-LLM smoke validation also passed and demonstrated conservative INSUFFICIENT termination when available evidence did not fully support the research objective.
+SearchTool: query → list[SearchResult]
+
+ReadTool: url → str
+
+Brave Search as the current real SEARCH adapter;
+
+HTTP Reader as the current real READ adapter;
+
+WEB_TOOL_MODE = fake | real;
+
+WebToolError as the controlled external-tool failure boundary;
+
+shared Scout / Research tool selection through get_web_tools();
+
+timeouts, content-size bounds, redirect validation, URL-scheme validation, DNS resolution, private/non-global IP rejection, and redirect-target revalidation;
+
+bounded context preparation using tiktoken;
+
+per-read and cumulative Research token budgets;
+
+Scout read-context token budgeting;
+
+candidate deduplication for repeated SELECT of the same source;
+
+semantic main-content preference for article/main;
+
+deterministic density-based extraction fallback for section/div pages;
+
+boilerplate suppression for navigation, headers, footers, scripts, forms, sidebars, and related non-editorial structures.
+
+The core architecture remains:
+
+LLM interprets and decides semantically;
+Python governs execution and limits;
+LangGraph governs workflow.
+
+The complete automated project test suite currently passes:
+
+189 passing tests
+
+Real-network smoke validation also passed.
+
+Scout real smoke:
+
+STATUS = FINISHED
+LAST_ERROR = None
+CANDIDATE_COUNT = 1
+POST_TOKENS = 1800
+
+The real Scout discovered and read:
+
+https://www.scmr.com/article/how-agentic-ai-changes-supply-chain-operations
+
+Main-content extraction began directly in editorial content rather than site navigation / boilerplate.
+
+Research real smoke:
+
+NODE_STATUS = RESEARCH_COMPLETED
+BRIEF_STATUS = SUFFICIENT
+SOURCE_COUNT = 5
+EVIDENCE_COUNT = 2
+
+The Research agent used real web search/read infrastructure, extracted evidence from authoritative NIST AI Risk Management Framework resources, preserved provenance, produced counterpoints and unresolved questions, and explicitly distinguished general governance evidence from supply-chain-specific interpretation.
+
+The previous Quality Evaluator Integration v0.1, Research Capability v0.1, ResearchBrief → Writer typed boundary, bounded Writer revision loop, and Human publication boundary remain preserved.
 
 Current Active LangGraph Workflows
 
@@ -497,9 +562,143 @@ MAX_RESEARCH_EVIDENCE_ITEMS = 6
 
 Research Validation Status
 
-Research v0.1 has been validated through deterministic automated tests and real OpenAI smoke runs against the current deterministic fake web environment. The latest smoke correctly produced extracted evidence while terminating INSUFFICIENT because the evidence did not establish the stronger requested claim.
+Research v0.1 is implemented and validated through deterministic automated tests, real OpenAI semantic execution, and bounded real-web smoke validation.
 
-Research web search and reading remain fake/deterministic. The capability validates agent mechanics, evidence boundaries, and semantic behavior; it is not yet production web research.
+Research now operates against either:
+
+fake deterministic tools for automated tests and controlled development;
+
+or:
+
+real Brave Search + HTTP Reader tools when WEB_TOOL_MODE=real.
+
+The evidence-promotion boundary remains unchanged:
+
+SEARCH → READ → EXTRACT → EvidenceItem → ResearchBrief
+
+Only extracted EvidenceItem objects may support Writer-facing factual findings.
+
+Real Research smoke validation completed successfully with:
+
+RESEARCH_COMPLETED;
+
+SUFFICIENT;
+
+5 discovered sources;
+
+2 extracted evidence items;
+
+authoritative NIST governance sources;
+
+counterpoints;
+
+unresolved questions;
+
+explicit qualification where the evidence was general AI-governance guidance rather than a supply-chain-specific rule.
+
+The smoke demonstrated that real web access did not weaken the established evidence, provenance, or bounded-runtime contracts.
+
+Real Web Tooling v0.1
+
+The shared web-tool boundary is now implemented.
+
+Provider-neutral contracts:
+
+SearchTool = Callable[[str], list[SearchResult]]
+
+ReadTool = Callable[[str], str]
+
+Runtime modes:
+
+fake → deterministic web_search / web_reader
+
+real → Brave Search / HTTP Reader
+
+The mode selector is centralized in get_web_tools().
+
+Real SEARCH behavior:
+
+uses Brave Search API;
+
+validates non-empty and provider-bounded queries;
+
+uses timeout protection;
+
+maps provider responses into SearchResult;
+
+wraps infrastructure failures as WebToolError.
+
+Real READ behavior:
+
+accepts only http/https URLs;
+
+rejects localhost, private, reserved, or otherwise non-global targets;
+
+resolves DNS before execution;
+
+revalidates redirect targets;
+
+bounds redirects;
+
+requires text-compatible content;
+
+bounds response size;
+
+uses timeout protection;
+
+wraps external HTTP failures as WebToolError.
+
+Scout and Research catch only the controlled WebToolError boundary for recoverable external-tool failures. Arbitrary programming errors are not silently converted into web failures.
+
+Context Preparation v0.1
+
+External text is normalized before entering bounded LLM-facing state.
+
+The current preparation layer:
+
+collapses redundant whitespace;
+
+removes exact duplicate lines while preserving first occurrence/order;
+
+counts tokens with tiktoken;
+
+applies hard token-level truncation;
+
+records original token count, prepared token count, and truncation status.
+
+Current configured budgets:
+
+Scout READ context maximum = 1800 tokens;
+
+Research READ context maximum = 2500 tokens per successful read;
+
+Research total stored READ context maximum = 8000 tokens.
+
+These are runtime-owned limits. The LLM may not override them.
+
+Main Content Extraction v0.2.1
+
+HTML reading now prefers semantic article content, then main content.
+
+When semantic containers are unavailable, deterministic density scoring evaluates section/div candidates using content length, paragraph density, heading density, link ratio, list density, semantic hints, and boilerplate hints.
+
+Ignored boilerplate containers include:
+
+aside;
+form;
+footer;
+head;
+header;
+nav;
+noscript;
+script;
+style.
+
+The semantic article/main path intentionally bypasses the generic density minimum so valid short editorial containers are not discarded.
+
+Real Scout smoke against SCMR confirmed that the extracted content began with the article authors/date and key takeaways rather than site navigation.
+
+Automated extraction coverage includes semantic article/main priority, nested boilerplate removal, body fallback, density selection, navigation penalties, and unchanged non-HTML text.
 
 Opportunity Evaluation Principle
 
@@ -889,61 +1088,77 @@ Scout Tooling Status
 
 Scout reasoning is real.
 
-Scout web tools are not yet real.
+Scout tooling now supports both deterministic fake execution and bounded real-web execution.
 
-Current implementations:
+Current runtime selector:
 
-web_search
+WEB_TOOL_MODE=fake
+→ web_search + web_reader
 
-web_reader
+WEB_TOOL_MODE=real
+→ brave_search + http_reader
 
-are deterministic fake tools created specifically to isolate and
+The fake mode remains the automated-test default so pytest does not depend on live network access.
 
-validate the agent mechanics.
+The real mode has been manually smoke validated.
 
-The fake search tool currently returns the same predefined results
+A real Scout run independently:
 
-regardless of the search query.
+formulated a search query;
+
+used Brave Search;
+
+selected a discovered SCMR source;
+
+read the source through the bounded HTTP Reader;
+
+received main-content extraction rather than navigation boilerplate;
+
+prepared the external content under the Scout token budget;
+
+selected exactly one candidate;
+
+terminated FINISHED with no final error.
 
 Therefore:
 
 Agentic decision behavior = REAL
 
-Web discovery environment = FAKE / DETERMINISTIC
+Real web search/read capability = IMPLEMENTED AND SMOKE VALIDATED
 
-The current implementation must not be described as a production
+Automated-test web environment = FAKE / DETERMINISTIC BY DEFAULT
 
-LinkedIn discovery capability.
+This does not imply unrestricted browsing or production-grade LinkedIn-native discovery.
 
 Scout Known Limitations
 
-The following limitations are intentionally known:
+The following limitations remain intentionally known:
 
-Fake Web Environment
+LinkedIn-native access
 
-The current web_search implementation ignores the actual query and
-
-returns predefined SearchResult objects.
-
-The current web_reader reads predefined content.
+Real Web Tooling v0.1 provides bounded public web search/read capability. It does not yet establish a dedicated LinkedIn API, authenticated LinkedIn browsing, or guaranteed access to LinkedIn post content.
 
 Candidate Metadata
 
-Current fake search results do not provide complete real LinkedIn
+Reliable real-world LinkedIn metadata is not yet established.
 
-metadata.
+Reaction count, comment count, author reach, publication age, and related engagement metadata are not yet guaranteed inputs.
 
-For the current isolated implementation:
+For sources where author identity is unavailable, the system must continue to avoid inventing identity.
 
-author_name = "Unknown"
+Search / Reader Accessibility
 
-is used rather than allowing the LLM to invent author identity.
+Public pages may reject automated reading, return 403 responses, require JavaScript rendering, or expose structures the current deterministic HTML extractor cannot fully interpret.
+
+WebToolError allows Scout to recover from supported external-tool failures, but it does not guarantee every discovered source is readable.
+
+Main Content Extraction
+
+The current semantic + density heuristic is validated against automated fixtures and successful real smoke pages, but it remains a deterministic heuristic rather than a general browser-rendering engine.
 
 Action History
 
-ScoutState currently preserves operational state but does not maintain
-
-a complete chronological action / observation trace.
+ScoutState preserves operational state but does not yet maintain a complete chronological action / observation trace.
 
 The final state may show:
 
@@ -953,7 +1168,7 @@ visited URLs;
 
 current search results;
 
-latest read content;
+latest prepared read content;
 
 selected candidates;
 
@@ -965,15 +1180,7 @@ but it does not yet provide a complete ordered execution history.
 
 Termination
 
-The Scout can finish through:
-
-FINISH
-
-or by reaching:
-
-max_steps
-
-Real test runs have demonstrated max_steps termination.
+Scout remains bounded by FINISH and max_steps.
 
 The runtime must remain bounded.
 
@@ -1037,11 +1244,13 @@ Current Test Baseline
 
 Full project suite:
 
-150 passing tests
+189 passing tests
 
-The suite covers the previously established Writer, Quality Evaluator, Opportunity Evaluation, Scout, routing, and workflow contracts plus Research v0.1 schemas, SEARCH / READ / EXTRACT / FINISH behavior, provenance guardrails, local action-budget recovery, global step and decision limits, semantic FINISH statuses, ResearchBrief trust boundaries, evidence-only synthesis, source deduplication, and bounded research-loop behavior.
+The suite covers Writer, Quality Evaluator, Opportunity Evaluation, Scout, Research, routing, workflow integration, web-tool selection, Brave Search mapping and failures, HTTP Reader security and content limits, controlled WebToolError recovery, context preparation, Scout/Research token guards, candidate deduplication, semantic main-content extraction, content-density extraction, and the previously established ResearchBrief / Writer / evaluator contracts.
 
-Live OpenAI calls are not required by the automated test suite. LLM-facing tests use mocks where appropriate. Real OpenAI smoke validation is performed separately.
+Live network calls are not required by pytest. External providers are mocked or replaced with deterministic fakes in automated tests.
+
+Real-network and real-LLM validation are performed separately as controlled smoke tests.
 
 Current Development Status
 
@@ -1049,24 +1258,43 @@ The current development increment is:
 
 IMPLEMENTED
 TESTED
+REAL-WEB SMOKE VALIDATED
 AUDITED
-READY FOR CHECKPOINT COMMIT
+READY FOR CONTEXT REFRESH AND CHECKPOINT COMMIT
 
-Full test suite result:
+Current automated test baseline:
 
-150 passed
+189 passing tests
 
-Project Context Snapshot integrity:
+Project Context Snapshot integrity from the pre-context-update audit:
 
 PASS
 
-The automated audit confirmed that repository content remained stable during audit collection.
+The audit confirmed repository content remained stable during collection.
+
+The audit also correctly reported context-consistency warnings because PROJECT_CONTEXT.md still described the previous 150-test / fake-web checkpoint. This file update resolves that semantic-context drift before the final audit is generated.
 
 Current Development Objective
 
-The current increment integrates the existing Quality Evaluator into the active HIGH-opportunity path after Writer. The integrated workflow now preserves the ResearchBrief → Writer typed boundary and continues from the resulting draft into semantic quality evaluation and deterministic PASS / REVISE / REJECT routing.
+Close Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 as one recoverable checkpoint without weakening the already validated agent boundaries.
 
-The validated integrated path is now:
+The functional objective has been achieved:
+
+Scout can discover and read real public web content through bounded tools;
+
+Research can gather real evidence through the same provider-neutral tooling boundary;
+
+external content is bounded before entering LLM-facing state;
+
+recoverable web failures are represented explicitly;
+
+security and operational limits remain Python-owned;
+
+Research provenance and EXTRACT evidence promotion remain intact;
+
+the integrated HIGH-opportunity workflow architecture remains unchanged.
+
+The current validated integrated path remains:
 
 Scout
 ↓
@@ -1087,47 +1315,79 @@ Quality Evaluator
 ├── REVISE → Writer → Quality Evaluator
 └── REJECT → END
 
-REVISE returns only to Writer; Research is not repeated. The revision loop remains bounded by the existing iteration limit.
+WEB_TOOL_MODE determines whether Scout and Research use fake or real web infrastructure; it does not change workflow responsibility boundaries.
 
 Current WIP
 
-Quality Evaluator Integration v0.1 is implemented, tested, and audited and is ready for checkpoint commit.
+Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 are implemented, covered by the 189-test automated suite, and separately validated through real Scout and real Research smoke runs.
 
-The current working tree contains the workflow routing changes and systemic integration tests required to connect Quality Evaluator to the integrated HIGH-opportunity path. No additional capability should be mixed into this checkpoint before commit.
+The remaining work for this increment is checkpoint hygiene only:
+
+keep WEB_TOOL_MODE=fake as the normal deterministic development/test default;
+
+confirm .env remains ignored by Git;
+
+refresh PROJECT_CONTEXT.md to this factual state;
+
+rerun project_audit.py;
+
+verify context consistency and snapshot integrity;
+
+review git diff / git status;
+
+stage;
+
+commit;
+
+push.
+
+No additional product capability should be mixed into this checkpoint.
 
 Next Planned Capability
 
 After this checkpoint commit, development should continue with:
 
-Real Web Tooling v0.1 — Contract and Bounded Integration
+End-to-End Real Workflow Validation v0.1 — Controlled Live Path
 
-The next increment should replace the current deterministic fake search/read environment with bounded real-world search and reading while preserving the already validated Scout and Research responsibility boundaries.
+The next increment should validate the already integrated architecture under explicit real-web mode rather than immediately adding another large capability.
 
-Concept and responsibility should be decided before code. The increment should explicitly define:
+Target controlled path:
 
-which real search mechanism Scout may use;
+Scout real search/read
+↓
+Opportunity Evaluation
+↓
+HIGH
+↓
+Research real search/read
+↓
+ResearchBrief
+↓
+Writer
+↓
+Quality Evaluator
+↓
+Human / END boundary
 
-which real search mechanism Research may use;
+The objective is to validate composition, not to loosen autonomy.
 
-which reading/fetch mechanism may access discovered URLs;
+The increment should capture:
 
-allowed source/domain behavior;
+whether the complete real path terminates correctly;
 
-provenance requirements;
+whether real Scout content produces a coherent OpportunityEvaluation;
 
-timeouts and external-tool failure handling;
+whether Research remains evidence-grounded on the live path;
 
-rate, tool, and cost limits;
+whether Writer receives the exact structured ResearchBrief;
 
-deduplication and content-size limits;
+whether Quality Evaluator routing remains bounded;
 
-how failures are represented in agent state;
+where real latency, token use, source accessibility, and provider failures appear across the complete path.
 
-whether Scout and Research share infrastructure while retaining separate contracts;
+No autonomous publication should be introduced.
 
-mocked external-response tests before real-network smoke validation.
-
-The objective is not unrestricted browsing. It is to make the existing bounded agents operate against real external information without weakening their current guardrails, evidence boundaries, or deterministic runtime ownership.
+After controlled end-to-end validation, later work can address real candidate metadata / engagement signals, multi-candidate handling, observability, and product-facing Human-in-the-loop experience.
 
 Opportunity Routing Direction
 
@@ -1172,15 +1432,41 @@ is explicitly QUEUED.
 
 Research Status
 
-Research Capability v0.1 is implemented, tested, audited, and real-LLM smoke validated as a standalone bounded specialist capability.
+Research Capability v0.1 remains a bounded specialist capability with real semantic execution and optional real-web infrastructure.
 
-Its responsibility is:
+Its responsibility remains:
 
 Given an approved opportunity,
 gather and promote the minimum evidence required
 to produce a factual and defensible contribution.
 
-Research now executes after HIGH Opportunity Evaluation and passes its structured ResearchBrief to Writer. Its web environment remains fake/deterministic until real search and reading tools are explicitly designed and validated.
+Research executes after HIGH Opportunity Evaluation and passes its structured ResearchBrief to Writer.
+
+Its web environment is now selectable:
+
+fake/deterministic for automated testing;
+
+real Brave Search + HTTP Reader for controlled live execution.
+
+Real Research smoke validation completed successfully with SUFFICIENT status, five discovered NIST sources, and two promoted EvidenceItem objects.
+
+The smoke preserved the architectural distinction between sourced evidence and interpretation: the resulting brief explicitly stated when governance guidance was general rather than a supply-chain-specific rule.
+
+Current bounded Research limits remain:
+
+MAX_RESEARCH_STEPS = 10
+
+MAX_RESEARCH_DECISIONS = 12
+
+MAX_RESEARCH_SEARCHES = 3
+
+MAX_RESEARCH_READS = 5
+
+MAX_RESEARCH_EVIDENCE_ITEMS = 6
+
+RESEARCH_READ_CONTEXT_MAX_TOKENS = 2500
+
+RESEARCH_TOTAL_READ_CONTEXT_MAX_TOKENS = 8000
 
 Architectural Principles
 
@@ -1376,17 +1662,7 @@ Open Design Decisions
 
 The following decisions remain intentionally unresolved:
 
-How Scout will access real LinkedIn or web candidate sources.
-
-Which real search mechanism will replace the deterministic fake
-
-web_search tool.
-
-Which real reading mechanism will replace the deterministic fake
-
-web_reader tool.
-
-How reliable LinkedIn metadata can be collected.
+How reliable LinkedIn-native candidate content and metadata can be collected.
 
 Whether reaction_count is consistently available.
 
@@ -1400,50 +1676,41 @@ Handling of missing engagement data.
 
 Calibration of engagement velocity thresholds.
 
-How queued MEDIUM opportunities should later be revisited,
-prioritized, or promoted.
+How queued MEDIUM opportunities should later be revisited, prioritized, or promoted.
 
 Whether Research SUFFICIENT, INSUFFICIENT, and LIMIT_REACHED should receive differentiated routing before Writer in a later hardening increment.
 
-Which real search and reading tools should replace the deterministic fake Research environment.
+Whether Brave Search remains the long-term search provider or should become one provider behind a broader adapter layer.
+
+Whether HTTP Reader should later be complemented by a browser-rendered reader for JavaScript-heavy or anti-bot pages.
+
+How source credibility / authority should eventually influence Research decisions beyond the current semantic judgment.
 
 Model selection per component.
 
-Whether Opportunity semantic dimensions should remain in one LLM
-
-call or be separated.
+Whether Opportunity semantic dimensions should remain in one LLM call or be separated.
 
 Long-term Opportunity Evaluation calibration methodology.
 
-Whether measured token/tool cost should later influence Research
+Whether measured token/tool cost should later influence Research Cost.
 
-Cost.
-
-Whether author relevance should become a separate evaluation
-
-dimension.
+Whether author relevance should become a separate evaluation dimension.
 
 Whether Scout should later become a LangGraph subgraph.
 
-Whether ScoutState should include a complete action / observation
+Whether ScoutState should include a complete action / observation history.
 
-history.
-
-How selected candidates should be deduplicated.
-
-How multiple Scout candidates should be ranked or queued.
+How multiple distinct Scout candidates should be ranked or queued.
 
 How the active workflow should represent multiple opportunities.
 
-How production-grade observability should record agent decisions,
+How production-grade observability should record agent decisions, tool calls, token usage, latency, cost, and failures.
 
-tool calls, costs, and failures.
+How real LinkedIn engagement or publication should be integrated while preserving mandatory human publication authority.
 
 These decisions must be resolved incrementally.
 
-They must not be silently encoded into implementation without an
-
-explicit architectural or product decision.
+They must not be silently encoded into implementation without an explicit architectural or product decision.
 
 Context Maintenance Rule
 
