@@ -38,3 +38,9 @@ data/output/*
 # Project audits
 docs/project_audit/*.md
 !docs/project_audit/.gitkeep
+
+# Runtime data
+data/checkpoint/*
+data/input/*
+data/output/*
+data/memory/*.db

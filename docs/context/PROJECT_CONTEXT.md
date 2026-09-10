@@ -20,21 +20,22 @@ Current Stable Baseline
 
 Stable baseline commit:
 
-3ce9349
+753df83
 
 Commit description:
 
-docs: restore README images and diagram formatting
+feat: validate real end-to-end agent workflow
 
-This committed HEAD already includes the previously completed Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 checkpoint through the preceding implementation commits.
+This committed baseline includes the completed End-to-End Real Workflow Validation v0.1 checkpoint and all preceding capabilities, including Real Web Tooling v0.1, Context Preparation v0.1, Main Content Extraction v0.2.1, Opportunity Evaluation, bounded Scout, Research, Writer, Quality Evaluator, and the mandatory Human / END publication boundary.
 
-The current End-to-End Real Workflow Validation v0.1 increment was developed on top of this committed baseline.
+The current Interaction Memory v0.1 — Persistent Discovery History / Scout Integration increment was developed on top of this committed baseline.
 
-The working tree intentionally contains the validated implementation and regression protection described below. The commit containing this increment will become the next recoverable stable baseline.
+The working tree intentionally contains the validated Interaction Memory implementation, calibration artifact, regression protection, and context/checkpoint material described below. The commit containing this increment will become the next recoverable stable baseline.
 
 Recent baseline lineage:
 
-3ce9349
+753df83
+← 3ce9349
 ← 12c290d
 ← bc608e6
 ← 156aa07
@@ -1259,13 +1260,101 @@ later organize Scout or multi-agent orchestration when doing so adds
 
 clear value.
 
+Interaction Memory v0.1 — Persistent Discovery History / Scout Integration
+
+Purpose:
+
+Persist operational discovery history across application runs so Scout can avoid repeatedly consuming the same successfully read public content.
+
+Implemented:
+
+SQLite-backed interaction repository and service under app/memory/;
+
+canonical URL identity with deterministic normalization;
+
+tracking parameters and fragments removed while functional query parameters are preserved;
+
+canonical URL uniqueness prevents duplicate interaction records;
+
+persistent VISITED state is recorded only after a successful Scout READ and context preparation;
+
+failed Scout READ attempts do not become persistent VISITED interactions;
+
+SELECT promotes the persisted interaction to SELECTED;
+
+Scout SEARCH filters URLs already present in persistent interaction memory before they are offered for semantic READ selection;
+
+current-run revisit protection and persistent cross-run memory operate together;
+
+SEARCH outcomes distinguish HAS_NOVEL_RESULTS, NO_SEARCH_RESULTS, and NO_NOVEL_RESULTS;
+
+NO_NOVEL_RESULTS allows bounded semantic search reformulation rather than forcing immediate termination;
+
+novelty-search retries are bounded independently from the Scout global operational step budget;
+
+a novel result resets the novelty retry counter;
+
+the real scout_node composition root instantiates InteractionMemoryService and injects it into the Scout runtime;
+
+the runtime SQLite file is intentionally excluded from Git;
+
+repository/service contracts already support storing an Agentic draft and a later human final version, but those workflow integrations are intentionally deferred.
+
+Operational state semantics established during this increment:
+
+Scout visited_urls means successful READs within the current runtime.
+
+Persistent VISITED means a source was successfully read and prepared for Scout consumption.
+
+A failed Scout READ remains recoverable but is not treated as successfully visited.
+
+Research retains its existing local runtime semantics for visited_urls, where an attempted blocked source may remain recorded to prevent repeated attempts inside the same research run. This distinction is intentional and was preserved rather than silently changing Research behavior during the Scout-memory increment.
+
+Interaction Memory is operational history, not LLM conversational memory.
+
+Rodrigo Voice Golden Set is a separate curated calibration artifact under docs/calibration/ and must not be treated as operational interaction memory.
+
+Validation:
+
+28 dedicated Interaction Memory foundation tests pass;
+
+10 dedicated Scout + Interaction Memory integration tests pass;
+
+existing Scout web-recovery tests were updated to preserve the successful-read VISITED semantic;
+
+the complete automated project suite passes with 228 tests;
+
+a controlled real E2E Run 1 completed successfully with WEB_TOOL_MODE=real after the memory integration and reached the existing Human / END quality boundary;
+
+the successful real Scout READ created runtime interaction_memory.db data while the database remained excluded from Git.
+
+Additional live validation intentionally pending:
+
+Run the same real discovery workflow again without deleting the runtime database and observe that previously persisted content cannot be consumed again by Scout.
+
+This Run 2 validation is useful behavioral evidence but is not a blocker for checkpointing the already automated and smoke-tested implementation.
+
+Intentionally incomplete:
+
+Writer → agentic_draft persistence in the live workflow;
+
+Human → human_final persistence in the live workflow;
+
+recent-history retrieval in a frontend or operator interface;
+
+full ordered Scout action / observation tracing;
+
+token/cost optimization of Scout, Research, Writer, and Evaluator context;
+
+LinkedIn-native candidate acquisition.
+
 Current Test Baseline
 
 Full project suite:
 
-190 passing tests
+228 passing tests
 
-The suite covers Writer, Quality Evaluator, Opportunity Evaluation, Scout, Research, routing, workflow integration, web-tool selection, Brave Search mapping and failures, HTTP Reader security and content limits, controlled WebToolError recovery, context preparation, Scout/Research token guards, candidate deduplication, semantic main-content extraction, content-density extraction, ResearchBrief / Writer contracts, and the typed ResearchBrief → EvaluatorInput regression contract discovered by live E2E validation.
+The suite covers Writer, Quality Evaluator, Opportunity Evaluation, Scout, Research, routing, workflow integration, web-tool selection, Brave Search mapping and failures, HTTP Reader security and content limits, controlled WebToolError recovery, context preparation, Scout/Research token guards, candidate deduplication, semantic main-content extraction, content-density extraction, ResearchBrief / Writer contracts, the typed ResearchBrief → EvaluatorInput regression contract discovered by live E2E validation, Interaction Memory URL canonicalization and SQLite persistence, and Scout persistent-memory filtering / novelty-search behavior.
 
 Live network calls are not required by pytest. External providers are mocked or replaced with deterministic fakes in automated tests.
 
@@ -1275,15 +1364,23 @@ Current Development Status
 
 The current development increment is:
 
+Interaction Memory v0.1 — Persistent Discovery History / Scout Integration
+
+Status:
+
 IMPLEMENTED
+
 TESTED
-REAL END-TO-END VALIDATED
+
+REAL RUN 1 VALIDATED
+
 AUDITED
-READY FOR CONTEXT REFRESH AND CHECKPOINT COMMIT
+
+READY FOR CHECKPOINT COMMIT
 
 Current automated test baseline:
 
-190 passing tests
+228 passing tests
 
 Project Context Snapshot integrity from the pre-context-update audit:
 
@@ -1291,83 +1388,73 @@ PASS
 
 The audit confirmed repository content remained stable during collection.
 
-The audit correctly reported context-consistency differences because this PROJECT_CONTEXT.md still declared the previous 189-test checkpoint and listed End-to-End Real Workflow Validation as future work. This update resolves that semantic-context drift before the final checkpoint audit.
+The audit correctly reported context-consistency INFO messages because this PROJECT_CONTEXT.md still declared stable baseline 3ce9349 and 190 passing tests while the actual repository HEAD was 753df83 and the current suite had 228 passing tests. This context refresh resolves that semantic drift before the checkpoint commit.
 
 Current Development Objective
 
-Close End-to-End Real Workflow Validation v0.1 as one recoverable checkpoint, preserving the complete bounded architecture and converting the discovered Evaluator contract drift into an automated regression contract.
+Close Interaction Memory v0.1 — Persistent Discovery History / Scout Integration as one recoverable checkpoint.
 
-The functional objective has been achieved:
+The functional objective achieved in this increment is narrower than a full interaction-history product:
 
-Scout can discover and read real public web content through bounded tools;
+Scout can persist successfully read URLs across application runs;
 
-Opportunity Evaluation can classify the selected live candidate HIGH;
+canonical equivalent URLs resolve to one interaction identity;
 
-Research can gather and promote real evidence through the provider-neutral tooling boundary;
+known persistent URLs are filtered before Scout can consume them again;
 
-Research can terminate SUFFICIENT on the live path;
+successful READ and SELECT transitions are reflected in persistent interaction state;
 
-Writer receives the structured ResearchBrief;
+failed Scout READ attempts do not become persistent VISITED records;
 
-Quality Evaluator receives the same typed ResearchBrief contract and can evaluate the resulting draft;
+Scout can distinguish no provider results from no novel results;
 
-PASS reaches the existing Human / END boundary;
+the LLM may semantically reformulate search after NO_NOVEL_RESULTS;
 
-no autonomous publication is introduced;
+Python bounds novelty retries and retains deterministic ownership of persistence and execution;
 
-external content remains bounded before entering LLM-facing state;
+the full pre-existing workflow remains green with 228 passing tests;
 
-recoverable web failures remain explicit;
+a real Run 1 confirmed the memory-enabled composition still completes the live Scout → Opportunity → Research → Writer → Quality Evaluator path.
 
-security and operational limits remain Python-owned;
-
-Research provenance and EXTRACT evidence promotion remain intact.
-
-The validated live path is:
-
-Scout real search/read
-↓
-PostCandidate
-↓
-Opportunity Evaluation
-↓
-HIGH → ACCEPTED_FOR_RESEARCH
-↓
-Research real search/read
-↓
-ResearchBrief = SUFFICIENT
-↓
-Writer
-↓
-Quality Evaluator = PASS
-↓
-Human / END
-
-WEB_TOOL_MODE determines whether Scout and Research use fake or real web infrastructure; it does not change workflow responsibility boundaries.
+The additional real Run 2 memory-reuse observation remains pending and can be executed after this checkpoint without changing the committed implementation.
 
 Current WIP
 
-End-to-End Real Workflow Validation v0.1 is implemented, live validated, covered by the 190-test automated suite, and audited.
+Interaction Memory v0.1 — Persistent Discovery History / Scout Integration is implemented, tested, audited, and ready for checkpointing.
 
-The current dirty working tree intentionally contains only checkpoint material for this increment:
+The current dirty working tree intentionally contains:
 
-app/components/evaluator.py
+.gitignore
 
-app/schemas/evaluator.py
+app/agents/scout.py
 
-tests/test_evaluator.py
+app/graph/nodes/scout_node.py
 
-app/scripts/smoke_e2e.py
+app/schemas/scout.py
 
-The remaining work for this increment is checkpoint hygiene only:
+app/memory/
 
-keep WEB_TOOL_MODE=fake as the normal deterministic development/test default;
+docs/context/PROJECT_CONTEXT.md
 
-confirm .env remains ignored by Git;
+docs/calibration/RODRIGO_VOICE_GOLDEN_SET.md
 
-refresh PROJECT_CONTEXT.md to this factual state;
+tests/test_interaction_memory.py
 
-rerun project_audit.py;
+tests/test_scout_interaction_memory.py
+
+tests/test_web_tool_recovery.py
+
+The runtime database:
+
+data/memory/interaction_memory.db
+
+is intentionally excluded from Git and must remain local runtime data.
+
+The Rodrigo Voice Golden Set is included in the checkpoint as a separate calibration artifact. It is not part of the Interaction Memory runtime model.
+
+Remaining work for this checkpoint is checkpoint hygiene only:
+
+rerun project_audit.py after this context refresh;
 
 verify context consistency and snapshot integrity;
 
@@ -1379,45 +1466,69 @@ commit;
 
 push.
 
-No additional product capability should be mixed into this checkpoint.
+No Token Governance implementation should be mixed into this checkpoint.
 
 Next Planned Capability
 
 After this checkpoint commit, development should continue with:
 
-LinkedIn-native Integration v0.1 — Controlled Discovery / Input Layer
+Token Governance v0.1 — Bounded Research & Lean Context
 
 Objective:
 
-Replace the current generic-public-web approximation of LinkedIn discovery with a controlled LinkedIn-native or LinkedIn-aware candidate-input path while preserving all existing workflow, evidence, cost, security, and human-authority boundaries.
+Reduce LLM/context consumption while preserving the quality contract required to produce a short, factual, relevant, differentiated LinkedIn comment.
 
-Initial scope should focus on candidate acquisition and metadata rather than publication.
+The first optimization target is the mismatch between the small final artifact and the comparatively large intermediate research/context footprint.
 
-Target additions include, where technically and contractually available:
+Initial investigation should measure and map:
 
-reliable LinkedIn post URL / identifier handling;
+Web → Scout prepared-context size;
 
-author identity and headline when actually observed;
+Scout / Opportunity → Research input size;
 
-published_at;
+Research SEARCH / READ / EXTRACT consumption;
 
-reaction_count;
+ResearchBrief size and field duplication;
 
-comment_count;
+ResearchBrief → Writer context size;
 
-post age;
+Writer → Quality Evaluator context size;
 
-other objective engagement signals only when reliably obtainable;
+model usage, latency, and cost per component where measurable.
 
-clear distinction between LinkedIn-native content and generic public-web sources.
+Initial architectural direction:
 
-The current DEFAULT_ENGAGEMENT_POTENTIAL = 50 placeholder must remain until reliable objective signals justify a deterministic engagement calculation.
+keep the existing evidence-provenance boundary SEARCH → READ → EXTRACT → EvidenceItem → ResearchBrief;
 
-No engagement metric should be invented by the LLM.
+make Research sufficiency proportional to the final artifact rather than maximizing research depth;
 
-No autonomous publication or commenting should be introduced.
+prefer early semantic stop once sufficient high-quality evidence exists;
 
-The existing Scout → Opportunity Evaluation → Research → Writer → Quality Evaluator → Human boundary remains the protected core path.
+reduce duplicated or low-value Writer-facing research fields;
+
+compress context before Writer and Evaluator boundaries;
+
+preserve Python-owned hard budgets and deterministic guardrails;
+
+preserve semantic LLM ownership where interpretation materially adds value;
+
+do not weaken factual grounding, source provenance, quality evaluation, or Human publication authority merely to save tokens.
+
+Likely design questions to resolve before code:
+
+the minimum useful number of promoted EvidenceItem objects for a short LinkedIn comment;
+
+whether key_findings, counterpoints, and unresolved_questions should remain mandatory Writer-facing fields;
+
+appropriate lower SEARCH / READ / evidence budgets for this specific product;
+
+whether Scout and Research read-context limits should be reduced or made adaptive;
+
+which components can safely use cheaper models;
+
+how token usage and cost should be measured so future optimization is evidence-based rather than estimated from output length alone.
+
+LinkedIn-native Integration remains a later planned capability. Token Governance is intentionally prioritized first because the real E2E run demonstrated that the current system can generate a short high-quality comment while carrying substantially larger intermediate research context than the final artifact requires.
 
 Future Agent Experience / Observable Workflow Direction
 
@@ -1855,3 +1966,110 @@ PROJECT_CONTEXT.md
 Git checkpoint
 
 is the official development recovery mechanism for the project.
+
+Development Interaction Contract
+
+The following rules are part of the project's recoverable development
+context and must be preserved across development sessions.
+
+Repository and Execution Context
+
+Development commands must assume:
+
+Operating system: Windows
+
+Shell: PowerShell
+
+Repository root:
+C:\Users\rods_\Desktop\AI - LAB\linkedin-agentic-ai-system
+
+Virtual environment:
+.venv
+
+Commands are normally executed from the repository root.
+
+Python modules under app/ must be invoked using Python module notation
+when -m is used.
+
+Examples:
+
+Correct:
+
+python -m app.scripts.smoke_e2e
+
+Incorrect:
+
+python -m app/scripts/smoke_e2e.py
+
+Test Execution Convention
+
+Tests should be executed through the active Python interpreter rather than
+depending directly on the pytest launcher executable.
+
+Preferred:
+
+python -m pytest tests/test_interaction_memory.py -v
+
+Full suite:
+
+python -m pytest
+
+This convention ensures pytest runs from the active project virtual
+environment and avoids Windows launcher/path inconsistencies.
+
+Do not use:
+
+pytest -m tests/...
+
+because -m in pytest means marker selection, not Python module execution.
+
+Code Structure Preservation
+
+Before proposing new production files, tests, imports, or commands:
+
+Respect the existing repository package structure captured by the audit.
+
+Do not invent directories or relocate existing capabilities without an
+explicit architectural decision.
+
+New capabilities should follow the established separation of concerns.
+
+Python packages created under app/ should include __init__.py where
+appropriate for explicit package semantics.
+
+Imports should be compatible with execution from the repository root.
+
+Test paths must correspond to actual files under tests/.
+
+Code Delivery Convention
+
+When providing implementation code:
+
+provide the exact destination path for every file;
+
+prefer complete file contents when creating a new file;
+
+preserve existing architectural boundaries;
+
+provide terminal commands separately from source code;
+
+commands must be directly copyable into PowerShell;
+
+never assume Bash/Linux commands unless explicitly required.
+
+Architecture Preservation Rule
+
+Code suggestions must preserve the established project ownership model:
+
+LLM owns semantic interpretation and bounded semantic decisions;
+
+Python owns deterministic execution, state, authorization, limits,
+persistence, and factual contracts;
+
+LangGraph owns workflow orchestration;
+
+external infrastructure must remain behind explicit tool/repository/service
+boundaries.
+
+A new development session should treat this contract as authoritative unless
+the current repository state explicitly supersedes it.

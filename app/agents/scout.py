@@ -6,6 +6,7 @@ from app.config.settings import (
     SCOUT_READ_CONTEXT_MAX_TOKENS,
 )
 from app.context_preparation import prepare_context
+from app.memory.service import InteractionMemoryService
 from app.schemas.post import PostCandidate
 from app.schemas.scout import ScoutAction, ScoutState
 from app.schemas.tools import ReadTool, SearchResult, SearchTool
@@ -50,6 +51,11 @@ Rules:
 - Prefer actions that contribute directly to the objective.
 - You do not publish, comment, or contact anyone.
 - Return exactly one structured ScoutAction.
+- If last_search_outcome is NO_NOVEL_RESULTS, the search worked but every
+  discovered URL was already known from previous runs. Reformulate the search
+  query semantically instead of repeating the same strategy.
+- If last_search_outcome is NO_SEARCH_RESULTS, the search returned no results.
+- Novelty retries are bounded. Do not attempt to bypass operational limits.
 """.strip()
 
 
@@ -71,11 +77,32 @@ def decide_next_action(state: ScoutState) -> ScoutAction:
     return action
 
 
+def _filter_novel_search_results(
+    results: list[SearchResult],
+    memory_service: InteractionMemoryService,
+) -> list[SearchResult]:
+    unseen_urls = memory_service.filter_unseen_urls(
+        [result.url for result in results]
+    )
+
+    results_by_url = {
+        result.url: result
+        for result in results
+    }
+
+    return [
+        results_by_url[url]
+        for url in unseen_urls
+        if url in results_by_url
+    ]
+
+
 def execute_action(
     action: ScoutAction,
     state: ScoutState,
     search_tool: SearchTool,
     read_tool: ReadTool,
+    memory_service: InteractionMemoryService | None = None,
 ) -> str | list[SearchResult] | None:
 
     if state.steps >= state.max_steps:
@@ -97,9 +124,41 @@ def execute_action(
         state.search_queries.append(action.query)
 
         results = search_tool(action.query)
-        state.search_results = results
 
-        return results
+        if not results:
+            state.search_results = []
+            state.last_search_outcome = "NO_SEARCH_RESULTS"
+            return []
+
+        if memory_service is None:
+            state.search_results = results
+            state.last_search_outcome = "HAS_NOVEL_RESULTS"
+            state.novelty_search_attempts = 0
+            return results
+
+        novel_results = _filter_novel_search_results(
+            results=results,
+            memory_service=memory_service,
+        )
+
+        if not novel_results:
+            state.search_results = []
+            state.last_search_outcome = "NO_NOVEL_RESULTS"
+            state.novelty_search_attempts += 1
+
+            if (
+                state.novelty_search_attempts
+                >= state.max_novelty_search_attempts
+            ):
+                state.status = "FINISHED"
+
+            return []
+
+        state.search_results = novel_results
+        state.last_search_outcome = "HAS_NOVEL_RESULTS"
+        state.novelty_search_attempts = 0
+
+        return novel_results
 
     if action.action == "READ":
         if not action.url:
@@ -129,9 +188,9 @@ def execute_action(
         )
 
         state.status = "READING"
-        state.visited_urls.append(action.url)
 
         raw_content = read_tool(result.url)
+
         prepared = prepare_context(
             raw_content,
             max_tokens=SCOUT_READ_CONTEXT_MAX_TOKENS,
@@ -139,6 +198,13 @@ def execute_action(
 
         state.last_read_url = result.url
         state.last_read_content = prepared.content
+
+        # A URL only becomes visited after a successful READ and
+        # successful context preparation.
+        state.visited_urls.append(result.url)
+
+        if memory_service is not None:
+            memory_service.record_visit(result.url)
 
         return prepared.content
 
@@ -182,6 +248,9 @@ def execute_action(
 
         state.candidates.append(candidate)
 
+        if memory_service is not None:
+            memory_service.mark_selected(result.url)
+
         return None
 
     if action.action == "FINISH":
@@ -198,10 +267,13 @@ def run_scout(
     search_tool: SearchTool,
     read_tool: ReadTool,
     max_steps: int = 5,
+    max_novelty_search_attempts: int = 3,
+    memory_service: InteractionMemoryService | None = None,
 ) -> ScoutState:
     state = ScoutState(
         objective=objective,
         max_steps=max_steps,
+        max_novelty_search_attempts=max_novelty_search_attempts,
     )
 
     while state.status != "FINISHED":
@@ -217,6 +289,7 @@ def run_scout(
                 state=state,
                 search_tool=search_tool,
                 read_tool=read_tool,
+                memory_service=memory_service,
             )
             state.last_error = None
 

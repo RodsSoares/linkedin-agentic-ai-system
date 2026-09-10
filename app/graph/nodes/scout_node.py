@@ -1,5 +1,6 @@
 from app.agents.scout import run_scout
 from app.graph.state import LinkedInAgentState
+from app.memory.service import InteractionMemoryService
 from app.tools.web_tools import get_web_tools
 
 
@@ -13,10 +14,13 @@ def scout_node(state: LinkedInAgentState) -> dict:
 
     search_tool, read_tool = get_web_tools()
 
+    memory_service = InteractionMemoryService()
+
     scout_state = run_scout(
         objective=objective,
         search_tool=search_tool,
         read_tool=read_tool,
+        memory_service=memory_service,
     )
 
     if not scout_state.candidates:

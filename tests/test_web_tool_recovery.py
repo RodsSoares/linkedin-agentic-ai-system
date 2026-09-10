@@ -59,7 +59,9 @@ def test_scout_recovers_after_web_reader_failure():
     assert observed_errors[2] == (
         "Web tool failure: Web reader returned HTTP 403."
     )
-    assert blocked_url in state.visited_urls
+    assert blocked_url not in state.visited_urls
+    assert state.last_read_url is None
+    assert state.last_read_content is None
     assert state.status == "FINISHED"
     assert state.steps == 3
 
@@ -113,6 +115,7 @@ def test_research_search_failure_is_recoverable_and_consumes_budget():
         steps=0,
         last_error=None,
     )
+
     action = SimpleNamespace(
         search_query="agentic ai supply chain",
     )
@@ -163,9 +166,12 @@ def test_research_read_failure_allows_next_source_to_succeed():
     def read_tool(url: str) -> str:
         if url == blocked_url:
             raise WebToolError("Web reader returned HTTP 403.")
+
         return "Useful evidence from the readable source."
 
-    blocked_action = SimpleNamespace(url=blocked_url)
+    blocked_action = SimpleNamespace(
+        url=blocked_url,
+    )
 
     _execute_read(
         state=state,
@@ -182,7 +188,9 @@ def test_research_read_failure_allows_next_source_to_succeed():
         f"{blocked_url}: Web reader returned HTTP 403."
     )
 
-    readable_action = SimpleNamespace(url=readable_url)
+    readable_action = SimpleNamespace(
+        url=readable_url,
+    )
 
     _execute_read(
         state=state,
