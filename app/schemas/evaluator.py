@@ -1,12 +1,12 @@
 from pydantic import BaseModel, Field
 
 from app.schemas.post import PostCandidate
-
+from app.schemas.research import ResearchBrief
 
 class EvaluatorInput(BaseModel):
     post: PostCandidate
     current_draft: str
-    research_result: dict | None = None
+    research_result: ResearchBrief | None = None
 
 
 class VoiceEvaluation(BaseModel):

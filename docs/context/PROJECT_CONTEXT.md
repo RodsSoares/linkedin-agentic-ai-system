@@ -20,19 +20,24 @@ Current Stable Baseline
 
 Stable baseline commit:
 
-156aa07
+3ce9349
 
 Commit description:
 
-feat: integrate quality evaluator into opportunity workflow
+docs: restore README images and diagram formatting
 
-The current Real Web Tooling / Context Preparation increment was developed on top of this committed baseline.
+This committed HEAD already includes the previously completed Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 checkpoint through the preceding implementation commits.
 
-The working tree intentionally contains the validated implementation described below. The commit containing this increment will become the next recoverable stable baseline.
+The current End-to-End Real Workflow Validation v0.1 increment was developed on top of this committed baseline.
 
-Baseline lineage remains:
+The working tree intentionally contains the validated implementation and regression protection described below. The commit containing this increment will become the next recoverable stable baseline.
 
-156aa07
+Recent baseline lineage:
+
+3ce9349
+← 12c290d
+← bc608e6
+← 156aa07
 ← 6f3ebbe
 ← 0594a3d
 ← acff344
@@ -44,87 +49,101 @@ The official checkpoint mechanism remains code + tests + audit + PROJECT_CONTEXT
 
 Last Completed Development Increment
 
-The current completed and validated increment introduces:
+The current completed and validated increment is:
 
-Real Web Tooling v0.1 — Contract and Bounded Integration
+End-to-End Real Workflow Validation v0.1 — Controlled Live Path
 
-together with:
+Purpose:
 
-Context Preparation v0.1 — Bounded LLM Input
+Validate the already integrated architecture as one live composition under explicit real-web mode, without adding autonomous publication or loosening existing guardrails.
 
-and:
+Validated live path:
 
-Main Content Extraction v0.2.1 — Content Density Extraction
+Scout real search/read
+↓
+PostCandidate
+↓
+Opportunity Evaluation
+↓
+HIGH
+↓
+Research real search/read
+↓
+ResearchBrief
+↓
+Writer
+↓
+Quality Evaluator
+↓
+Human / END boundary
 
-This increment replaces the previously fake-only execution environment with a provider-neutral web-tool contract and an explicit runtime selector between deterministic fake tools and bounded real tools.
+Controlled E2E result:
 
-Implemented real infrastructure includes:
+WEB_TOOL_MODE = real
 
-SearchTool: query → list[SearchResult]
+Scout selected a current public supply-chain / agentic-AI article through real Brave Search + bounded HTTP Reader.
 
-ReadTool: url → str
+Opportunity Evaluation produced:
 
-Brave Search as the current real SEARCH adapter;
+topic_relevance = 96
+positioning_fit = 94
+contribution_potential = 81
+engagement_potential = 50
+research_cost = 27
+research_efficiency = 73
+opportunity_score = 81.8
+classification = HIGH
 
-HTTP Reader as the current real READ adapter;
+Research completed with:
 
-WEB_TOOL_MODE = fake | real;
+status = SUFFICIENT
 
-WebToolError as the controlled external-tool failure boundary;
+The ResearchBrief contained a bounded research objective, summary, key findings, promoted EvidenceItem objects, counterpoints, unresolved questions, and discovered sources. Evidence included authoritative NIST AI RMF governance material plus operational examples for bounded automation.
 
-shared Scout / Research tool selection through get_web_tools();
+Writer produced a grounded contribution from the structured ResearchBrief.
 
-timeouts, content-size bounds, redirect validation, URL-scheme validation, DNS resolution, private/non-global IP rejection, and redirect-target revalidation;
+Quality Evaluator produced:
 
-bounded context preparation using tiktoken;
+factual_accuracy = 97
+relevance = 99
+voice_match = 97
+decision = PASS
 
-per-read and cumulative Research token budgets;
+The final workflow state reached the existing human-publication boundary with no autonomous publication.
 
-Scout read-context token budgeting;
+Observed live elapsed time for the successful run:
 
-candidate deduplication for repeated SELECT of the same source;
+84.88 seconds
 
-semantic main-content preference for article/main;
+Integration defect discovered during controlled E2E:
 
-deterministic density-based extraction fallback for section/div pages;
+EvaluatorInput still expected research_result as dict | None while the shared workflow correctly supplied a typed ResearchBrief.
 
-boilerplate suppression for navigation, headers, footers, scripts, forms, sidebars, and related non-editorial structures.
+The defect appeared only when the complete live path reached Quality Evaluator, demonstrating that isolated and mocked tests had not fully protected this cross-capability boundary.
+
+Implemented fix:
+
+EvaluatorInput now accepts:
+
+ResearchBrief | None
+
+The typed ResearchBrief remains intact across workflow state and node boundaries. Serialization occurs only at the LLM prompt boundary inside the Evaluator component.
+
+Regression protection added:
+
+test_evaluator_input_accepts_typed_research_brief
+
+The complete automated project test suite now passes:
+
+190 passing tests
+
+The previous Real Web Tooling v0.1, Context Preparation v0.1, Main Content Extraction v0.2.1, Quality Evaluator Integration v0.1, Research Capability v0.1, ResearchBrief → Writer typed boundary, bounded Writer revision loop, and Human publication boundary remain preserved.
 
 The core architecture remains:
 
 LLM interprets and decides semantically;
 Python governs execution and limits;
 LangGraph governs workflow.
-
-The complete automated project test suite currently passes:
-
-189 passing tests
-
-Real-network smoke validation also passed.
-
-Scout real smoke:
-
-STATUS = FINISHED
-LAST_ERROR = None
-CANDIDATE_COUNT = 1
-POST_TOKENS = 1800
-
-The real Scout discovered and read:
-
-https://www.scmr.com/article/how-agentic-ai-changes-supply-chain-operations
-
-Main-content extraction began directly in editorial content rather than site navigation / boilerplate.
-
-Research real smoke:
-
-NODE_STATUS = RESEARCH_COMPLETED
-BRIEF_STATUS = SUFFICIENT
-SOURCE_COUNT = 5
-EVIDENCE_COUNT = 2
-
-The Research agent used real web search/read infrastructure, extracted evidence from authoritative NIST AI Risk Management Framework resources, preserved provenance, produced counterpoints and unresolved questions, and explicitly distinguished general governance evidence from supply-chain-specific interpretation.
-
-The previous Quality Evaluator Integration v0.1, Research Capability v0.1, ResearchBrief → Writer typed boundary, bounded Writer revision loop, and Human publication boundary remain preserved.
 
 Current Active LangGraph Workflows
 
@@ -1244,9 +1263,9 @@ Current Test Baseline
 
 Full project suite:
 
-189 passing tests
+190 passing tests
 
-The suite covers Writer, Quality Evaluator, Opportunity Evaluation, Scout, Research, routing, workflow integration, web-tool selection, Brave Search mapping and failures, HTTP Reader security and content limits, controlled WebToolError recovery, context preparation, Scout/Research token guards, candidate deduplication, semantic main-content extraction, content-density extraction, and the previously established ResearchBrief / Writer / evaluator contracts.
+The suite covers Writer, Quality Evaluator, Opportunity Evaluation, Scout, Research, routing, workflow integration, web-tool selection, Brave Search mapping and failures, HTTP Reader security and content limits, controlled WebToolError recovery, context preparation, Scout/Research token guards, candidate deduplication, semantic main-content extraction, content-density extraction, ResearchBrief / Writer contracts, and the typed ResearchBrief → EvaluatorInput regression contract discovered by live E2E validation.
 
 Live network calls are not required by pytest. External providers are mocked or replaced with deterministic fakes in automated tests.
 
@@ -1258,13 +1277,13 @@ The current development increment is:
 
 IMPLEMENTED
 TESTED
-REAL-WEB SMOKE VALIDATED
+REAL END-TO-END VALIDATED
 AUDITED
 READY FOR CONTEXT REFRESH AND CHECKPOINT COMMIT
 
 Current automated test baseline:
 
-189 passing tests
+190 passing tests
 
 Project Context Snapshot integrity from the pre-context-update audit:
 
@@ -1272,31 +1291,41 @@ PASS
 
 The audit confirmed repository content remained stable during collection.
 
-The audit also correctly reported context-consistency warnings because PROJECT_CONTEXT.md still described the previous 150-test / fake-web checkpoint. This file update resolves that semantic-context drift before the final audit is generated.
+The audit correctly reported context-consistency differences because this PROJECT_CONTEXT.md still declared the previous 189-test checkpoint and listed End-to-End Real Workflow Validation as future work. This update resolves that semantic-context drift before the final checkpoint audit.
 
 Current Development Objective
 
-Close Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 as one recoverable checkpoint without weakening the already validated agent boundaries.
+Close End-to-End Real Workflow Validation v0.1 as one recoverable checkpoint, preserving the complete bounded architecture and converting the discovered Evaluator contract drift into an automated regression contract.
 
 The functional objective has been achieved:
 
 Scout can discover and read real public web content through bounded tools;
 
-Research can gather real evidence through the same provider-neutral tooling boundary;
+Opportunity Evaluation can classify the selected live candidate HIGH;
 
-external content is bounded before entering LLM-facing state;
+Research can gather and promote real evidence through the provider-neutral tooling boundary;
 
-recoverable web failures are represented explicitly;
+Research can terminate SUFFICIENT on the live path;
+
+Writer receives the structured ResearchBrief;
+
+Quality Evaluator receives the same typed ResearchBrief contract and can evaluate the resulting draft;
+
+PASS reaches the existing Human / END boundary;
+
+no autonomous publication is introduced;
+
+external content remains bounded before entering LLM-facing state;
+
+recoverable web failures remain explicit;
 
 security and operational limits remain Python-owned;
 
-Research provenance and EXTRACT evidence promotion remain intact;
+Research provenance and EXTRACT evidence promotion remain intact.
 
-the integrated HIGH-opportunity workflow architecture remains unchanged.
+The validated live path is:
 
-The current validated integrated path remains:
-
-Scout
+Scout real search/read
 ↓
 PostCandidate
 ↓
@@ -1304,22 +1333,31 @@ Opportunity Evaluation
 ↓
 HIGH → ACCEPTED_FOR_RESEARCH
 ↓
-Research
+Research real search/read
 ↓
-ResearchBrief
+ResearchBrief = SUFFICIENT
 ↓
 Writer
 ↓
-Quality Evaluator
-├── PASS → Human / END
-├── REVISE → Writer → Quality Evaluator
-└── REJECT → END
+Quality Evaluator = PASS
+↓
+Human / END
 
 WEB_TOOL_MODE determines whether Scout and Research use fake or real web infrastructure; it does not change workflow responsibility boundaries.
 
 Current WIP
 
-Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 are implemented, covered by the 189-test automated suite, and separately validated through real Scout and real Research smoke runs.
+End-to-End Real Workflow Validation v0.1 is implemented, live validated, covered by the 190-test automated suite, and audited.
+
+The current dirty working tree intentionally contains only checkpoint material for this increment:
+
+app/components/evaluator.py
+
+app/schemas/evaluator.py
+
+tests/test_evaluator.py
+
+app/scripts/smoke_e2e.py
 
 The remaining work for this increment is checkpoint hygiene only:
 
@@ -1347,47 +1385,73 @@ Next Planned Capability
 
 After this checkpoint commit, development should continue with:
 
-End-to-End Real Workflow Validation v0.1 — Controlled Live Path
+LinkedIn-native Integration v0.1 — Controlled Discovery / Input Layer
 
-The next increment should validate the already integrated architecture under explicit real-web mode rather than immediately adding another large capability.
+Objective:
 
-Target controlled path:
+Replace the current generic-public-web approximation of LinkedIn discovery with a controlled LinkedIn-native or LinkedIn-aware candidate-input path while preserving all existing workflow, evidence, cost, security, and human-authority boundaries.
 
-Scout real search/read
-↓
-Opportunity Evaluation
-↓
-HIGH
-↓
-Research real search/read
-↓
-ResearchBrief
-↓
-Writer
-↓
-Quality Evaluator
-↓
-Human / END boundary
+Initial scope should focus on candidate acquisition and metadata rather than publication.
 
-The objective is to validate composition, not to loosen autonomy.
+Target additions include, where technically and contractually available:
 
-The increment should capture:
+reliable LinkedIn post URL / identifier handling;
 
-whether the complete real path terminates correctly;
+author identity and headline when actually observed;
 
-whether real Scout content produces a coherent OpportunityEvaluation;
+published_at;
 
-whether Research remains evidence-grounded on the live path;
+reaction_count;
 
-whether Writer receives the exact structured ResearchBrief;
+comment_count;
 
-whether Quality Evaluator routing remains bounded;
+post age;
 
-where real latency, token use, source accessibility, and provider failures appear across the complete path.
+other objective engagement signals only when reliably obtainable;
 
-No autonomous publication should be introduced.
+clear distinction between LinkedIn-native content and generic public-web sources.
 
-After controlled end-to-end validation, later work can address real candidate metadata / engagement signals, multi-candidate handling, observability, and product-facing Human-in-the-loop experience.
+The current DEFAULT_ENGAGEMENT_POTENTIAL = 50 placeholder must remain until reliable objective signals justify a deterministic engagement calculation.
+
+No engagement metric should be invented by the LLM.
+
+No autonomous publication or commenting should be introduced.
+
+The existing Scout → Opportunity Evaluation → Research → Writer → Quality Evaluator → Human boundary remains the protected core path.
+
+Future Agent Experience / Observable Workflow Direction
+
+A lightweight product-facing observability layer is now an explicit future direction for both this LinkedIn Agentic AI System and the reusable AI Solution Factory architecture.
+
+The first implementation should be deliberately simple: a live textual execution feed analogous to pytest progress, where each visible line corresponds to a real workflow event rather than simulated progress.
+
+Example event classes include:
+
+SCOUT_STARTED;
+SEARCH_COMPLETED;
+CANDIDATE_FOUND;
+OPPORTUNITY_EVALUATED;
+RESEARCH_STARTED;
+SOURCE_READ;
+EVIDENCE_EXTRACTED;
+RESEARCH_COMPLETED;
+WRITER_STARTED;
+DRAFT_COMPLETED;
+EVALUATION_COMPLETED;
+HUMAN_APPROVAL_REQUIRED;
+controlled provider/tool failure events.
+
+The governing UX principle is:
+
+Never leave the user waiting for an agent without showing what the system actually knows is happening.
+
+The frontend must not fabricate percentages or progress states. When workflow size is not known in advance, factual stage/event visibility is preferred over artificial completion percentages.
+
+The event layer should remain decoupled from the Orchestrator and reusable by future solutions. SSE is a suitable initial server-to-client transport unless later bidirectional requirements justify WebSocket.
+
+Future extensions may expose latency, token consumption, tool/provider calls, source counts, cost, failures, approval states, cards, richer visualizations, and eventually avatar/voice/digital-human representations without coupling those presentation technologies to the Core Engine.
+
+This observability layer is not part of the current checkpoint and must not delay LinkedIn-native integration.
 
 Opportunity Routing Direction
 
@@ -1513,6 +1577,8 @@ requirements can still be satisfied.
 Add complexity only when it provides clear behavioral or product
 
 value.
+
+Agent-facing product experiences should expose real workflow state and events rather than opaque waiting indicators or fabricated progress.
 
 Cost-Aware Orchestration
 
@@ -1704,7 +1770,7 @@ How multiple distinct Scout candidates should be ranked or queued.
 
 How the active workflow should represent multiple opportunities.
 
-How production-grade observability should record agent decisions, tool calls, token usage, latency, cost, and failures.
+How the shared Agent Experience / observability event protocol should represent agent decisions, workflow stages, tool calls, token usage, latency, cost, failures, and Human Approval across both LinkedIn Agentic AI System and AI Solution Factory.
 
 How real LinkedIn engagement or publication should be integrated while preserving mandatory human publication authority.
 

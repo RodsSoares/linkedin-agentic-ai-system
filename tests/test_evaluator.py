@@ -2,8 +2,17 @@ from app.components.evaluator import (
     calculate_voice_match,
     determine_decision,
 )
-from app.schemas.evaluator import EvaluationSignals, VoiceEvaluation
-
+from app.schemas.evaluator import (
+    EvaluationSignals,
+    EvaluatorInput,
+    VoiceEvaluation,
+)
+from app.schemas.post import PostCandidate
+from app.schemas.research import (
+    ResearchBrief,
+    ResearchObjective,
+    ResearchStatus,
+)
 
 def make_signals(
     naturalness=80,
@@ -96,3 +105,31 @@ def test_determine_decision_rejects_low_relevance():
     )
 
     assert result == "REJECT"
+
+
+def test_evaluator_input_accepts_typed_research_brief():
+    research_brief = ResearchBrief(
+        research_objective=ResearchObjective(
+            question="What controls are required for bounded AI autonomy?",
+        ),
+        summary="Bounded autonomy requires explicit authorization and escalation rules.",
+        status=ResearchStatus.SUFFICIENT,
+    )
+
+    post = PostCandidate(
+        post_id="test-post-001",
+        author_name="Test Author",
+        post_text="A test post about bounded AI autonomy.",
+        post_url="https://example.com/test-post",
+        source="test",
+    )
+
+    evaluator_input = EvaluatorInput(
+        post=post,
+        current_draft="A test draft grounded in the research brief.",
+        research_result=research_brief,
+    )
+
+    assert evaluator_input.research_result is research_brief
+    assert isinstance(evaluator_input.research_result, ResearchBrief)
+    assert evaluator_input.research_result.status == ResearchStatus.SUFFICIENT

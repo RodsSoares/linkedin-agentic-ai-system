@@ -58,6 +58,12 @@ def determine_decision(
 
 
 def evaluator(input_data: EvaluatorInput) -> QualityEvaluation:
+    research_context = (
+        input_data.research_result.model_dump_json(indent=2)
+        if input_data.research_result is not None
+        else "No research brief available."
+    )
+
     user_content = f"""
 ORIGINAL POST:
 {input_data.post.post_text}
@@ -66,7 +72,7 @@ DRAFT TO EVALUATE:
 {input_data.current_draft}
 
 AVAILABLE RESEARCH:
-{input_data.research_result}
+{research_context}
 """.strip()
 
     response = client.responses.parse(
