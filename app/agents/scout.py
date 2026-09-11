@@ -1,3 +1,5 @@
+from time import perf_counter
+
 from openai import OpenAI
 
 from app.config.settings import (
@@ -11,6 +13,7 @@ from app.schemas.post import PostCandidate
 from app.schemas.scout import ScoutAction, ScoutState
 from app.schemas.tools import ReadTool, SearchResult, SearchTool
 from app.tools.errors import WebToolError
+from app.telemetry.usage import record_context_usage, record_openai_usage
 
 
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -60,11 +63,19 @@ Rules:
 
 
 def decide_next_action(state: ScoutState) -> ScoutAction:
+    started_at = perf_counter()
     response = client.responses.parse(
         model=MODEL_NAME,
         instructions=SCOUT_SYSTEM_PROMPT,
         input=state.model_dump_json(indent=2),
         text_format=ScoutAction,
+    )
+    record_openai_usage(
+        component="scout",
+        operation="decide_next_action",
+        model=MODEL_NAME,
+        response=response,
+        latency_ms=(perf_counter() - started_at) * 1000,
     )
 
     action = response.output_parsed
@@ -194,6 +205,13 @@ def execute_action(
         prepared = prepare_context(
             raw_content,
             max_tokens=SCOUT_READ_CONTEXT_MAX_TOKENS,
+        )
+        record_context_usage(
+            component="scout",
+            operation="read_context",
+            original_tokens=prepared.original_tokens,
+            prepared_tokens=prepared.prepared_tokens,
+            truncated=prepared.truncated,
         )
 
         state.last_read_url = result.url

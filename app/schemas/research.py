@@ -93,6 +93,30 @@ class ResearchAction(BaseModel):
         ),
     )
 
+    material_gaps: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Material evidence gaps that still prevent a defensible contribution. "
+            "This is a semantic assessment, not a deterministic evidence-count rule."
+        ),
+    )
+
+    next_research_goal: str | None = Field(
+        default=None,
+        description=(
+            "Specific evidence gap the next SEARCH or READ is intended to resolve. "
+            "Leave null when no further research is semantically justified."
+        ),
+    )
+
+    sufficiency_reason: str | None = Field(
+        default=None,
+        description=(
+            "Semantic explanation of why current evidence is sufficient, insufficient, "
+            "or why further research is still required."
+        ),
+    )
+
     reason: str = Field(
         min_length=1,
         description="Semantic reason for requesting this action.",
@@ -125,6 +149,9 @@ class ResearchState(BaseModel):
     visited_urls: list[str] = Field(default_factory=list)
     read_sources: list[ReadSource] = Field(default_factory=list)
     evidence: list[EvidenceItem] = Field(default_factory=list)
+    material_gaps: list[str] = Field(default_factory=list)
+    next_research_goal: str | None = None
+    sufficiency_reason: str | None = None
     steps: int = Field(default=0, ge=0)
     decision_attempts: int = Field(default=0, ge=0)
     search_count: int = Field(default=0, ge=0)
@@ -159,4 +186,3 @@ class ResearchBrief(BaseModel):
     unresolved_questions: list[str] = Field(default_factory=list)
     sources: list[SearchResult] = Field(default_factory=list)
     status: ResearchStatus
-    

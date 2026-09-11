@@ -1,4 +1,5 @@
 import json
+from time import perf_counter
 
 from openai import OpenAI
 
@@ -10,6 +11,7 @@ from app.config.settings import (
 from app.prompts.writer import WRITER_SYSTEM_PROMPT
 from app.schemas.research import ResearchBrief
 from app.schemas.writer import WriterInput
+from app.telemetry.usage import record_openai_usage
 
 
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -50,11 +52,19 @@ REVISION INSTRUCTION:
 {input_data.revision_instruction}
 """.strip()
 
+    started_at = perf_counter()
     response = client.responses.create(
         model=MODEL_NAME,
         instructions=WRITER_SYSTEM_PROMPT,
         input=user_content,
         max_output_tokens=MAX_OUTPUT_TOKENS,
+    )
+    record_openai_usage(
+        component="writer",
+        operation="draft",
+        model=MODEL_NAME,
+        response=response,
+        latency_ms=(perf_counter() - started_at) * 1000,
     )
 
     return response.output_text.strip()

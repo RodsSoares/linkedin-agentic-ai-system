@@ -34,17 +34,7 @@ The working tree intentionally contains the validated Interaction Memory impleme
 
 Recent baseline lineage:
 
-753df83
-← 3ce9349
-← 12c290d
-← bc608e6
-← 156aa07
-← 6f3ebbe
-← 0594a3d
-← acff344
-← 0f842fa
-← 23bdb7c
-← 80bd89a
+753df83 ← 3ce9349 ← 12c290d ← bc608e6 ← 156aa07 ← 6f3ebbe ← 0594a3d ← acff344 ← 0f842fa ← 23bdb7c ← 80bd89a
 
 The official checkpoint mechanism remains code + tests + audit + PROJECT_CONTEXT.md + Git commit.
 
@@ -60,23 +50,7 @@ Validate the already integrated architecture as one live composition under expli
 
 Validated live path:
 
-Scout real search/read
-↓
-PostCandidate
-↓
-Opportunity Evaluation
-↓
-HIGH
-↓
-Research real search/read
-↓
-ResearchBrief
-↓
-Writer
-↓
-Quality Evaluator
-↓
-Human / END boundary
+Scout real search/read ↓ PostCandidate ↓ Opportunity Evaluation ↓ HIGH ↓ Research real search/read ↓ ResearchBrief ↓ Writer ↓ Quality Evaluator ↓ Human / END boundary
 
 Controlled E2E result:
 
@@ -86,14 +60,7 @@ Scout selected a current public supply-chain / agentic-AI article through real B
 
 Opportunity Evaluation produced:
 
-topic_relevance = 96
-positioning_fit = 94
-contribution_potential = 81
-engagement_potential = 50
-research_cost = 27
-research_efficiency = 73
-opportunity_score = 81.8
-classification = HIGH
+topic_relevance = 96 positioning_fit = 94 contribution_potential = 81 engagement_potential = 50 research_cost = 27 research_efficiency = 73 opportunity_score = 81.8 classification = HIGH
 
 Research completed with:
 
@@ -105,10 +72,7 @@ Writer produced a grounded contribution from the structured ResearchBrief.
 
 Quality Evaluator produced:
 
-factual_accuracy = 97
-relevance = 99
-voice_match = 97
-decision = PASS
+factual_accuracy = 97 relevance = 99 voice_match = 97 decision = PASS
 
 The final workflow state reached the existing human-publication boundary with no autonomous publication.
 
@@ -142,9 +106,7 @@ The previous Real Web Tooling v0.1, Context Preparation v0.1, Main Content Extra
 
 The core architecture remains:
 
-LLM interprets and decides semantically;
-Python governs execution and limits;
-LangGraph governs workflow.
+LLM interprets and decides semantically; Python governs execution and limits; LangGraph governs workflow.
 
 Current Active LangGraph Workflows
 
@@ -154,38 +116,21 @@ Content Workflow
 
 The existing Writer / Quality Evaluator workflow remains:
 
-START
-↓
-Writer
-↓
-Quality Evaluator
+START ↓ Writer ↓ Quality Evaluator
 
 Quality Evaluator routing:
 
-PASS → Human / END
-REVISE → Writer
-REJECT → END
+PASS → Human / END REVISE → Writer REJECT → END
 
 Revision loops remain bounded by a maximum iteration limit.
 
 Opportunity Workflow
 
-Opportunity Evaluation is now integrated into a dedicated controlled
-LangGraph workflow:
+Opportunity Evaluation is now integrated into a dedicated controlled LangGraph workflow:
 
-START
-↓
-Opportunity Evaluator
-↓
-Controlled Routing
-├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT
-├── MEDIUM → QUEUED → END
-└── LOW → END
+START ↓ Opportunity Evaluator ↓ Controlled Routing ├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT ├── MEDIUM → QUEUED → END └── LOW → END
 
-The Opportunity Evaluator receives a validated PostCandidate, performs
-semantic evaluation through the LLM, applies deterministic Python
-scoring and guardrails, stores the resulting OpportunityEvaluation in
-workflow state, and routes according to the final classification.
+The Opportunity Evaluator receives a validated PostCandidate, performs semantic evaluation through the LLM, applies deterministic Python scoring and guardrails, stores the resulting OpportunityEvaluation in workflow state, and routes according to the final classification.
 
 HIGH now executes the bounded Research capability and then passes the resulting structured ResearchBrief to Writer.
 
@@ -195,33 +140,15 @@ LOW terminates the Opportunity Workflow.
 
 Scout remains internally implemented as a bounded Python agent loop.
 
-It is now connected to Opportunity Evaluation through a dedicated
-LangGraph integration workflow while preserving the standalone
-Opportunity Workflow.
+It is now connected to Opportunity Evaluation through a dedicated LangGraph integration workflow while preserving the standalone Opportunity Workflow.
 
 Scout → Opportunity Workflow
 
-Scout is now integrated with Opportunity Evaluation through a dedicated
-compiled LangGraph workflow:
+Scout is now integrated with Opportunity Evaluation through a dedicated compiled LangGraph workflow:
 
-START
-↓
-Scout
-↓
-Scout Routing
-├── no candidate → END
-└── one candidate
-↓
-Opportunity Evaluator
-↓
-Controlled Routing
-├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT
-├── MEDIUM → QUEUED → END
-└── LOW → END
+START ↓ Scout ↓ Scout Routing ├── no candidate → END └── one candidate ↓ Opportunity Evaluator ↓ Controlled Routing ├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT ├── MEDIUM → QUEUED → END └── LOW → END
 
-The Scout itself remains a bounded Python agent loop. LangGraph does not
-replace its internal perceive → decide → act → observe loop; instead,
-scout_node adapts the Scout result into shared workflow state.
+The Scout itself remains a bounded Python agent loop. LangGraph does not replace its internal perceive → decide → act → observe loop; instead, scout_node adapts the Scout result into shared workflow state.
 
 The current integration contract is deliberately narrow:
 
@@ -231,29 +158,15 @@ exactly one candidate → Opportunity Evaluation;
 
 more than one candidate → explicit ValueError.
 
-The multi-candidate case remains unresolved by design. The system must
-not silently choose a first candidate, invent ranking logic, or encode a
-queueing policy without an explicit architectural decision.
+The multi-candidate case remains unresolved by design. The system must not silently choose a first candidate, invent ranking logic, or encode a queueing policy without an explicit architectural decision.
 
 Planned Workflow Direction
 
 The target system direction remains:
 
-Scout
-↓
-Opportunity Evaluation
-↓
-Research
-↓
-Writer
-↓
-Quality Evaluator
-↓
-Human-in-the-loop
+Scout ↓ Opportunity Evaluation ↓ Research ↓ Writer ↓ Quality Evaluator ↓ Human-in-the-loop
 
-This target is being implemented incrementally. Components must not be
-described as integrated before the corresponding workflow boundary has
-been implemented and validated.
+This target is being implemented incrementally. Components must not be described as integrated before the corresponding workflow boundary has been implemented and validated.
 
 Implemented Capabilities
 
@@ -349,15 +262,13 @@ Opportunity Evaluation evaluates whether a discovered post represents
 
 a strategically valuable opportunity for Rodrigo to contribute.
 
-It does not evaluate whether the original post is simply good or
-popular.
+It does not evaluate whether the original post is simply good or popular.
 
 Opportunity Workflow Integration
 
 Implemented:
 
-opportunity_evaluator_node as the LangGraph adapter for semantic
-evaluation and deterministic scoring;
+opportunity_evaluator_node as the LangGraph adapter for semantic evaluation and deterministic scoring;
 
 deterministic HIGH / MEDIUM / LOW routing;
 
@@ -377,8 +288,7 @@ Scout → Opportunity Workflow Integration
 
 Implemented:
 
-scout_node as the explicit adapter between the bounded Scout runtime
-and LinkedInAgentState;
+scout_node as the explicit adapter between the bounded Scout runtime and LinkedInAgentState;
 
 scout_objective added to shared workflow state;
 
@@ -386,16 +296,13 @@ deterministic route_after_scout() routing;
 
 dedicated build_scout_opportunity_workflow() graph;
 
-automatic transfer of one validated PostCandidate from Scout into
-Opportunity Evaluation;
+automatic transfer of one validated PostCandidate from Scout into Opportunity Evaluation;
 
 explicit early termination when Scout finds no candidate;
 
-prevention of unnecessary Opportunity Evaluation when no candidate
-exists;
+prevention of unnecessary Opportunity Evaluation when no candidate exists;
 
-explicit failure when Scout returns multiple candidates because
-multi-candidate ranking / queueing remains intentionally unresolved;
+explicit failure when Scout returns multiple candidates because multi-candidate ranking / queueing remains intentionally unresolved;
 
 isolated Scout-node tests;
 
@@ -403,31 +310,15 @@ Scout-routing tests;
 
 systemic Scout → Opportunity integration tests;
 
-preservation of the standalone Opportunity Workflow and existing
-Writer / Quality Evaluator workflow.
+preservation of the standalone Opportunity Workflow and existing Writer / Quality Evaluator workflow.
 
 The validated integrated path is:
 
-START
-↓
-Scout
-↓
-PostCandidate
-↓
-Opportunity Evaluator
-↓
-Controlled Routing
-├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT
-├── MEDIUM → QUEUED → END
-└── LOW → END
+START ↓ Scout ↓ PostCandidate ↓ Opportunity Evaluator ↓ Controlled Routing ├── HIGH → ACCEPTED_FOR_RESEARCH → Research → Writer → Quality Evaluator → PASS / REVISE / REJECT ├── MEDIUM → QUEUED → END └── LOW → END
 
 If Scout returns no candidate:
 
-Scout
-↓
-NO_CANDIDATE_FOUND
-↓
-END
+Scout ↓ NO_CANDIDATE_FOUND ↓ END
 
 Research and Writer are now executed for HIGH opportunities in this workflow.
 
@@ -471,24 +362,7 @@ MEDIUM → QUEUED and LOW → END behavior remains preserved.
 
 The current integrated HIGH path is:
 
-START
-↓
-Scout / Opportunity Evaluation
-↓
-HIGH
-↓
-ACCEPTED_FOR_RESEARCH
-↓
-Research
-↓
-ResearchBrief
-↓
-Writer
-↓
-Quality Evaluator
-├── PASS → Human / END
-├── REVISE → Writer → Quality Evaluator
-└── REJECT → END
+START ↓ Scout / Opportunity Evaluation ↓ HIGH ↓ ACCEPTED_FOR_RESEARCH ↓ Research ↓ ResearchBrief ↓ Writer ↓ Quality Evaluator ├── PASS → Human / END ├── REVISE → Writer → Quality Evaluator └── REJECT → END
 
 The revision loop remains bounded by the existing iteration limit, and REVISE does not rerun Research.
 
@@ -518,19 +392,7 @@ ResearchStatus.
 
 The bounded runtime follows:
 
-PostCandidate + OpportunityEvaluation
-↓
-ResearchObjective
-↓
-LLM semantic action decision
-↓
-Python authorization / guardrails
-↓
-SEARCH / READ / EXTRACT / FINISH
-↓
-ResearchState
-↓
-ResearchBrief
+PostCandidate + OpportunityEvaluation ↓ ResearchObjective ↓ LLM semantic action decision ↓ Python authorization / guardrails ↓ SEARCH / READ / EXTRACT / FINISH ↓ ResearchState ↓ ResearchBrief
 
 Evidence Promotion Boundary
 
@@ -574,11 +436,7 @@ Local action budgets block only the exhausted action and allow bounded recovery 
 
 Current bounds are:
 
-MAX_RESEARCH_STEPS = 10
-MAX_RESEARCH_DECISIONS = 12
-MAX_RESEARCH_SEARCHES = 3
-MAX_RESEARCH_READS = 5
-MAX_RESEARCH_EVIDENCE_ITEMS = 6
+MAX_RESEARCH_STEPS = 10 MAX_RESEARCH_DECISIONS = 12 MAX_RESEARCH_SEARCHES = 3 MAX_RESEARCH_READS = 5 MAX_RESEARCH_EVIDENCE_ITEMS = 6
 
 Research Validation Status
 
@@ -704,15 +562,7 @@ When semantic containers are unavailable, deterministic density scoring evaluate
 
 Ignored boilerplate containers include:
 
-aside;
-form;
-footer;
-head;
-header;
-nav;
-noscript;
-script;
-style.
+aside; form; footer; head; header; nav; noscript; script; style.
 
 The semantic article/main path intentionally bypasses the generic density minimum so valid short editorial containers are not discarded.
 
@@ -780,8 +630,7 @@ The deterministic Opportunity Score is:
 
 Opportunity Score =
 
-Contribution Potential × 0.30
-Positioning Fit × 0.25
+Contribution Potential × 0.30 Positioning Fit × 0.25
 
 Topic Relevance × 0.20
 
@@ -841,20 +690,15 @@ The current pattern is:
 
 PostCandidate
 
-↓
-LLM Semantic Evaluation
+↓ LLM Semantic Evaluation
 
-↓
-OpportunitySignals
+↓ OpportunitySignals
 
-↓
-Python Deterministic Scoring
+↓ Python Deterministic Scoring
 
-↓
-Guardrails
+↓ Guardrails
 
-↓
-HIGH / MEDIUM / LOW
+↓ HIGH / MEDIUM / LOW
 
 The LLM currently evaluates:
 
@@ -912,16 +756,13 @@ author reach, when reliably available
 
 The exact Engagement Potential formula remains unresolved.
 
-For the current systemic Opportunity Workflow validation, the graph node
-temporarily uses:
+For the current systemic Opportunity Workflow validation, the graph node temporarily uses:
 
 DEFAULT_ENGAGEMENT_POTENTIAL = 50
 
-This is a neutral placeholder for workflow testing, not a production
-engagement formula or an observed metric.
+This is a neutral placeholder for workflow testing, not a production engagement formula or an observed metric.
 
-No engagement formula should be silently invented before real Scout data
-availability is validated.
+No engagement formula should be silently invented before real Scout data availability is validated.
 
 Scout Agent v0.1
 
@@ -947,29 +788,21 @@ The Scout follows the pattern:
 
 ScoutState
 
-↓
-decide_next_action()
+↓ decide_next_action()
 
-↓
-LLM
+↓ LLM
 
-↓
-Structured ScoutAction
+↓ Structured ScoutAction
 
-↓
-Python Executor
+↓ Python Executor
 
-↓
-Guardrails
+↓ Guardrails
 
-↓
-Tool Execution
+↓ Tool Execution
 
-↓
-Updated ScoutState
+↓ Updated ScoutState
 
-↓
-Next LLM Decision
+↓ Next LLM Decision
 
 The loop continues until:
 
@@ -1005,8 +838,7 @@ It can request actions only through the ScoutAction structured contract.
 
 Scout Deterministic Guardrails
 
-Python remains responsible for authorizing or rejecting requested
-actions.
+Python remains responsible for authorizing or rejecting requested actions.
 
 Current guardrails include:
 
@@ -1112,11 +944,9 @@ Scout tooling now supports both deterministic fake execution and bounded real-we
 
 Current runtime selector:
 
-WEB_TOOL_MODE=fake
-→ web_search + web_reader
+WEB_TOOL_MODE=fake → web_search + web_reader
 
-WEB_TOOL_MODE=real
-→ brave_search + http_reader
+WEB_TOOL_MODE=real → brave_search + http_reader
 
 The fake mode remains the automated-test default so pytest does not depend on live network access.
 
@@ -1538,19 +1368,7 @@ The first implementation should be deliberately simple: a live textual execution
 
 Example event classes include:
 
-SCOUT_STARTED;
-SEARCH_COMPLETED;
-CANDIDATE_FOUND;
-OPPORTUNITY_EVALUATED;
-RESEARCH_STARTED;
-SOURCE_READ;
-EVIDENCE_EXTRACTED;
-RESEARCH_COMPLETED;
-WRITER_STARTED;
-DRAFT_COMPLETED;
-EVALUATION_COMPLETED;
-HUMAN_APPROVAL_REQUIRED;
-controlled provider/tool failure events.
+SCOUT_STARTED; SEARCH_COMPLETED; CANDIDATE_FOUND; OPPORTUNITY_EVALUATED; RESEARCH_STARTED; SOURCE_READ; EVIDENCE_EXTRACTED; RESEARCH_COMPLETED; WRITER_STARTED; DRAFT_COMPLETED; EVALUATION_COMPLETED; HUMAN_APPROVAL_REQUIRED; controlled provider/tool failure events.
 
 The governing UX principle is:
 
@@ -1568,42 +1386,21 @@ Opportunity Routing Direction
 
 The current v0.1 routing behavior is established as:
 
-HIGH
-↓
-ACCEPTED_FOR_RESEARCH
-↓
-Research
-↓
-Writer
-↓
-Quality Evaluator
-↓
-PASS / REVISE / REJECT
+HIGH ↓ ACCEPTED_FOR_RESEARCH ↓ Research ↓ Writer ↓ Quality Evaluator ↓ PASS / REVISE / REJECT
 
-MEDIUM
-↓
-QUEUED
-↓
-END
+MEDIUM ↓ QUEUED ↓ END
 
-LOW
-↓
-END
+LOW ↓ END
 
-HIGH means the opportunity is approved to proceed into the integrated
-Research → Writer → Quality Evaluator path.
+HIGH means the opportunity is approved to proceed into the integrated Research → Writer → Quality Evaluator path.
 
-MEDIUM opportunities remain distinct from LOW opportunities. They are
-preserved in a lower-priority queued state without incurring Research
-cost.
+MEDIUM opportunities remain distinct from LOW opportunities. They are preserved in a lower-priority queued state without incurring Research cost.
 
 LOW opportunities terminate the Opportunity Workflow.
 
 Research is already integrated for HIGH opportunities, and Quality Evaluator now follows Writer in that path.
 
-The lifecycle of queued MEDIUM opportunities may be revisited later
-using real operational evidence, but the current v0.1 routing behavior
-is explicitly QUEUED.
+The lifecycle of queued MEDIUM opportunities may be revisited later using real operational evidence, but the current v0.1 routing behavior is explicitly QUEUED.
 
 Research Status
 
@@ -1611,9 +1408,7 @@ Research Capability v0.1 remains a bounded specialist capability with real seman
 
 Its responsibility remains:
 
-Given an approved opportunity,
-gather and promote the minimum evidence required
-to produce a factual and defensible contribution.
+Given an approved opportunity, gather and promote the minimum evidence required to produce a factual and defensible contribution.
 
 Research executes after HIGH Opportunity Evaluation and passes its structured ResearchBrief to Writer.
 
@@ -1737,13 +1532,11 @@ using an LLM for decisions that can be reliably deterministic;
 
 inventing objective engagement data;
 
-claiming the current fake Scout tools perform real LinkedIn
-discovery;
+claiming the current fake Scout tools perform real LinkedIn discovery;
 
 prematurely optimizing Opportunity Evaluation weights without data;
 
-implementing unrelated platform capabilities before the core
-workflow
+implementing unrelated platform capabilities before the core workflow
 
 becomes operational;
 
@@ -1795,11 +1588,9 @@ max_steps limits exploration.
 
 Scout → Opportunity Integration
 
-The integration boundary between Scout and Opportunity Evaluation is now
-established.
+The integration boundary between Scout and Opportunity Evaluation is now established.
 
-scout_node owns adaptation from ScoutState into
-LinkedInAgentState.
+scout_node owns adaptation from ScoutState into LinkedInAgentState.
 
 The current v0.1 cardinality contract is:
 
@@ -1809,8 +1600,7 @@ one candidate → continue to Opportunity Evaluation;
 
 multiple candidates → fail explicitly.
 
-This is a temporary boundary contract, not a final product rule for
-multi-opportunity handling.
+This is a temporary boundary contract, not a final product rule for multi-opportunity handling.
 
 Opportunity Routing
 
@@ -1824,8 +1614,7 @@ LOW → END.
 
 ACCEPTED_FOR_RESEARCH records the approval transition and now leads directly into the integrated Research capability.
 
-The later lifecycle of queued MEDIUM opportunities remains open to
-calibration.
+The later lifecycle of queued MEDIUM opportunities remains open to calibration.
 
 Structured Outputs
 
@@ -1969,8 +1758,7 @@ is the official development recovery mechanism for the project.
 
 Development Interaction Contract
 
-The following rules are part of the project's recoverable development
-context and must be preserved across development sessions.
+The following rules are part of the project's recoverable development context and must be preserved across development sessions.
 
 Repository and Execution Context
 
@@ -1980,16 +1768,13 @@ Operating system: Windows
 
 Shell: PowerShell
 
-Repository root:
-C:\Users\rods_\Desktop\AI - LAB\linkedin-agentic-ai-system
+Repository root: C:\Users\rods_\Desktop\AI - LAB\linkedin-agentic-ai-system
 
-Virtual environment:
-.venv
+Virtual environment: .venv
 
 Commands are normally executed from the repository root.
 
-Python modules under app/ must be invoked using Python module notation
-when -m is used.
+Python modules under app/ must be invoked using Python module notation when -m is used.
 
 Examples:
 
@@ -2003,8 +1788,7 @@ python -m app/scripts/smoke_e2e.py
 
 Test Execution Convention
 
-Tests should be executed through the active Python interpreter rather than
-depending directly on the pytest launcher executable.
+Tests should be executed through the active Python interpreter rather than depending directly on the pytest launcher executable.
 
 Preferred:
 
@@ -2014,8 +1798,7 @@ Full suite:
 
 python -m pytest
 
-This convention ensures pytest runs from the active project virtual
-environment and avoids Windows launcher/path inconsistencies.
+This convention ensures pytest runs from the active project virtual environment and avoids Windows launcher/path inconsistencies.
 
 Do not use:
 
@@ -2029,13 +1812,11 @@ Before proposing new production files, tests, imports, or commands:
 
 Respect the existing repository package structure captured by the audit.
 
-Do not invent directories or relocate existing capabilities without an
-explicit architectural decision.
+Do not invent directories or relocate existing capabilities without an explicit architectural decision.
 
 New capabilities should follow the established separation of concerns.
 
-Python packages created under app/ should include __init__.py where
-appropriate for explicit package semantics.
+Python packages created under app/ should include init.py where appropriate for explicit package semantics.
 
 Imports should be compatible with execution from the repository root.
 
@@ -2063,13 +1844,683 @@ Code suggestions must preserve the established project ownership model:
 
 LLM owns semantic interpretation and bounded semantic decisions;
 
-Python owns deterministic execution, state, authorization, limits,
-persistence, and factual contracts;
+Python owns deterministic execution, state, authorization, limits, persistence, and factual contracts;
 
 LangGraph owns workflow orchestration;
 
-external infrastructure must remain behind explicit tool/repository/service
-boundaries.
+external infrastructure must remain behind explicit tool/repository/service boundaries.
 
-A new development session should treat this contract as authoritative unless
-the current repository state explicitly supersedes it.
+A new development session should treat this contract as authoritative unless the current repository state explicitly supersedes it.
+
+CURRENT CHECKPOINT UPDATE — TOKEN GOVERNANCE & BEHAVIORAL CALIBRATION
+
+This section supersedes older status, baseline, WIP, test-count, and next-step declarations above where they conflict with the current repository state. Historical sections remain preserved because they document the architectural evolution of the project.
+
+Current Stable Baseline
+
+Last clean committed baseline before the current WIP:
+
+72002eb
+feat: add persistent interaction memory to scout
+
+Branch:
+
+main
+
+This commit supersedes the older 753df83 stable-baseline declaration retained in the historical context above.
+
+Current Test Baseline
+
+Current validated full regression suite:
+
+250 passed
+
+Canonical command:
+
+python -m pytest -q
+
+The current suite includes the previously established behavioral contracts plus Token Usage Observability instrumentation and Gap-Driven Research tests.
+
+Current WIP
+
+The current dirty working tree intentionally contains the next validated development increment on top of 72002eb.
+
+Primary capability areas:
+
+Token Usage Observability v0.1
+
+Implemented:
+
+run-scoped usage capture through a ContextVar-backed collector;
+
+LLM usage records by component and operation;
+
+input, output, total, cached-input, and reasoning token capture when available;
+
+LLM latency capture;
+
+context-usage records before and after preparation;
+
+aggregation by run and component;
+
+no-op behavior when telemetry capture is inactive;
+
+instrumentation across Scout, Opportunity Evaluator, Research, Writer, and Quality Evaluator;
+
+real E2E telemetry runner at app/scripts/run_with_usage.py.
+
+Current real E2E execution command:
+
+python -m app.scripts.run_with_usage
+
+Pricing is intentionally not hardcoded into telemetry. Model identity and observed usage are recorded as facts; mutable pricing should later be applied through configurable cost derivation.
+
+Gap-Driven Research / Lean Research Contract v0.1
+
+The Research contract now carries explicit semantic sufficiency information:
+
+material_gaps;
+
+next_research_goal;
+
+sufficiency_reason.
+
+The governing principle is:
+
+Evidence quantity alone does not determine sufficiency.
+
+After evidence exists, an additional SEARCH requires semantic justification through:
+
+at least one explicit material gap; and
+
+a concrete next research goal.
+
+The LLM continues to own semantic judgments about:
+
+claim coverage;
+
+source authority;
+
+independence;
+
+relevance;
+
+contradictions;
+
+unresolved material gaps;
+
+whether the available evidence is semantically sufficient.
+
+Python continues to own:
+
+action authorization;
+
+counters;
+
+hard ceilings;
+
+provenance;
+
+runtime status;
+
+tool execution;
+
+final factual state.
+
+The established evidence-promotion boundary remains unchanged:
+
+SEARCH → READ → EXTRACT → EvidenceItem → ResearchBrief
+
+No deterministic rule such as "two evidence items means sufficient" has been introduced.
+
+The existing hard Research ceilings remain runtime-owned.
+
+The new Gap-Driven Research behavior is covered by automated tests, but it has not yet received a post-change HIGH real E2E validation.
+
+Therefore no production token-saving claim should yet be made for the new Research contract.
+
+Rodrigo Voice Golden Set
+
+The Rodrigo Voice Golden Set remains a separate calibration artifact:
+
+docs/calibration/RODRIGO_VOICE_GOLDEN_SET.md
+
+The dataset now contains additional real human-vs-Agentic calibration evidence.
+
+Current interpretation:
+
+technical and semantic quality is already strong;
+
+the Writer still tends to produce more explanatory completeness than Rodrigo naturally prefers for LinkedIn comments;
+
+Rodrigo tends to preserve the central technical thesis while removing secondary detail;
+
+conversational professional positioning is preferred over white-paper-like exposition;
+
+Human publication preference remains the calibration ground truth;
+
+high automated voice_match alone is not sufficient evidence of publication readiness;
+
+the evidence is not yet mature enough to freeze a permanent Social Writing Contract.
+
+Token Governance Real Baseline
+
+The original expensive HIGH real E2E run established the main optimization target.
+
+Observed E2E usage:
+
+Total tokens: 104,783
+Input tokens: 100,904
+Output tokens: 3,879
+LLM calls: 22
+
+Research alone consumed approximately:
+
+75,474 total tokens
+14 LLM calls
+
+The Research loop reached:
+
+LIMIT_REACHED
+
+despite producing useful evidence and a final draft that passed Quality Evaluation.
+
+This mismatch between a short final social artifact and a large intermediate Research footprint is the empirical basis for the current Lean Research / Token Governance work.
+
+The existing context-preparation layer also demonstrated material value during this baseline. Observed external context was reduced from approximately:
+
+15,091 original tokens
+
+to:
+
+6,800 prepared tokens
+
+across the recorded Scout/Research READ contexts.
+
+The primary optimization target therefore remains the Research loop and semantic stopping behavior rather than removing the existing context-preparation boundary.
+
+E2E Behavioral Calibration Baseline
+
+A controlled natural battery of eight unchanged real-web E2E runs was completed.
+
+Detailed experimental record:
+
+docs/calibration/E2E_BEHAVIOR_BASELINE.md
+
+Consolidated results:
+
+Run
+
+Outcome
+
+Opportunity Score
+
+Research
+
+Total Tokens
+
+1
+
+HIGH
+
+83.45
+
+Yes → PASS
+
+104,783
+
+2
+
+NO_CANDIDATE_FOUND
+
+—
+
+No
+
+8,452
+
+3
+
+MEDIUM
+
+79.45
+
+No
+
+15,297
+
+4
+
+NO_CANDIDATE_FOUND
+
+—
+
+No
+
+5,160
+
+5
+
+MEDIUM
+
+79.75
+
+No
+
+16,889
+
+6
+
+MEDIUM
+
+79.60
+
+No
+
+16,350
+
+7
+
+NO_CANDIDATE_FOUND
+
+—
+
+No
+
+5,937
+
+8
+
+NO_CANDIDATE_FOUND
+
+—
+
+No
+
+4,514
+
+Observed distribution:
+
+HIGH: 1/8
+MEDIUM: 3/8
+NO_CANDIDATE_FOUND: 4/8
+
+The system did not force downstream Research/Writer execution when the opportunity threshold was not met.
+
+The natural repeated-run battery is now complete. Continuing to rerun Scout merely until a random HIGH appears would weaken experimental control and consume resources without resolving the main Research question.
+
+Interaction Memory — Live Behavioral Observation
+
+Repeated real runs produced behavior consistent with persistent cross-run URL novelty filtering.
+
+Previously consumed URLs were not observed being recycled as the next selected candidate.
+
+This strengthens the operational validation of Interaction Memory v0.1.
+
+Important limitation:
+
+Interaction Memory currently establishes URL-level identity, not semantic identity.
+
+Different URLs discussing the same thesis, event, article, or idea may still be treated as novel.
+
+Semantic duplicate detection remains future work.
+
+Opportunity Calibration Observation
+
+Three independent MEDIUM opportunities clustered immediately below the current HIGH threshold:
+
+79.45
+79.75
+79.60
+
+This is a meaningful calibration signal but is not sufficient evidence to lower the HIGH threshold.
+
+Across these cases, Topic Relevance and Positioning Fit remained high while Contribution Potential was the main limiting factor.
+
+Current hypothesis:
+
+The evaluator may be distinguishing correctly between content that is highly relevant to Rodrigo and content that offers a sufficiently differentiated contribution.
+
+The HIGH threshold remains unchanged pending broader evidence.
+
+Scout Search-Budget Hypothesis
+
+Repeated NO_CANDIDATE_FOUND outcomes create a new evidence-backed design question:
+
+Is the current Scout exploration budget too restrictive as persistent memory makes novel discovery progressively harder?
+
+This must not be confused with the Research ceiling:
+
+MAX_RESEARCH_STEPS = 10
+
+Before changing Scout limits, the system should distinguish and observe:
+
+raw SEARCH calls;
+
+READ calls;
+
+Scout semantic decisions;
+
+novelty retries;
+
+context growth;
+
+global Scout step ceilings.
+
+Architectural direction to evaluate:
+
+Adaptive Scout Search Budget
+
+Possible policy:
+
+bounded initial discovery
+→ if results are known/non-novel, permit targeted semantic reformulation
+→ remain selective about READ
+→ stop on strong candidate, repeated lack of novelty, or hard ceiling
+
+The principle is to be relatively generous with cheap discovery while remaining progressively stricter as operations become more expensive.
+
+No Scout budget value is changed by this checkpoint.
+
+Web / Tool Latency Observation
+
+Real E2E runs showed substantial variance in elapsed time outside captured LLM latency.
+
+Examples included runs with only a few seconds of remainder and others with more than 80–100 seconds.
+
+The current metric:
+
+workflow elapsed time - captured LLM latency
+
+must not be described as pure web latency.
+
+It may include:
+
+SEARCH latency;
+
+READ latency;
+
+provider/network delay;
+
+tool runtime;
+
+orchestration overhead;
+
+other uncaptured execution time.
+
+Future Web / Tool Latency Observability is justified, but it is not required to close the current checkpoint.
+
+Current Product Direction — LinkedIn Content Intelligence
+
+The product direction is now broader than a comment-only assistant.
+
+The target architecture should evolve toward a reusable LinkedIn Content Intelligence System with two primary content intents:
+
+COMMENT
+AUTHORIAL_POST
+
+The system should reuse the same core engine wherever appropriate:
+
+Discovery
+↓
+Opportunity Intelligence
+↓
+Research / Evidence
+↓
+Content-specific Writer
+↓
+Content-specific Quality Evaluation
+↓
+Human Review
+
+A discovery should eventually be classifiable into outcomes such as:
+
+IGNORE
+COMMENT
+AUTHORIAL_POST
+COMMENT + AUTHORIAL_POST
+SAVE_FOR_LATER
+
+This creates two connected entry paths rather than two isolated systems.
+
+A source discovered while searching for comment opportunities may reveal a stronger authorial-post opportunity.
+
+Research performed for an authorial post may reveal relevant external conversations worth commenting on.
+
+The two modes should use different writing and evaluation contracts.
+
+COMMENT intent
+
+Expected characteristics:
+
+shorter;
+
+conversational;
+
+directly contextual to another person's thesis;
+
+contribution-focused;
+
+lower acceptable research footprint;
+
+strong Rodrigo Voice calibration;
+
+avoid white-paper or mini-essay behavior.
+
+AUTHORIAL_POST intent
+
+Expected characteristics:
+
+longer;
+
+more structured;
+
+stronger narrative development;
+
+more formal where appropriate;
+
+capable of developing an original thesis;
+
+potentially larger evidence requirement;
+
+stronger opening/hook and argument progression;
+
+explicit authorial positioning.
+
+The long-term voice model should therefore be understood as:
+
+Rodrigo Voice
++
+Communication Context
+
+rather than one universal style for every social artifact.
+
+Golden Set evidence should eventually distinguish comment calibration from authorial-post calibration.
+
+Research as a Reusable Asset
+
+A new architectural principle is established for the future product direction:
+
+Research is a reusable product asset, not a disposable intermediate artifact.
+
+The future system should avoid automatically repeating equivalent research for every social artifact.
+
+Conceptual direction:
+
+Discovery
+↓
+Research Asset / Evidence
+↓
+Content Memory
+├── Comment
+├── Authorial Post
+├── Follow-up
+└── Future Idea
+
+This direction is aligned with Token Governance because validated evidence may support more than one downstream artifact.
+
+The exact persistence model for reusable Research/Evidence remains unresolved and must not be silently implemented without a dedicated design increment.
+
+Current Architectural Position
+
+The current system remains operationally comment-oriented.
+
+The new authorial-post direction is a product/architecture target, not an implemented capability.
+
+Existing production ownership remains:
+
+LLM → semantic interpretation and bounded semantic decisions
+Python → deterministic execution, authorization, state, limits, persistence, factual contracts
+LangGraph → workflow orchestration
+Human → final publication authority
+
+No autonomous LinkedIn publication or autonomous commenting is introduced.
+
+LinkedIn-native integration is still not implemented.
+
+Current Development Status
+
+Current increment:
+
+Token Governance v0.1
++
+Gap-Driven Research
++
+Usage Observability
++
+Behavioral / Voice Calibration
+
+Status:
+
+IMPLEMENTED
+TESTED
+250 PASSING TESTS
+REAL BEHAVIORAL BASELINE CAPTURED
+DOCUMENTATION CLOSURE IN PROGRESS
+CHECKPOINT COMMIT PENDING
+
+The current working tree should remain focused on closing this increment.
+
+Do not mix the future Authorial Post implementation, LinkedIn-native integration, model routing, or Web/Tool Latency instrumentation into this checkpoint.
+
+Immediate Checkpoint Closure
+
+Before committing the current increment:
+
+preserve docs/calibration/E2E_BEHAVIOR_BASELINE.md;
+
+update this PROJECT_CONTEXT.md;
+
+run the full regression suite:
+
+python -m pytest -q
+
+run:
+
+python app/scripts/project_audit.py
+
+validate snapshot integrity and context consistency;
+
+review git diff and git status;
+
+stage;
+
+commit;
+
+push.
+
+Next Planned Capability
+
+The next scientifically useful development step is not another uncontrolled Scout repetition.
+
+It is:
+
+Controlled Gap-Driven Research Validation
+
+Purpose:
+
+Compare the current Gap-Driven Research behavior with the original expensive Research baseline under a known HIGH opportunity.
+
+The controlled comparison should measure:
+
+Research LLM calls;
+
+input/output/total tokens;
+
+decision-prompt growth;
+
+terminal status;
+
+EvidenceItem quality and quantity;
+
+ResearchBrief size;
+
+latency;
+
+Writer/Evaluator quality if downstream execution is included.
+
+The production HIGH threshold must not be lowered merely to manufacture a Research run.
+
+After the controlled Research validation, reassess:
+
+Scout search-budget policy;
+
+Opportunity calibration evidence;
+
+Web/tool latency instrumentation priority.
+
+Only after the current Token Governance / Research calibration stage is closed should implementation begin on the generalized content-intent architecture for:
+
+COMMENT
+AUTHORIAL_POST
+
+and cross-pollination between both.
+
+Future Product Roadmap
+
+Current architectural sequence:
+
+1. Close Token Governance / calibration checkpoint
+2. Controlled Gap-Driven Research validation
+3. Scout search-budget calibration
+4. Generalized Content Intent / Opportunity architecture
+5. Authorial Post Pipeline v0.1
+6. Comment ↔ Authorial Post cross-pollination
+7. Context-specific Voice / Golden Sets
+8. LinkedIn-native discovery integration
+9. Human Review / publication workflow hardening
+10. Product-facing Agent Experience / observability
+
+This sequence is directional rather than a rigid delivery contract. Evidence from controlled validation may change ordering where justified.
+
+Local Development Command Rules
+
+Rodrigo develops this project on Windows using VS Code, PowerShell, and a project-local .venv.
+
+Python / pytest
+
+The canonical test command is python -m pytest, never bare pytest.
+
+For targeted tests, use:
+
+python -m pytest <test_path> -q
+
+For the full regression suite, use:
+
+python -m pytest -q
+
+When the PowerShell prompt already shows (.venv), do not provide an additional virtual-environment activation command unless there is evidence that the environment is not actually active.
+
+Do not shorten previously validated project commands merely for convenience.
+
+Prefer commands that explicitly use the active Python interpreter over Windows executable launchers such as pytest.exe.
+
+Treat these commands as part of the project's operational contract, not as stylistic preferences.
+
+Command Delivery
+
+Provide shell commands in separate code blocks.
+
+Commands must be directly executable from the repository root in the established Windows/PowerShell environment.
+
+Before proposing a command, preserve the project's already-established execution convention unless the current task specifically requires changing it.

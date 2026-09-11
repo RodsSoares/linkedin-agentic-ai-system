@@ -1,7 +1,10 @@
+from time import perf_counter
+
 from openai import OpenAI
 
 from app.config.settings import MODEL_NAME, OPENAI_API_KEY
 from app.prompts.evaluator import EVALUATOR_SYSTEM_PROMPT
+from app.telemetry.usage import record_openai_usage
 from app.schemas.evaluator import (
     EvaluationSignals,
     EvaluatorInput,
@@ -75,11 +78,19 @@ AVAILABLE RESEARCH:
 {research_context}
 """.strip()
 
+    started_at = perf_counter()
     response = client.responses.parse(
         model=MODEL_NAME,
         instructions=EVALUATOR_SYSTEM_PROMPT,
         input=user_content,
         text_format=EvaluationSignals,
+    )
+    record_openai_usage(
+        component="evaluator",
+        operation="evaluate",
+        model=MODEL_NAME,
+        response=response,
+        latency_ms=(perf_counter() - started_at) * 1000,
     )
 
     signals = response.output_parsed

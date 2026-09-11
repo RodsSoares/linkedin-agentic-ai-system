@@ -892,3 +892,55 @@ Rodrigo converts the same underlying reasoning into a shorter operational/archit
 No production prompt or Evaluator threshold should be changed solely because of this example.
 
 Continue evidence collection before consolidating the Social Writing Contract.
+
+## #4 — Bounded Autonomy / Agentic AI Risk
+
+### Context
+Comment on a discussion about agentic AI applied to business and operational workflows, focusing on the difference between autonomous execution and controlled, measurable autonomy.
+
+### AI Draft
+
+The key test is not whether an agent resolves more exceptions touchlessly, but whether it does so within authority and without creating downstream rework.
+
+For each workflow, the operating model needs to be explicit: permitted actions, approval limits, confidence thresholds, system-of-record ownership, rollback paths and escalation rules. Then measure against a baseline: manual touches, cycle time, exception aging, policy compliance, rework and post-action errors.
+
+That is how bounded autonomy becomes an execution capability rather than a faster way to automate risk.
+
+### Human Final — Rodrigo Voice
+
+Entendo que o principal questionamento não é simplesmente se um agente consegue resolver mais exceções sem intervenção humana, mas se consegue fazer isso dentro dos limites de sua autoridade e sem gerar retrabalho nas etapas futuras.
+
+O ideal é que cada fluxo de trabalho tenha um modelo operacional explícito: ações permitidas, limites e responsabilidades, mecanismos de rollback e regras de exceção e escalonamento. Depois, devemos medir os resultados comparando-os com uma base de referência.
+
+Acredito que é assim que a autonomia com limites se transforma em capacidade real de execução, em vez de se tornar uma maneira rápida de automatizar riscos.
+
+### Human Evaluation
+- Decision: ADJUSTED
+- Technical thesis: APPROVED
+- Voice match of AI draft: PARTIAL
+- Human final: APPROVED_FOR_GOLDEN_SET
+
+### Voice Calibration Signals
+
+- Prefer conversational positioning over thesis-like declarations.
+- Prefer opening with formulations such as "Entendo que..." when presenting an interpretation.
+- Prefer progressive argument construction rather than immediately asserting a universal conclusion.
+- Use "O ideal é..." naturally when moving from diagnosis to recommendation.
+- Use "Acredito que..." when closing with a reasoned personal conclusion.
+- Preserve technical vocabulary when useful, such as "rollback", without unnecessarily expanding the technical enumeration.
+- Prefer concise groups of operational concepts over exhaustive lists of metrics or controls.
+- Avoid making a LinkedIn comment sound like a technical report or academic mini-essay.
+- Maintain a strong conclusion, but frame it as professional reasoning rather than absolute authority.
+
+### Transformation Pattern
+
+AI draft:
+direct technical assertion → detailed operational specification → authoritative conclusion
+
+Rodrigo Voice:
+personal interpretation → practical operating principle → reasoned personal conclusion
+
+### Key Learning
+
+Rodrigo's voice does not reduce technical depth by removing the underlying reasoning. It reduces unnecessary technical density and changes the rhetorical stance: from "explaining the correct answer" to "contributing an experienced professional perspective to the discussion".
+

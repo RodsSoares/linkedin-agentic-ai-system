@@ -17,6 +17,7 @@ from app.schemas.research import (
 )
 from app.schemas.tools import ReadTool, SearchResult, SearchTool
 from app.tools.errors import WebToolError
+from app.telemetry.usage import record_context_usage
 
 
 MAX_RESEARCH_STEPS = 10
@@ -63,6 +64,7 @@ def run_research_loop(
 
         action = action_decider(state)
         state.decision_attempts += 1
+        _record_semantic_assessment(state=state, action=action)
 
         state = execute_research_action(
             state=state,
@@ -72,6 +74,27 @@ def run_research_loop(
         )
 
     return state
+
+
+def _record_semantic_assessment(
+    state: ResearchState,
+    action: ResearchAction,
+) -> None:
+    """Persist the LLM-owned gap assessment without turning it into a Python judgment."""
+    state.material_gaps = list(action.material_gaps)
+    state.next_research_goal = action.next_research_goal
+
+    if action.sufficiency_reason is not None:
+        state.sufficiency_reason = action.sufficiency_reason
+
+
+def _requires_gap_target_for_additional_search(state: ResearchState) -> bool:
+    """Require a gap target only after evidence exists.
+
+    getattr keeps this helper compatible with lightweight state doubles used by
+    recovery tests while preserving normal ResearchState behavior.
+    """
+    return bool(getattr(state, "evidence", []))
 
 
 def build_research_brief(
@@ -164,6 +187,21 @@ def _execute_search(
             "Choose another valid action."
         )
         return state
+
+    if _requires_gap_target_for_additional_search(state):
+        if not action.material_gaps:
+            state.last_error = (
+                "SEARCH after evidence extraction requires at least one explicit "
+                "material gap."
+            )
+            return state
+
+        if action.next_research_goal is None or not action.next_research_goal.strip():
+            state.last_error = (
+                "SEARCH after evidence extraction requires a specific "
+                "next_research_goal."
+            )
+            return state
 
     state.search_queries.append(query)
     state.search_count += 1
@@ -264,6 +302,13 @@ def _execute_read(
         raw_content,
         max_tokens=per_read_budget,
     )
+    record_context_usage(
+        component="research",
+        operation="read_context",
+        original_tokens=prepared.original_tokens,
+        prepared_tokens=prepared.prepared_tokens,
+        truncated=prepared.truncated,
+    )
 
     state.read_sources.append(
         ReadSource(
@@ -352,6 +397,8 @@ def _execute_finish(
         return state
 
     state.status = finish_status
+    state.sufficiency_reason = action.sufficiency_reason or action.reason
+    state.next_research_goal = None
     state.steps += 1
     state.last_error = None
 

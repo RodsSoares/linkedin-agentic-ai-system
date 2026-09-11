@@ -1,6 +1,8 @@
+from time import perf_counter
 from typing import Any, TypeVar
 
 from app.config.settings import MODEL_NAME
+from app.telemetry.usage import record_openai_usage
 from app.schemas.research import (
     ResearchAction,
     ResearchBrief,
@@ -23,6 +25,7 @@ def build_research_objective_with_llm(
         llm=llm,
         prompt=prompt,
         output_model=ResearchObjective,
+        operation="build_objective",
     )
 
 
@@ -36,6 +39,7 @@ def decide_research_action_with_llm(
         llm=llm,
         prompt=prompt,
         output_model=ResearchAction,
+        operation="decide_action",
     )
 
 
@@ -59,6 +63,7 @@ def build_research_brief_with_llm(
         llm=llm,
         prompt=prompt,
         output_model=ResearchBriefSynthesis,
+        operation="build_brief",
     )
 
     return ResearchBrief(
@@ -77,11 +82,20 @@ def _parse_structured_response(
     llm: Any,
     prompt: str,
     output_model: type[T],
+    operation: str,
 ) -> T:
+    started_at = perf_counter()
     response = llm.responses.parse(
         model=MODEL_NAME,
         input=prompt,
         text_format=output_model,
+    )
+    record_openai_usage(
+        component="research",
+        operation=operation,
+        model=MODEL_NAME,
+        response=response,
+        latency_ms=(perf_counter() - started_at) * 1000,
     )
 
     parsed = response.output_parsed
@@ -197,16 +211,40 @@ Important rules:
 - Prefer the minimum amount of research necessary.
 - Do not write the final LinkedIn contribution.
 
-Research progression policy:
-- SEARCH exists to discover candidate sources, not to accumulate queries.
-- If there is a plausibly relevant discovered result that has not been read,
-  prefer READ before another SEARCH.
+Gap-driven research policy:
+- SEARCH exists to resolve a concrete material evidence gap, not to accumulate
+  queries or links.
+- A material gap is something that still prevents one factual, relevant, and
+  defensible LinkedIn contribution. Do not treat every unanswered question as
+  material.
+- After evidence has been extracted, reassess the remaining material gaps
+  before requesting more research.
+- If there is a plausibly relevant discovered result that may resolve the
+  current gap and has not been read, prefer READ before another SEARCH.
 - If a read source contains useful support that has not yet been captured,
   prefer EXTRACT before another SEARCH or READ.
-- Use another SEARCH only when the currently discovered/read material cannot
-  address an important gap in the narrow research objective.
-- Once the evidence is sufficient for one defensible LinkedIn contribution,
-  choose FINISH rather than broadening the research.
+- Another SEARCH is justified only when you can identify a specific material
+  gap and state a concrete next_research_goal aimed at resolving it.
+- Refine the search query around that gap. Do not repeat broad searches merely
+  because more sources would feel safer.
+- Evidence quantity alone never determines sufficiency. One strong source may
+  still need corroboration; several weak or redundant sources may still be
+  insufficient. Judge relevance, authority, independence, claim coverage, and
+  contradictions semantically.
+- If repeated bounded attempts are not resolving a gap, do not keep spending
+  resources on generic variants. Either narrow the intended claim so the gap is
+  no longer material, or FINISH as INSUFFICIENT when the required claim cannot
+  be defended.
+- Once no material gap remains for one defensible LinkedIn contribution,
+  choose FINISH rather than broadening the research; use SUFFICIENT when the
+  collected evidence supports the narrow ResearchObjective.
+- For every action, populate material_gaps with only the gaps that remain
+  material to the intended defensible contribution.
+- For SEARCH or READ that continues the investigation, populate
+  next_research_goal with the single concrete gap-resolution goal for that next
+  step. Leave it null when no further research is justified.
+- Populate sufficiency_reason with a concise semantic assessment of why the
+  current evidence is or is not sufficient.
 - FINISH requires finish_status:
   - SUFFICIENT only when the collected evidence is enough to support the narrow
     ResearchObjective without requiring unsupported claims;
@@ -239,6 +277,11 @@ SOURCES ALREADY READ:
 EVIDENCE ALREADY EXTRACTED:
 {evidence}
 
+CURRENT GAP ASSESSMENT FROM THE PREVIOUS DECISION:
+material_gaps={state.material_gaps}
+next_research_goal={state.next_research_goal or "None"}
+sufficiency_reason={state.sufficiency_reason or "None"}
+
 CURRENT COUNTERS:
 steps={state.steps}
 decision_attempts={state.decision_attempts}
@@ -252,8 +295,11 @@ CURRENT STATUS:
 {state.status.value if state.status is not None else "RUNNING"}
 
 Return one ResearchAction.
-For FINISH, populate finish_status with SUFFICIENT or INSUFFICIENT.
+For FINISH, populate finish_status with SUFFICIENT or INSUFFICIENT and leave
+next_research_goal null.
 For non-FINISH actions, leave finish_status null.
+After evidence exists, any new SEARCH must include at least one material gap and
+a specific next_research_goal.
 """.strip()
 
 

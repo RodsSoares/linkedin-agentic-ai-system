@@ -2,7 +2,7 @@
 
 A controlled agentic AI system for discovering high-value LinkedIn interaction opportunities, gathering evidence, drafting contributions, evaluating quality, and preserving human publication authority.
 
-**Current stage:** active development. Real Web Tooling v0.1, Context Preparation v0.1, and Main Content Extraction v0.2.1 are implemented and validated with a **189-test automated baseline**. The next planned increment is **End-to-End Real Workflow Validation v0.1 — Controlled Live Path**.
+**Current stage:** Token Governance v0.1, Token Usage Observability, Interaction Memory v0.1, and Gap-Driven Research are implemented and validated with a **250-test automated baseline**. An **8-run real-web E2E behavioral baseline** has been captured. The next planned increment is **Controlled Gap-Driven Research Validation** against a known HIGH opportunity.
 
 ## Architecture Overview
 
@@ -155,8 +155,8 @@ Scout is a bounded agentic loop responsible for discovering potentially valuable
 Its action vocabulary is:
 
 ```text
-```text
-`SEARCH` · `READ` · `SELECT` · `FINISH`
+SEARCH · READ · SELECT · FINISH
+```
 
 The internal loop follows:
 
@@ -916,7 +916,133 @@ Frontier models should be reserved for tasks where their additional reasoning ca
 
 Deterministic logic, bounded context, and cheaper models should be preferred whenever they can satisfy the requirement reliably.
 
-This principle is expected to evolve into broader token governance and model-routing capabilities as the system matures.
+This principle has now evolved into an initial **Token Governance v0.1** capability with run-scoped usage observability across the main LLM and context boundaries. Model routing remains a future capability.
+
+## Interaction Memory
+
+Scout now includes persistent Interaction Memory backed by SQLite.
+
+The current memory layer records canonical URL-level interaction history so previously consumed material can be filtered across executions.
+
+Its current purpose includes:
+
+```text
+cross-run URL identity
+    ↓
+persistent visited/selected history
+    ↓
+novelty filtering
+    ↓
+reduced recycling of previously consumed opportunities
+```
+
+Successful READ operations can persist a visited interaction, and selected candidates can be promoted to a selected interaction state.
+
+The memory boundary is intentionally deterministic and persistent.
+
+Current limitation:
+
+**URL-level novelty is not semantic novelty.**
+
+Different URLs discussing the same thesis, event, article, or idea may still be treated as distinct. Semantic duplicate detection remains future work.
+
+## Token Usage Observability
+
+The system now includes run-scoped telemetry for LLM and prepared-context usage.
+
+Observed LLM fields can include:
+
+```text
+component
+operation
+model
+input tokens
+output tokens
+total tokens
+cached input tokens
+reasoning tokens
+latency
+```
+
+Context telemetry records:
+
+```text
+component
+operation
+original tokens
+prepared tokens
+truncated
+```
+
+Instrumentation currently covers the main boundaries across:
+
+- Scout;
+- Opportunity Evaluation;
+- Research;
+- Writer;
+- Quality Evaluation.
+
+A real workflow can be executed with telemetry using:
+
+```powershell
+python -m app.scripts.run_with_usage
+```
+
+Telemetry is designed to remain a no-op when capture is inactive.
+
+Model pricing is intentionally not hardcoded into the observed usage records. Cost derivation should remain configurable because pricing is mutable.
+
+## Gap-Driven Research
+
+The Research contract now carries explicit semantic sufficiency information:
+
+```text
+material_gaps
+next_research_goal
+sufficiency_reason
+```
+
+The governing rule is:
+
+> **Evidence quantity alone does not determine sufficiency.**
+
+Once evidence exists, an additional SEARCH requires explicit semantic justification through at least one material gap and a concrete next research goal.
+
+The LLM remains responsible for semantic judgments such as:
+
+- claim coverage;
+- source authority;
+- independence;
+- relevance;
+- contradictions;
+- unresolved material gaps;
+- semantic sufficiency.
+
+Python remains responsible for:
+
+- authorization;
+- counters;
+- hard limits;
+- provenance;
+- runtime status;
+- tool execution;
+- factual state.
+
+The evidence chain remains unchanged:
+
+```text
+SEARCH
+  ↓
+READ
+  ↓
+EXTRACT
+  ↓
+EvidenceItem
+  ↓
+ResearchBrief
+```
+
+No deterministic rule such as “two evidence items means sufficient” is used.
 
 ## Tech Stack
 
@@ -946,7 +1072,7 @@ The architecture intentionally keeps search and read interfaces provider-neutral
 
 The current automated baseline is:
 
-189 passing tests
+250 passing tests
 
 The suite covers behavior across areas including:
 
@@ -992,7 +1118,17 @@ Research per-read and cumulative context boundaries;
 
 main-content extraction;
 
-content-density extraction.
+content-density extraction;
+
+persistent Interaction Memory and canonical URL identity;
+
+Scout cross-run novelty behavior;
+
+Token Usage Observability and context-usage telemetry;
+
+Gap-Driven Research semantic contracts and authorization;
+
+usage instrumentation across Scout, Opportunity Evaluation, Research, Writer, and Quality Evaluation.
 
 Automated tests are designed not to depend on live OpenAI or live web calls where deterministic isolation is more appropriate.
 
@@ -1025,48 +1161,145 @@ Research Evidence Provenance
 Human Publication Boundary
 Project Audit / Recovery Discipline
 
+Interaction Memory v0.1
+
+Token Usage Observability v0.1
+
+Gap-Driven Research / Lean Research Contract v0.1
+
+Real-Web E2E Behavioral Calibration Baseline (8 runs)
+
 ### Intentionally incomplete
 
 Full production LinkedIn discovery
 Reliable LinkedIn engagement metadata
 Objective Engagement Potential formula
 Multiple-candidate orchestration
-Production-grade observability
+Production-grade operational observability beyond current token/context telemetry
 Production deployment architecture
-Long-term model routing / token governance
+Dynamic model routing / advanced token governance
 Calibration from real-world outcomes
-Fully validated real end-to-end workflow
+Post-change controlled HIGH validation of Gap-Driven Research
 Autonomous publication — intentionally excluded
 
 ## Next Development Increment
 
 The next planned capability is:
 
-End-to-End Real Workflow Validation v0.1
+**Controlled Gap-Driven Research Validation**
 
-The objective is to validate the integrated path with real external tooling and real model behavior across the workflow boundary rather than validating Scout and Research only through isolated smoke tests.
+The purpose is to compare the current Gap-Driven Research behavior against the original expensive Research baseline using a known HIGH opportunity under controlled conditions.
 
-Conceptually:
+The comparison should measure:
 
 ```text
-Real discovery
+Research LLM calls
     ↓
-Scout
+Input / output / total tokens
     ↓
-Opportunity Evaluation
+Decision-prompt growth
     ↓
-HIGH
+Terminal Research status
     ↓
-Research
+EvidenceItem quality and quantity
     ↓
-Writer
+ResearchBrief size
     ↓
-Quality Evaluation
+Latency
     ↓
-Human / END boundary
+Writer / Evaluator quality when downstream execution is included
 ```
 
-The validation should preserve all existing guardrails and make failures observable rather than bypassing them for the sake of a successful demo.
+The production HIGH threshold must not be lowered merely to manufacture a Research run.
+
+The original HIGH baseline consumed approximately **104,783 total E2E tokens**, of which Research consumed approximately **75,474 tokens across 14 LLM calls** and ended in `LIMIT_REACHED` despite producing useful evidence and a draft that later passed Quality Evaluation.
+
+The new Gap-Driven Research contract is automated-test validated, but it has **not yet received a post-change HIGH real E2E validation**. No token-saving claim should therefore be treated as established until this controlled comparison is completed.
+
+### Behavioral Calibration Baseline
+
+Eight unchanged real-web E2E runs were captured as a behavioral baseline:
+
+| Outcome | Runs |
+|---|---:|
+| HIGH | 1 / 8 |
+| MEDIUM | 3 / 8 |
+| NO_CANDIDATE_FOUND | 4 / 8 |
+
+The three MEDIUM opportunities clustered at:
+
+```text
+79.45
+79.75
+79.60
+```
+
+This is a calibration signal, not sufficient evidence to lower the current HIGH threshold of 80.
+
+The detailed experimental record is maintained in:
+
+```text
+docs/calibration/E2E_BEHAVIOR_BASELINE.md
+```
+
+### Current Calibration Questions
+
+The behavioral baseline created three evidence-backed follow-up questions:
+
+1. whether Scout should eventually use an adaptive search budget as persistent memory makes novel discovery progressively harder;
+2. whether web/tool latency should be instrumented separately from LLM latency;
+3. whether the 79.x MEDIUM cluster represents healthy differentiation filtering or requires later opportunity-score calibration.
+
+These are hypotheses for later increments. They do not change current production behavior.
+
+### Future Product Direction — LinkedIn Content Intelligence
+
+The current implemented workflow remains comment-oriented.
+
+The longer-term architecture is expected to evolve toward two related content intents:
+
+```text
+COMMENT
+AUTHORIAL_POST
+```
+
+These should share the same core intelligence where appropriate:
+
+```text
+Discovery
+    ↓
+Opportunity Intelligence
+    ↓
+Research / Evidence
+    ↓
+Content-specific Writer
+    ↓
+Content-specific Quality Evaluation
+    ↓
+Human Review
+```
+
+A future discovery may therefore be classified into outcomes such as:
+
+```text
+IGNORE
+COMMENT
+AUTHORIAL_POST
+COMMENT + AUTHORIAL_POST
+SAVE_FOR_LATER
+```
+
+This direction is **architectural roadmap, not current implemented behavior**.
+
+The two modes should use different writing and evaluation contracts. Comments should remain concise, contextual, and conversational; authorial posts may support longer argument development, stronger narrative structure, and a larger evidence requirement.
+
+A related future principle is:
+
+> **Research should become a reusable product asset rather than a disposable intermediate artifact.**
+
+Validated evidence may eventually support comments, authorial posts, follow-ups, and future ideas without automatically repeating equivalent Research work.
+
+Human publication authority remains mandatory in both modes.
 
 ## Known Limitations
 
@@ -1086,11 +1319,11 @@ main-content extraction is heuristic and is not intended to solve every webpage 
 
 the real search adapter currently depends on Brave Search, although the internal contract is provider-neutral;
 
-production-grade cost, latency, and decision telemetry are not yet complete;
+token/context usage telemetry is implemented, while production-grade tool latency, cost derivation, and broader decision observability remain incomplete;
 
 cloud deployment architecture is not yet established;
 
-the complete real workflow still requires explicit end-to-end validation.
+the current Gap-Driven Research contract still requires a controlled post-change HIGH validation.
 
 These limitations are documented rather than hidden because the project is being developed as a sequence of validated capabilities.
 
@@ -1191,6 +1424,23 @@ Development recovery context is maintained separately in:
 docs/context/PROJECT_CONTEXT.md
 
 This separation prevents the README from becoming the sole source of architectural truth while keeping the repository understandable to a new reader.
+
+### Calibration Documentation
+
+Behavioral and human-calibration evidence is maintained separately from the architecture documentation.
+
+Current calibration artifacts include:
+
+```text
+docs/calibration/E2E_BEHAVIOR_BASELINE.md
+docs/calibration/RODRIGO_VOICE_GOLDEN_SET.md
+```
+
+`E2E_BEHAVIOR_BASELINE.md` preserves the repeated real-web execution evidence used for Scout, Opportunity, Token Governance, and Research calibration.
+
+`RODRIGO_VOICE_GOLDEN_SET.md` preserves real AI-draft vs human-publication-preference examples for future voice calibration.
+
+These artifacts are evidence sources, not executable production contracts.
 
 ## Project Philosophy
 
