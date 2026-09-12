@@ -2818,3 +2818,668 @@ final Human / END boundary.
 If direct LinkedIn reading fails, that failure should be treated as evidence about the LinkedIn-native acquisition limitation rather than bypassed by weakening the existing web-security or provenance contracts.
 
 No autonomous publication is introduced.
+
+CURRENT CHECKPOINT UPDATE — EDITORIAL CALIBRATION + PUBLIC WEB DISCOVERY DIRECTION
+
+This section supersedes older status, WIP, calibration-next-step, LinkedIn-integration, and roadmap declarations above where they conflict with the current project state.
+
+Checkpoint Scope
+
+The current checkpoint consolidates three connected developments:
+
+successful real Target Content execution against a public LinkedIn post;
+
+Editorial Preference / Editorial Rewrite experimental calibration through v0.2.2;
+
+a product-direction decision to prioritize real opportunity discovery through public web sources before adding authenticated LinkedIn integration.
+
+The checkpoint deliberately does not introduce autonomous LinkedIn publication.
+
+Human publication authority remains mandatory.
+
+Real Target Content Validation — Completed
+
+The first controlled real LinkedIn-native target validation was successfully executed against a known public LinkedIn URL.
+
+Observed end-to-end path:
+
+Real LinkedIn URL
+↓
+Target Content Loader
+↓
+PostCandidate
+↓
+Opportunity Evaluation
+↓
+HIGH
+↓
+Research
+↓
+Writer
+↓
+Quality Evaluator
+↓
+PASS
+↓
+Human Review
+↓
+Manual LinkedIn publication
+
+The real target produced:
+
+opportunity_score = 81.9
+classification = HIGH
+research_status = SUFFICIENT
+quality_decision = PASS
+
+Quality signals:
+
+factual_accuracy = 96
+relevance = 98
+voice_match = 96
+
+The current public reader was able to read the target LinkedIn URL in this case.
+
+Observed ingestion debt:
+
+author metadata was not reliably parsed and remained Unknown;
+
+extracted post content included comments / LinkedIn boilerplate in addition to the main post.
+
+These limitations did not block the controlled end-to-end validation.
+
+The successful case is evidence that public LinkedIn content can sometimes be acquired through the existing bounded public reader.
+
+It is not evidence that all LinkedIn content is publicly readable.
+
+First Real Published Human-Final Calibration Case
+
+The first real Target Content case produced a technically strong Agentic draft which Rodrigo subsequently edited and manually published.
+
+This established a real:
+
+agentic_draft
+→ human_final
+→ published
+
+calibration example.
+
+The important product lesson is:
+
+semantic quality != publication preference
+
+A draft may be:
+
+factually grounded;
+
+relevant;
+
+professionally strong;
+
+semantically correct;
+
+highly rated by the existing Quality Evaluator;
+
+and still be something Rodrigo would materially edit or even discard.
+
+The current Golden Set therefore remains calibration evidence rather than a permanent universal writing specification.
+
+Human publication judgment remains the strongest available editorial ground truth.
+
+Editorial Preference Capability — Experimental Baseline v0.2.2
+
+The project now contains an isolated Editorial Preference capability for COMMENT content.
+
+Current schema dimensions include:
+
+central_thesis_focus
+contribution_density
+conversational_naturalness
+selective_evidence_use
+stopping_discipline
+front_loaded_value
+synthetic_completeness_risk
+publication_likelihood
+
+Structured semantic output includes:
+
+core_thesis
+must_preserve_elements
+optional_support_elements
+remove_or_compress_elements
+editorial_reason
+decision = PASS | ADJUST
+
+v0.2.2 Semantic Policy
+
+Current experimental policy establishes:
+
+CORE THESIS
+= exactly one dominant professional contribution
+
+MUST PRESERVE
+= minimum semantic content required for that thesis to survive
+
+OPTIONAL SUPPORT
+= useful but non-essential supporting material
+
+REMOVE OR COMPRESS
+= material whose marginal contribution is insufficient for the current social context
+
+must_preserve_elements must not retain an entire rich sentence merely because one semantic fragment inside it is necessary.
+
+The counterfactual test is:
+
+"If this meaning is removed, does the core thesis still survive intact?"
+
+If yes, the element is not mandatory.
+
+Answer-First / Front-Loaded Value
+
+The current experimental evaluator also measures:
+
+front_loaded_value
+
+This is not a rigid rule that every comment must begin with a conclusion.
+
+The intended question is:
+
+If the reader consumes only the opening block,
+has the main professional contribution already been delivered?
+
+This reflects two observations:
+
+executive communication often benefits from answer-first information ordering;
+
+LinkedIn comments may be visually truncated behind Show more.
+
+This remains a contextual editorial signal rather than a universal deterministic writing rule.
+
+Editorial Rewrite Capability — Experimental
+
+An isolated Editorial Rewrite capability exists.
+
+Its responsibility is:
+
+original Agentic draft
++
+Editorial Preference Evaluation
++
+same ResearchBrief
++
+bounded calibration context
+↓
+revised publication candidate
+
+The rewrite must not:
+
+rerun Research;
+
+invent new factual claims;
+
+alter Research evidence;
+
+infer a hidden Human Final;
+
+publish autonomously;
+
+replace Human Review.
+
+The capability was experimentally validated against the real Target Content case.
+
+Current Focused Test Baseline
+
+The current focused Editorial Preference / Editorial Rewrite regression suite passes:
+
+43 passed
+
+Canonical focused command:
+
+python -m pytest tests/test_editorial_preference_schema.py tests/test_editorial_preference_evaluator.py tests/test_editorial_preference_semantic.py tests/test_editorial_rewrite.py -q
+
+This is a focused regression result.
+
+A new full-suite test count must be captured before checkpoint commit.
+
+Do not infer the current full-suite count from the older 255-test Target Content checkpoint.
+
+v0.2.2 Real Semantic Experiment
+
+The v0.2.2 experiment materially improved semantic decomposition.
+
+The evaluator correctly reduced the core thesis to:
+
+Before automation, evaluate whether a process step may simply not need to exist.
+
+The mandatory semantic content was reduced to:
+
+Evaluate whether a step can be eliminated before automation.
+
+Previously over-preserved material such as:
+
+client / control / compliance
+flow-level metrics
+lead time
+rework
+first-pass quality
+
+was correctly moved into optional support.
+
+The evaluator also changed the real case from the earlier permissive PASS behavior to:
+
+ADJUST
+
+which better matches the observed Human action.
+
+However, the Rewrite still selected a formulation Rodrigo would probably discard.
+
+The model preferred a technically coherent path centered on:
+
+eliminate the step
++
+client / control / compliance
+
+while Rodrigo's actual editorial choice preserved a different compact mechanism:
+
+understand whether the process makes sense
++
+map / eliminate / combine / rearrange / simplify
+
+This is a critical calibration result.
+
+Calibration Strategy Decision — Stop Post-Specific Prompt Tuning
+
+The project should not continue manually hardcoding increasingly specific writing behavior around the same post.
+
+Reason:
+
+Editorial preference is contextual.
+
+It may vary by:
+
+source post;
+
+objective;
+
+subject;
+
+target audience;
+
+discussion style;
+
+professional context;
+
+desired positioning;
+
+available research;
+
+interaction type.
+
+A perfect static prompt is not the target architecture.
+
+The v0.2.2 prompt should therefore be treated as an experimental baseline, not endlessly tuned against the same single case.
+
+The latest evidence strengthens this principle:
+
+Rodrigo Voice is not a prompt.
+It is an editorial decision function learned from real choices.
+
+Next Calibration Architecture — Human Feedback Learning
+
+The long-term calibration direction is now:
+
+Opportunity
+↓
+Research
+↓
+Writer proposes Agentic Draft
+↓
+Human reviews / edits / rejects
+↓
+Human Final + publication outcome
+↓
+Feedback Capture
+↓
+Preference Memory
+↓
+future context-sensitive retrieval
+
+The system should learn from:
+
+PUBLISHED AS-IS
+EDITED + PUBLISHED
+DISCARDED
+
+rather than relying only on abstract manually authored prompt rules.
+
+Planned Human Feedback Learning Record
+
+Future contract direction:
+
+HumanEditLearningRecord
+
+case_id
+content_intent
+source_context
+objective
+
+agentic_draft
+human_final
+publication_outcome
+
+preserved_meanings
+removed_meanings
+added_meanings
+reordered_meanings
+
+tone_shift
+density_shift
+opening_shift
+closing_shift
+
+likely_editorial_preference
+confidence
+
+The record should describe observed editorial transformation.
+
+It must not convert one edit into a universal deterministic rule.
+
+Preference Memory
+
+Future Preference Memory should preserve calibration cases and distinguish:
+
+GLOBAL PREFERENCE
+recurring patterns observed across many cases
+
+CONTEXTUAL PREFERENCE
+patterns relevant only to specific situations
+
+Calibration Retrieval
+
+Before future generation / rewriting, the system should eventually retrieve a small number of contextually similar previous cases.
+
+Conceptual direction:
+
+new opportunity
+↓
+context / objective / topic / interaction type
+↓
+retrieve relevant prior calibration cases
+↓
+Writer / Rewrite receives bounded examples
+↓
+Human Review
+
+No vector database, embeddings architecture, or retrieval implementation is approved by this checkpoint alone.
+
+The immediate need is to collect real interaction evidence first.
+
+LinkedIn Integration Decision
+
+The project's goal is not autonomous LinkedIn publication.
+
+Manual publication remains acceptable and desirable.
+
+Therefore a LinkedIn write API currently provides little product value.
+
+The important unresolved side of the workflow is:
+
+LinkedIn / public professional discussion
+↓
+find real opportunities
+↓
+prioritize
+↓
+research
+↓
+draft
+↓
+Human
+↓
+manual publication
+
+The project should therefore prioritize discovery, not publication automation.
+
+Public Web Discovery Strategy — Approved Next Direction
+
+The selected intermediate strategy is:
+
+Public Web Sources + Search
+
+before implementing authenticated LinkedIn browsing.
+
+The hypothesis to test is:
+
+Public web search/read may provide enough real LinkedIn opportunity coverage
+to make authenticated LinkedIn integration unnecessary for the current product.
+
+The project should prove or refute this empirically.
+
+Target Discovery Architecture
+
+Public Web Search
+↓
+LinkedIn / professional-content result discovery
+↓
+URL filtering / deduplication
+↓
+bounded public reader
+↓
+content normalization
+↓
+PostCandidate[]
+↓
+Opportunity Evaluation
+↓
+ranked opportunities
+↓
+Research
+↓
+Writer
+↓
+Human Review
+↓
+manual publication
+
+The existing PostCandidate boundary remains the convergence contract.
+
+Potential source architecture:
+
+LinkedInSourceAdapter
+├── public_web
+├── manual_target
+└── browser_authenticated   # future only if justified
+
+Every legitimate source adapter should converge into the same factual PostCandidate contract.
+
+Input origin must not silently become downstream behavioral policy.
+
+Public Web Discovery v0.1 — Measurement Before Architecture Expansion
+
+The next development increment is:
+
+LinkedIn Discovery v0.1 — Public Web Sources
+
+The goal is not to build a crawler.
+
+The goal is to determine whether bounded public search/read can reliably produce useful real LinkedIn opportunities.
+
+Initial search strategy may use explicit topic / domain queries such as:
+
+site:linkedin.com/posts "agentic AI"
+site:linkedin.com/posts "process automation"
+site:linkedin.com/posts "AI transformation"
+site:linkedin.com/posts "supply chain" "AI"
+site:linkedin.com/posts "business process" automation
+
+Actual query construction should reuse the existing Scout / SearchTool architecture where possible rather than create a parallel search system.
+
+Before final implementation contracts are frozen, inspect the current:
+
+app/tools/web_tools.py
+app/agents/scout.py
+app/schemas/scout.py
+
+to reuse existing interfaces and ownership boundaries.
+
+Public Web Discovery Evaluation Metrics
+
+Authenticated LinkedIn browsing should only be added if public-web evidence demonstrates a meaningful gap.
+
+The first public discovery experiments should capture:
+
+Discovery Coverage
+
+How many genuinely relevant LinkedIn / professional-content opportunities are found?
+
+Readability Rate
+
+How many discovered public results can the bounded reader successfully retrieve?
+
+Normalization Quality
+
+How reliably can the system extract:
+
+canonical URL
+main post/content text
+author identity when actually observable
+source identity
+
+without inventing metadata?
+
+Opportunity Yield
+
+How many normalized candidates become:
+
+MEDIUM
+HIGH
+
+under the existing Opportunity Evaluation policy?
+
+These metrics should drive the future authentication decision.
+
+Authenticated LinkedIn Browsing — Deferred Decision
+
+Do not implement authenticated browser / session infrastructure merely because it is technically possible.
+
+A future authenticated source layer is justified only if public discovery materially fails in areas such as:
+
+coverage
+readability
+content freshness
+relevant feed access
+author / post availability
+
+If public web search/read produces sufficient opportunity quality and volume, the authenticated LinkedIn communication layer may be omitted entirely.
+
+This is a deliberate complexity-avoidance decision.
+
+Publication Policy
+
+Publication remains manual.
+
+The current system may:
+
+discover;
+
+score;
+
+research;
+
+draft;
+
+evaluate;
+
+rewrite;
+
+learn from Human feedback.
+
+It must not autonomously:
+
+post;
+
+comment;
+
+react;
+
+message;
+
+impersonate Human approval.
+
+The Human remains the final publication boundary.
+
+Current Architectural Ownership
+
+The established architecture remains:
+
+LLM
+→ semantic interpretation, drafting, and bounded semantic judgment
+
+Python
+→ deterministic execution, validation, limits, state, persistence, provenance, and policy enforcement
+
+LangGraph
+→ workflow orchestration
+
+Human
+→ final publication authority
+
+The principle remains:
+
+Context != Policy
+
+Calibration examples provide context/evidence.
+
+Critical runtime behavior, limits, source rules, publication authority, and future learned-preference application must remain explicitly governed.
+
+Immediate Checkpoint Closure
+
+Before commit:
+
+place the updated calibration / context files in their repository paths;
+
+run the full regression suite;
+
+run the project audit;
+
+inspect the audit and confirm Snapshot Integrity;
+
+inspect git status --short;
+
+stage only the intended checkpoint files;
+
+commit;
+
+push only after the checkpoint is validated.
+
+Canonical commands remain:
+
+python -m pytest -q
+
+and:
+
+python app/scripts/project_audit.py
+
+The audit-generated exact HEAD, test count, working-tree state, and snapshot integrity should be treated as the final factual checkpoint evidence.
+
+Next Planned Capability
+
+After this checkpoint is committed:
+
+LinkedIn Discovery v0.1 — Public Web Sources
+
+Development sequence:
+
+inspect existing SearchTool / Scout / PostCandidate contracts
+↓
+define discovery measurement contract
+↓
+implement bounded public discovery
+↓
+normalize candidates into PostCandidate[]
+↓
+measure coverage / readability / normalization / opportunity yield
+↓
+decide whether authenticated LinkedIn browsing has demonstrated product value
+
+Human Feedback Learning / Preference Memory remains an approved calibration direction, but real opportunity discovery takes priority so that future calibration data comes from genuine interactions rather than repeated tuning against one post.
