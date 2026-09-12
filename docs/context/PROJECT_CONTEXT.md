@@ -2480,16 +2480,25 @@ Future Product Roadmap
 
 Current architectural sequence:
 
-1. Close Token Governance / calibration checkpoint
-2. Controlled Gap-Driven Research validation
-3. Scout search-budget calibration
-4. Generalized Content Intent / Opportunity architecture
-5. Authorial Post Pipeline v0.1
-6. Comment ↔ Authorial Post cross-pollination
-7. Context-specific Voice / Golden Sets
-8. LinkedIn-native discovery integration
-9. Human Review / publication workflow hardening
-10. Product-facing Agent Experience / observability
+Close Token Governance / calibration checkpoint
+
+Controlled Gap-Driven Research validation
+
+Scout search-budget calibration
+
+Generalized Content Intent / Opportunity architecture
+
+Authorial Post Pipeline v0.1
+
+Comment ↔ Authorial Post cross-pollination
+
+Context-specific Voice / Golden Sets
+
+LinkedIn-native discovery integration
+
+Human Review / publication workflow hardening
+
+Product-facing Agent Experience / observability
 
 This sequence is directional rather than a rigid delivery contract. Evidence from controlled validation may change ordering where justified.
 
@@ -2524,3 +2533,288 @@ Provide shell commands in separate code blocks.
 Commands must be directly executable from the repository root in the established Windows/PowerShell environment.
 
 Before proposing a command, preserve the project's already-established execution convention unless the current task specifically requires changing it.
+
+CURRENT CHECKPOINT UPDATE — TARGET CONTENT INPUT v0.1
+
+This section supersedes older status, WIP, test-count, and next-step declarations above where they conflict with the current repository state.
+
+Current Stable Baseline
+
+Current committed HEAD:
+
+07cb91e
+feat: add token governance and gap-driven research
+
+Branch:
+
+main
+
+This commit closes the preceding Token Governance / Gap-Driven Research checkpoint and is the recoverable baseline for the current Target Content Input work.
+
+Current Test Baseline
+
+Current validated full regression suite:
+
+255 passed
+
+Canonical command:
+
+python -m pytest -q
+
+The full pre-existing behavioral suite remains green after introducing the Target Content Input path.
+
+Current Development Increment
+
+Target Content Input v0.1
+
+Purpose:
+
+Provide a deliberate second entry path for known content that Rodrigo explicitly wants the system to evaluate, without forcing Scout to rediscover a predetermined target.
+
+The architectural distinction is:
+
+AUTO
+
+Scout
+↓
+PostCandidate
+↓
+Opportunity Evaluation
+↓
+Research
+↓
+Writer
+↓
+Quality Evaluator
+↓
+Human / END
+
+TARGET / MANUAL
+
+LinkedIn URL
+↓
+Target Content Loader
+↓
+PostCandidate
+↓
+Opportunity Evaluation
+↓
+Research
+↓
+Writer
+↓
+Quality Evaluator
+↓
+Human / END
+
+The central boundary rule is:
+
+Both discovery paths converge on the existing PostCandidate contract.
+
+From PostCandidate onward, downstream components must remain agnostic to whether the candidate originated from Scout or from a manually supplied target URL.
+
+Implemented
+
+A new input boundary exists under:
+
+app/inputs/target_content.py
+
+The Target Content Loader:
+
+accepts an explicitly supplied target URL;
+
+normalizes surrounding URL whitespace before use;
+
+rejects an empty URL before attempting external reading;
+
+uses the existing bounded content-reading/preparation boundary rather than introducing a parallel scraping architecture;
+
+rejects empty prepared content;
+
+constructs a validated PostCandidate from the target content;
+
+preserves the existing downstream PostCandidate contract.
+
+Dedicated validation exists under:
+
+tests/test_target_content.py
+
+Coverage includes:
+
+successful URL → read/prepared content → PostCandidate construction;
+
+surrounding URL whitespace normalization;
+
+empty URL rejection before reading;
+
+empty prepared-content rejection.
+
+Workflow Integration
+
+The target/manual entry path is now covered by:
+
+tests/test_target_content_workflow.py
+
+The controlled target path feeds the normalized PostCandidate into the existing Opportunity Workflow rather than duplicating Opportunity Evaluation, Research, Writer, or Quality Evaluator logic.
+
+The intended invariant is:
+
+Input origin != downstream policy.
+
+Scout discovery policy remains Scout-owned.
+
+Manual target acquisition remains Target Content Loader-owned.
+
+Opportunity Evaluation and all downstream stages consume the shared factual contract and do not encode special behavior merely because the content was manually selected.
+
+Architectural Rationale
+
+A known target must not be simulated as an autonomous Scout discovery.
+
+Doing so would contaminate the distinction between:
+
+discovery;
+
+ingestion;
+
+evaluation;
+
+research;
+
+content generation.
+
+Target Content Input therefore adds a second legitimate input gate instead of changing Scout behavior.
+
+This preserves the project's ownership model:
+
+LLM → semantic interpretation and bounded semantic decisions
+
+Python → deterministic execution, authorization, state, limits, persistence, and factual contracts
+
+LangGraph → workflow orchestration
+
+Human → final publication authority
+
+Context ≠ Policy
+
+Input context may tell the system which content is being evaluated, but origin-specific information must not silently become downstream behavioral policy.
+
+Critical workflow rules, guardrails, quality requirements, execution conventions, and publication authority remain explicit policy owned by the appropriate deterministic/workflow layer.
+
+Known Limitation
+
+Target Content Input v0.1 does not establish guaranteed LinkedIn-native retrieval.
+
+A supplied LinkedIn URL may still be unreadable through the current public HTTP Reader because LinkedIn or another source may require authentication, JavaScript rendering, or anti-bot/browser capabilities.
+
+The capability currently guarantees a controlled input contract and workflow boundary, not universal LinkedIn page accessibility.
+
+Current WIP
+
+The current working tree intentionally contains the Target Content Input increment and project documentation assets.
+
+Functional WIP:
+
+app/inputs/target_content.py
+
+tests/test_target_content.py
+
+tests/test_target_content_workflow.py
+
+Documentation / visual assets:
+
+docs/images/art-architecture-overview.png
+
+docs/images/art-end-to-end-agentic-solution-flow.png
+
+This PROJECT_CONTEXT.md is being refreshed before checkpoint commits.
+
+The visual assets are relevant project documentation and should be checkpointed separately from the functional Target Content Input implementation so Git history preserves semantic separation.
+
+Current Development Status
+
+Target Content Input v0.1:
+
+IMPLEMENTED
+
+WORKFLOW-INTEGRATED
+
+TESTED
+
+255 PASSING TESTS
+
+AUDITED
+
+CHECKPOINT COMMIT PENDING
+
+The current repository state should now be closed without adding unrelated capabilities.
+
+Immediate Checkpoint Closure
+
+After replacing docs/context/PROJECT_CONTEXT.md with this updated file:
+
+run the full regression suite:
+
+python -m pytest -q
+
+run:
+
+python app/scripts/project_audit.py
+
+validate snapshot integrity and context consistency;
+
+review git status;
+
+commit the functional Target Content Input increment together with this context update;
+
+commit the two visual documentation assets separately;
+
+push both commits so origin/main and the local repository are synchronized.
+
+Next Planned Capability
+
+After checkpoint closure, execute the first controlled real target-content validation using a deliberately chosen known LinkedIn opportunity.
+
+The validation objective is:
+
+Known LinkedIn URL
+↓
+Target Content Loader
+↓
+PostCandidate
+↓
+Opportunity Evaluation
+↓
+Research, when classification permits
+↓
+Writer
+↓
+Quality Evaluator
+↓
+Human Review
+
+The known target should be used as a controlled experiment, not as evidence that Scout discovered it autonomously.
+
+The first planned real target is the previously selected professional discussion about understanding/redesigning processes before automating.
+
+The controlled run should observe:
+
+whether the target URL can be read through the current bounded reader;
+
+the resulting PostCandidate;
+
+Opportunity Evaluation signals, score, guardrails, and classification;
+
+Research behavior and token usage if the opportunity is HIGH;
+
+ResearchBrief evidence quality;
+
+Writer output;
+
+Quality Evaluator decision;
+
+final Human / END boundary.
+
+If direct LinkedIn reading fails, that failure should be treated as evidence about the LinkedIn-native acquisition limitation rather than bypassed by weakening the existing web-security or provenance contracts.
+
+No autonomous publication is introduced.
