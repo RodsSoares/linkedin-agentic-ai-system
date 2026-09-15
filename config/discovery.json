@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "search": {
+    "max_results_per_query": 5,
+    "topics": [
+      "AI agents",
+      "AI automation",
+      "artificial intelligence supply chain",
+      "business AI transformation"
+    ],
+    "strategies": [
+      {
+        "name": "linkedin_posts",
+        "enabled": true,
+        "template": "site:linkedin.com/posts/ \"{topic}\""
+      }
+    ]
+  },
+  "discovery": {
+    "max_queries": 4,
+    "max_candidates": 10,
+    "max_opportunity_evaluations": 5
+  }
+}
