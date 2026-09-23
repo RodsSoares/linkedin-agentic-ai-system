@@ -3,6 +3,72 @@ from pydantic import BaseModel, Field
 from app.schemas.research import EvidenceItem
 
 
+class ArgumentSynthesis(BaseModel):
+    """
+    LLM-owned semantic synthesis used to construct an ArgumentBrief.
+
+    Evidence is referenced by index rather than recreated by the model.
+    The Python runtime resolves validated indices back to the original
+    EvidenceItem objects from the ResearchBrief.
+    """
+
+    original_thesis: str = Field(
+        min_length=1,
+        description=(
+            "Concise statement of the central thesis or claim in the "
+            "original professional discussion."
+        ),
+    )
+
+    relevant_context: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Context required to understand the discussion and the "
+            "intellectual decision space."
+        ),
+    )
+
+    strongest_evidence_indices: list[int] = Field(
+        default_factory=list,
+        description=(
+            "Zero-based indices identifying the strongest supporting "
+            "EvidenceItem objects from the input ResearchBrief."
+        ),
+    )
+
+    strongest_counterevidence_indices: list[int] = Field(
+        default_factory=list,
+        description=(
+            "Zero-based indices identifying EvidenceItem objects from the "
+            "input ResearchBrief that materially challenge or qualify "
+            "relevant contribution directions."
+        ),
+    )
+
+    central_tensions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Material tensions, trade-offs, contradictions, assumptions, "
+            "or competing interpretations identified in the research."
+        ),
+    )
+
+    uncertainties: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Material uncertainties that should constrain defensible arguments."
+        ),
+    )
+
+    contribution_areas: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Areas where a useful, differentiated, and defensible "
+            "contribution may be possible."
+        ),
+    )
+
+
 class ArgumentBrief(BaseModel):
     """
     Structured intellectual synthesis produced from a ResearchBrief.

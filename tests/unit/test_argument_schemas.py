@@ -3,6 +3,7 @@ from pydantic import ValidationError
 
 from app.schemas.argument import (
     ArgumentBrief,
+    ArgumentSynthesis,
     Perspective,
     PerspectiveSet,
     SelectedPerspective,
@@ -38,6 +39,51 @@ def make_perspective(
         contribution="Connect AI adoption with process redesign and operational outcomes.",
     )
 
+
+def test_argument_synthesis_accepts_valid_data():
+    synthesis = ArgumentSynthesis(
+        original_thesis="AI will substantially change professional work.",
+        relevant_context=[
+            "Adoption is occurring across multiple business functions.",
+        ],
+        strongest_evidence_indices=[0, 2],
+        strongest_counterevidence_indices=[1],
+        central_tensions=[
+            "Automation efficiency versus organizational redesign.",
+        ],
+        uncertainties=[
+            "Long-term organizational effects remain uncertain.",
+        ],
+        contribution_areas=[
+            "Connect technological capability with operating-model change.",
+        ],
+    )
+
+    assert synthesis.original_thesis == (
+        "AI will substantially change professional work."
+    )
+    assert synthesis.strongest_evidence_indices == [0, 2]
+    assert synthesis.strongest_counterevidence_indices == [1]
+
+
+def test_argument_synthesis_rejects_empty_original_thesis():
+    with pytest.raises(ValidationError):
+        ArgumentSynthesis(
+            original_thesis="",
+        )
+
+
+def test_argument_synthesis_optional_collections_default_to_empty():
+    synthesis = ArgumentSynthesis(
+        original_thesis="A valid thesis.",
+    )
+
+    assert synthesis.relevant_context == []
+    assert synthesis.strongest_evidence_indices == []
+    assert synthesis.strongest_counterevidence_indices == []
+    assert synthesis.central_tensions == []
+    assert synthesis.uncertainties == []
+    assert synthesis.contribution_areas == []
 
 def test_argument_brief_accepts_valid_data():
     evidence = make_evidence()
