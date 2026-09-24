@@ -7,6 +7,8 @@ from app.schemas.argument import (
     Perspective,
     PerspectiveSet,
     SelectedPerspective,
+    PerspectiveSynthesis,
+    PerspectiveSetSynthesis,
 )
 from app.schemas.research import EvidenceItem
 
@@ -236,3 +238,180 @@ def test_selected_perspective_allows_no_human_guidance():
 
     assert selected.perspective == perspective
     assert selected.human_guidance is None
+
+
+def test_perspective_set_accepts_two_distinct_perspectives():
+    perspective_a = Perspective(
+        perspective_id="perspective-a",
+        label="Operating model",
+        core_argument=(
+            "AI-agent value depends on operating-model design, "
+            "not technical capability alone."
+        ),
+        why_it_matters=(
+            "Organizations may overestimate technology while "
+            "underestimating workflow redesign."
+        ),
+        supporting_evidence=[],
+        counterargument=None,
+        uncertainty=None,
+        contribution=(
+            "Shift the discussion from agent capability to "
+            "operational integration."
+        ),
+    )
+
+    perspective_b = Perspective(
+        perspective_id="perspective-b",
+        label="Bounded autonomy",
+        core_argument=(
+            "Agent autonomy should be calibrated according to "
+            "decision risk and reversibility."
+        ),
+        why_it_matters=(
+            "Uniform human approval policies can create either "
+            "excessive risk or unnecessary friction."
+        ),
+        supporting_evidence=[],
+        counterargument=None,
+        uncertainty=None,
+        contribution=(
+            "Introduce risk and reversibility as practical "
+            "criteria for autonomy."
+        ),
+    )
+
+    perspective_set = PerspectiveSet(
+        perspectives=[
+            perspective_a,
+            perspective_b,
+        ]
+    )
+
+    assert len(perspective_set.perspectives) == 2
+    assert perspective_set.perspectives[0].perspective_id == "perspective-a"
+    assert perspective_set.perspectives[1].perspective_id == "perspective-b"
+
+
+def test_perspective_set_rejects_single_perspective():
+    perspective = Perspective(
+        perspective_id="perspective-a",
+        label="Operating model",
+        core_argument="AI-agent value depends on operating-model design.",
+        why_it_matters="Technical capability alone is insufficient.",
+        supporting_evidence=[],
+        contribution="Focus discussion on operational integration.",
+    )
+
+    with pytest.raises(ValidationError):
+        PerspectiveSet(
+            perspectives=[perspective]
+        )
+
+
+def test_perspective_set_rejects_more_than_four_perspectives():
+    perspectives = [
+        Perspective(
+            perspective_id=f"perspective-{index}",
+            label=f"Perspective {index}",
+            core_argument=f"Core argument {index}",
+            why_it_matters=f"Why it matters {index}",
+            supporting_evidence=[],
+            contribution=f"Contribution {index}",
+        )
+        for index in range(5)
+    ]
+
+    with pytest.raises(ValidationError):
+        PerspectiveSet(
+            perspectives=perspectives
+        )
+
+
+def test_selected_perspective_preserves_human_guidance():
+    perspective = Perspective(
+        perspective_id="perspective-a",
+        label="Bounded autonomy",
+        core_argument=(
+            "Autonomy should depend on decision risk and reversibility."
+        ),
+        why_it_matters=(
+            "Different decisions justify different levels of human control."
+        ),
+        supporting_evidence=[],
+        contribution=(
+            "Use risk and reversibility to discuss autonomy boundaries."
+        ),
+    )
+
+    selected = SelectedPerspective(
+        perspective=perspective,
+        human_guidance=(
+            "Connect this with practical supply-chain decision making."
+        ),
+    )
+
+    assert selected.perspective == perspective
+    assert selected.human_guidance == (
+        "Connect this with practical supply-chain decision making."
+    )
+
+
+def test_perspective_synthesis_accepts_evidence_indices():
+    synthesis = PerspectiveSynthesis(
+        perspective_id="bounded-autonomy",
+        label="Bounded autonomy",
+        core_argument=(
+            "Agent autonomy should depend on decision risk "
+            "and reversibility."
+        ),
+        why_it_matters=(
+            "Different decisions justify different levels "
+            "of human control."
+        ),
+        supporting_evidence_indices=[0, 2],
+        counterargument=(
+            "Additional human control can reduce automation speed."
+        ),
+        uncertainty=(
+            "The appropriate thresholds are not yet established."
+        ),
+        contribution=(
+            "Use risk and reversibility as criteria for autonomy."
+        ),
+    )
+
+    assert synthesis.supporting_evidence_indices == [0, 2]
+
+
+def test_perspective_synthesis_defaults_evidence_indices_to_empty():
+    synthesis = PerspectiveSynthesis(
+        perspective_id="operating-model",
+        label="Operating model",
+        core_argument=(
+            "AI-agent value depends on operating-model design."
+        ),
+        why_it_matters=(
+            "Technical capability alone does not guarantee value."
+        ),
+        contribution=(
+            "Shift attention from capability to operational integration."
+        ),
+    )
+
+    assert synthesis.supporting_evidence_indices == []
+
+
+def test_perspective_set_synthesis_requires_two_to_four_perspectives():
+    perspective = PerspectiveSynthesis(
+        perspective_id="single",
+        label="Single perspective",
+        core_argument="A valid argument.",
+        why_it_matters="It matters.",
+        contribution="It contributes.",
+    )
+
+    with pytest.raises(ValidationError):
+        PerspectiveSetSynthesis(
+            perspectives=[perspective]
+        )

@@ -135,6 +135,78 @@ class ArgumentBrief(BaseModel):
     )
 
 
+class PerspectiveSynthesis(BaseModel):
+    """
+    LLM-owned semantic representation of a candidate perspective.
+
+    Evidence is referenced by index rather than recreated by the model.
+    The Python runtime resolves validated indices back to the original
+    EvidenceItem objects from the ArgumentBrief.
+    """
+
+    perspective_id: str = Field(
+        min_length=1,
+        description="Stable identifier unique within the generated set.",
+    )
+    label: str = Field(
+        min_length=1,
+        description="Concise conceptual label for the perspective.",
+    )
+    core_argument: str = Field(
+        min_length=1,
+        description="Central intellectual proposition of the perspective.",
+    )
+    why_it_matters: str = Field(
+        min_length=1,
+        description=(
+            "Why this intellectual direction matters to the discussion."
+        ),
+    )
+    supporting_evidence_indices: list[int] = Field(
+        default_factory=list,
+        description=(
+            "Zero-based indices referencing evidence from the "
+            "ArgumentBrief evidence pool."
+        ),
+    )
+    counterargument: str | None = Field(
+        default=None,
+        description=(
+            "Strongest meaningful objection, limitation, or competing "
+            "interpretation when one exists."
+        ),
+    )
+    uncertainty: str | None = Field(
+        default=None,
+        description=(
+            "Material uncertainty that constrains this perspective."
+        ),
+    )
+    contribution: str = Field(
+        min_length=1,
+        description=(
+            "What this perspective could add intellectually to the discussion."
+        ),
+    )
+
+
+class PerspectiveSetSynthesis(BaseModel):
+    """
+    LLM-owned collection of candidate intellectual perspectives.
+
+    The runtime converts these semantic proposals into a PerspectiveSet
+    after validating evidence references.
+    """
+
+    perspectives: list[PerspectiveSynthesis] = Field(
+        min_length=2,
+        max_length=4,
+        description=(
+            "Materially distinct and defensible intellectual perspectives."
+        ),
+    )
+    
+
 class Perspective(BaseModel):
     """
     One defensible intellectual direction derived from an ArgumentBrief.
