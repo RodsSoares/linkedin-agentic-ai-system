@@ -79,6 +79,12 @@ RESEARCH
 ├── ResearchBrief
 └── ResearchStatus
 
+ARGUMENT / CONVERSATION INTELLIGENCE
+├── ArgumentBrief
+├── Perspective
+├── PerspectiveSet
+└── SelectedPerspective
+
 GENERATION
 └── Writer structured contracts
 
@@ -571,6 +577,189 @@ writer_node
 v
 current_draft
 
+Argument and Conversation Intelligence Domain
+
+The Human-Centered Conversation Intelligence architecture introduces a typed boundary between evidence and final expression.
+
+The central rule is:
+
+Research evidence
+≠
+intellectual direction
+≠
+expression
+
+ArgumentBrief
+
+ArgumentBrief is the output contract of Argument Intelligence.
+
+Conceptually:
+
+ResearchBrief
+↓
+Argument Intelligence
+↓
+ArgumentBrief
+
+Its purpose is to transform the reusable evidence base into a compact intellectual decision space without writing the final contribution.
+
+It may represent concepts such as:
+
+original thesis;
+
+relevant context;
+
+strongest supporting evidence;
+
+counterevidence;
+
+tensions and trade-offs;
+
+uncertainty;
+
+possible contribution areas;
+
+source references.
+
+Ownership:
+
+Semantic synthesis:
+Argument Intelligence / LLM
+
+Evidence and provenance constraints:
+Research contracts + Python validation
+
+Downstream consumption:
+Perspective Generation
+
+Important invariant:
+
+ArgumentBrief != final position
+
+The artifact structures what can defensibly be argued. It does not claim to know which argument Rodrigo personally chooses.
+
+Perspective
+
+Perspective represents one materially distinct, defensible intellectual direction grounded in the ArgumentBrief and available evidence.
+
+Representative concepts include:
+
+perspective_id;
+
+label;
+
+core_argument;
+
+why_it_matters;
+
+supporting_evidence;
+
+counterargument;
+
+uncertainty;
+
+contribution.
+
+Important invariant:
+
+Perspective != Expression
+
+A perspective answers:
+
+"What could be worth saying?"
+
+It does not define the final tone, wording, or voice.
+
+PerspectiveSet
+
+PerspectiveSet groups the bounded set of candidate perspectives generated from the same ArgumentBrief.
+
+Conceptually:
+
+ArgumentBrief
+↓
+Perspective Generation
+↓
+PerspectiveSet
+
+The set preserves divergence before human convergence.
+
+Its perspectives must be materially distinct and defensible rather than artificial stylistic variants.
+
+Perspective identifiers must remain suitable for deterministic human selection and downstream resolution.
+
+SelectedPerspective
+
+SelectedPerspective is the explicit contract that carries the human-owned intellectual direction downstream.
+
+Conceptually:
+
+PerspectiveSet
+↓
+Human decision
+↓
+SelectedPerspective
+
+It preserves:
+
+the selected Perspective;
+
+optional human_guidance.
+
+The selection boundary is deterministic: Python resolves and validates the explicit human-selected identifier against the available PerspectiveSet. The selection component must not rank, infer, or silently substitute a different perspective.
+
+human_guidance is human context for materialization. It is not automatically factual evidence.
+
+Downstream consumption:
+
+SelectedPerspective
+↓
+Rodrigo Voice / Writer
+
+Important invariant:
+
+Once a SelectedPerspective exists, downstream generation may improve expression but must not silently choose another thesis.
+
+Writer Boundary Evolution
+
+The Writer boundary has evolved from:
+
+PostCandidate
++
+ResearchBrief
+→ Writer
+
+toward:
+
+PostCandidate
++
+ResearchBrief
++
+SelectedPerspective
++
+revision context
+→ Writer
+
+During migration, selected_perspective remains optional for compatibility with the graph path that has not yet been fully migrated.
+
+After LangGraph Integration, the Human-Centered MVP path should make the human convergence boundary explicit before final materialization.
+
+Rodrigo Voice is expression context, not an authority over the selected intellectual direction.
+
+Orchestration State Migration
+
+The canonical MVP requires orchestration state capable of carrying, at minimum, the new artifacts needed by the integrated flow:
+
+ResearchBrief
+ArgumentBrief
+PerspectiveSet
+SelectedPerspective
+current draft
+quality evaluation
+HITL / routing status
+
+The exact final LinkedInAgentState representation belongs to LangGraph Integration and should not be documented as implemented before that increment is complete.
+
 Quality Domain
 
 Quality Evaluation Contract
@@ -645,7 +834,7 @@ next_step
 human_feedback
 status
 
-The active HIGH path represented by this state is documented as Scout/supplied candidate → Opportunity Evaluation → Research → ResearchBrief → Writer → Quality Evaluator, with PASS/REVISE/REJECT routing.
+The currently integrated graph still follows Scout/supplied candidate → Opportunity Evaluation → Research → ResearchBrief → Writer → Quality Evaluator, with PASS/REVISE/REJECT routing. The canonical MVP architecture adds Argument Intelligence → Perspective Generation → Human Perspective Selection between Research and Writer; full orchestration of that path belongs to the LangGraph Integration increment.
 
 Global State Is Not a Universal Component API
 

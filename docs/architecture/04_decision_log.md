@@ -774,3 +774,149 @@ Do not create ADRs for routine refactors, isolated bug fixes, formatting, or imp
 Existing accepted ADRs should not be rewritten to pretend the original context never existed.
 
 If a decision changes materially, add a new ADR and mark the previous one Superseded.
+
+ADR-017 — Human-Centered Conversation Intelligence is the canonical product architecture
+
+Status: Accepted
+Date: 2026-09-24
+
+Context
+
+The original workflow moved directly from Research into Writer and relied on the Writer to perform several intellectual tasks at once:
+
+infer a useful position;
+
+choose an argument;
+
+reproduce Rodrigo's voice;
+
+write the final contribution.
+
+Real editorial use and architecture review exposed a limitation in that assumption.
+
+The hardest part of a valuable professional contribution is often not producing fluent text. It is deciding what is worth saying.
+
+Human interpretation can depend on professional experience, accumulated knowledge, current objectives, personal associations, values, intuition, and context that should not be simulated through an ever-growing set of prompts, scores, and editorial variables.
+
+A separate Human-Centered Conversation Intelligence proposal was created to explore a different product architecture. The implementation has since progressed naturally in that direction through Argument Contracts, Argument Intelligence, Perspective Generation, Human Perspective Selection, and SelectedPerspective-aware Writer / Voice integration.
+
+Maintaining the same architecture as a separate "PROPOSED — NOT CANONICAL" document would now conflict with the actual direction of the system.
+
+Decision
+
+The canonical product principle is:
+
+AI expands. Human converges. AI materializes. Human owns.
+
+The canonical MVP flow is:
+
+Human Intent / Theme
+→ Discovery / Scout
+→ Target Qualification
+→ Opportunity Evaluation
+→ Research
+→ ResearchBrief
+→ Argument Intelligence
+→ ArgumentBrief
+→ Perspective Generation
+→ PerspectiveSet
+→ Human Perspective Selection
+→ SelectedPerspective
+→ Rodrigo Voice / Writer
+→ Quality Evaluator
+→ Human Final Review
+→ Manual Publication
+
+The human owns two distinct authority boundaries:
+
+Intellectual authority — selection, rejection, combination, guidance, or modification of the direction to be expressed.
+
+Publication authority — final review and the decision whether to publish externally.
+
+AI may generate multiple defensible intellectual directions, but it must not silently infer or replace the human's selected final position.
+
+Rationale
+
+The architecture uses AI for intellectual expansion where machine capabilities provide leverage:
+
+discovery;
+
+reading;
+
+research;
+
+synthesis;
+
+comparison;
+
+tension mapping;
+
+perspective generation;
+
+drafting;
+
+evaluation.
+
+It preserves human judgment where irreducible personal context matters:
+
+interpretation;
+
+intellectual direction;
+
+personal experience;
+
+contextual nuance;
+
+final editorial judgment;
+
+publication.
+
+Human-in-the-Loop is therefore part of the cognitive architecture, not merely a safety gate.
+
+Consequences
+
+Research must remain reusable and as independent as practical from the final editorial direction.
+
+A new Argument Intelligence boundary separates evidence synthesis from final positioning.
+
+Perspective Generation must produce materially distinct and defensible intellectual directions rather than stylistic variants.
+
+Human Perspective Selection becomes an explicit workflow boundary.
+
+The Writer no longer owns independent selection of Rodrigo's intellectual position when a SelectedPerspective is available.
+
+Rodrigo Voice becomes an expression/personalization layer:
+
+"Given this selected perspective, how might Rodrigo naturally express it?"
+
+rather than:
+
+"What does Rodrigo believe and which argument should he choose?"
+
+LangGraph must eventually orchestrate the complete new flow and preserve the HITL perspective-selection boundary.
+
+Autonomous publication remains prohibited.
+
+The former standalone ADR-PROPOSED-human-centered-conversation-intelligence.md is superseded as a separate proposal artifact by this accepted decision plus the canonical architecture in 01_system_overview.md.
+
+MVP Boundary
+
+The frozen MVP is a system capable of finding or receiving an opportunity, qualifying it, researching it, transforming evidence into an ArgumentBrief, generating multiple defensible perspectives, requesting the human's desired intellectual direction, and only then producing and evaluating the final content.
+
+The implementation roadmap is:
+
+Argument Contracts v0.1
+
+Argument Intelligence v0.1
+
+Perspective Generation v0.1
+
+Human Perspective Selection v0.1
+
+Writer / Voice Integration v0.1
+
+LangGraph Integration
+
+MVP Validation & Release
+
+Performance Analytics, Feedback Learning, adaptive policy calibration, advanced UX, and autonomous publication are outside the frozen MVP.

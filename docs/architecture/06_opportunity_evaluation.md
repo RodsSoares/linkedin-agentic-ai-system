@@ -1,6 +1,6 @@
 Opportunity Evaluation
 
-1. Purpose
+Purpose
 
 The Opportunity Evaluation capability determines whether a discovered professional discussion represents a sufficiently valuable opportunity to justify further system effort.
 
@@ -19,28 +19,28 @@ Opportunity Evaluation is the strategic resource-allocation gate between candida
 The implemented HIGH path is now:
 
 Scout
-  ↓
+↓
 PostCandidate
-  ↓
+↓
 Opportunity Evaluation
-  ├── LOW    → END
-  ├── MEDIUM → QUEUED → END
-  └── HIGH   → ACCEPTED_FOR_RESEARCH
-                    ↓
-                 Research
-                    ↓
-              ResearchBrief
-                    ↓
-                  Writer
-                    ↓
-            Quality Evaluator
-              ├── PASS   → Human / END
-              ├── REVISE → Writer
-              └── REJECT → END
+├── LOW    → END
+├── MEDIUM → QUEUED → END
+└── HIGH   → ACCEPTED_FOR_RESEARCH
+↓
+Research
+↓
+ResearchBrief
+↓
+Writer
+↓
+Quality Evaluator
+├── PASS   → Human / END
+├── REVISE → Writer
+└── REJECT → END
 
 Human publication authority remains mandatory.
 
-2. Current Capability Status
+Current Capability Status
 
 VERSION: v0.1
 DESIGN: IMPLEMENTED
@@ -59,11 +59,11 @@ The project has progressed from the original specification into an integrated wo
 
 The broader project currently has:
 
-189 passing tests
+396 passing tests
 
 This document therefore describes the implemented v0.1 contract while preserving the original product rationale and calibration assumptions.
 
-3. Core Product Principle
+Core Product Principle
 
 Opportunity is not popularity
 
@@ -86,7 +86,7 @@ Conceptually:
 High audience
 +
 low contribution potential
-        ↓
+↓
 limited opportunity
 
 while:
@@ -96,12 +96,12 @@ Relevant discussion
 strong positioning fit
 +
 strong contribution potential
-        ↓
+↓
 high opportunity
 
 The system must not become an engagement bot that prioritizes content simply because it is popular.
 
-4. Responsibility Model
+Responsibility Model
 
 Opportunity Evaluation uses the same responsibility split as the broader architecture.
 
@@ -139,36 +139,36 @@ LLM interprets semantically; Python scores and classifies deterministically; Lan
 
 The LLM does not directly own HIGH / MEDIUM / LOW.
 
-5. Evaluation Pipeline
+Evaluation Pipeline
 
 PostCandidate
-      │
-      ▼
+│
+▼
 Semantic Opportunity Evaluation
-      │
-      ▼
+│
+▼
 OpportunitySignals
-      │
-      ├── topic_relevance
-      ├── positioning_fit
-      ├── contribution_potential
-      └── research_cost
-      │
-      ▼
+│
+├── topic_relevance
+├── positioning_fit
+├── contribution_potential
+└── research_cost
+│
+▼
 Deterministic Application Logic
-      │
-      ├── engagement_potential
-      ├── research_efficiency
-      ├── weighted score
-      └── mandatory guardrails
-      │
-      ▼
+│
+├── engagement_potential
+├── research_efficiency
+├── weighted score
+└── mandatory guardrails
+│
+▼
 OpportunityEvaluation
-      │
-      ▼
+│
+▼
 HIGH / MEDIUM / LOW
-      │
-      ▼
+│
+▼
 Deterministic Workflow Routing
 
 This separation makes the capability:
@@ -185,7 +185,7 @@ less dependent on a particular model;
 
 easier to evolve without weakening operational control.
 
-6. Evaluation Dimensions
+Evaluation Dimensions
 
 Opportunity Evaluation v0.1 uses five scoring dimensions:
 
@@ -215,7 +215,7 @@ and is converted by:
 
 Research Efficiency = 100 - Research Cost
 
-7. Contribution Potential
+Contribution Potential
 
 Definition
 
@@ -290,7 +290,7 @@ The rationale remains:
 
 If there is nothing valuable to add, audience size should generally not justify commenting.
 
-8. Positioning Fit
+Positioning Fit
 
 Definition
 
@@ -352,7 +352,7 @@ Weight
 
 Professional visibility is valuable only when it reinforces a useful and authentic positioning.
 
-9. Topic Relevance
+Topic Relevance
 
 Definition
 
@@ -424,7 +424,7 @@ Weight
 
 20%
 
-10. Engagement Potential
+Engagement Potential
 
 Definition
 
@@ -497,7 +497,7 @@ Weight
 
 Visibility matters, but it must not dominate strategic contribution value.
 
-11. Research Cost
+Research Cost
 
 Definition
 
@@ -567,7 +567,7 @@ Research Cost is currently a semantic estimate made before the full Research cap
 
 It is not yet a measured token/tool-cost metric.
 
-12. Research Efficiency
+Research Efficiency
 
 Python converts Research Cost into a positive scoring dimension:
 
@@ -590,7 +590,7 @@ Weight:
 
 Research effort matters, but strategically valuable opportunities should still be allowed to justify meaningful research.
 
-13. Opportunity Score v0.1
+Opportunity Score v0.1
 
 Weights
 
@@ -626,11 +626,15 @@ Formula
 
 Opportunity Score =
 
-    Contribution Potential × 0.30
-  + Positioning Fit        × 0.25
-  + Topic Relevance        × 0.20
-  + Engagement Potential   × 0.15
-  + Research Efficiency    × 0.10
+Contribution Potential × 0.30
+
+Positioning Fit        × 0.25
+
+Topic Relevance        × 0.20
+
+Engagement Potential   × 0.15
+
+Research Efficiency    × 0.10
 
 where:
 
@@ -642,7 +646,7 @@ The resulting score remains in:
 
 The implementation rounds the final score according to the current application contract.
 
-14. Mandatory Guardrails
+Mandatory Guardrails
 
 Weighted averages alone are insufficient.
 
@@ -680,7 +684,7 @@ Positioning Fit = 30
 Topic Relevance = 25
 → guardrail not triggered
 
-15. Classification
+Classification
 
 If no mandatory guardrail is triggered:
 
@@ -696,17 +700,17 @@ score < 60
 Equivalent conceptual logic:
 
 if guardrail_triggered:
-    classification = "LOW"
+classification = "LOW"
 elif opportunity_score >= 80:
-    classification = "HIGH"
+classification = "HIGH"
 elif opportunity_score >= 60:
-    classification = "MEDIUM"
+classification = "MEDIUM"
 else:
-    classification = "LOW"
+classification = "LOW"
 
 The exact source implementation may differ syntactically, but this behavioral contract must remain stable unless explicitly recalibrated.
 
-16. Classification Semantics and Implemented Routing
+Classification Semantics and Implemented Routing
 
 HIGH
 
@@ -715,15 +719,15 @@ A HIGH opportunity combines sufficiently strong strategic value to justify Resea
 Implemented route:
 
 HIGH
-  ↓
+↓
 ACCEPTED_FOR_RESEARCH
-  ↓
+↓
 Research
-  ↓
+↓
 ResearchBrief
-  ↓
+↓
 Writer
-  ↓
+↓
 Quality Evaluator
 
 ACCEPTED_FOR_RESEARCH records the approval transition before the Research capability executes.
@@ -739,9 +743,9 @@ That decision has now been resolved for v0.1.
 Implemented route:
 
 MEDIUM
-  ↓
+↓
 QUEUED
-  ↓
+↓
 END
 
 QUEUED records the semantic lifecycle status, but the current workflow does not yet implement persistent queue storage, later reprioritization, or automatic promotion.
@@ -755,12 +759,12 @@ A LOW opportunity either has insufficient score or violates a mandatory strategi
 Implemented route:
 
 LOW
-  ↓
+↓
 END
 
 LOW opportunities do not consume Research and Writer inference in the normal workflow.
 
-17. Structured Contracts
+Structured Contracts
 
 The original design proposed typed Pydantic contracts.
 
@@ -807,27 +811,27 @@ The exact source schema remains authoritative if field names evolve.
 The architectural distinction is:
 
 OpportunitySignals
-    = semantic model output
+= semantic model output
 
 OpportunityEvaluation
-    = validated application decision artifact
+= validated application decision artifact
 
-18. Engagement Data Separation
+Engagement Data Separation
 
 Engagement Potential remains outside the LLM-owned OpportunitySignals contract.
 
 This is deliberate.
 
 LLM
-    ↓
+↓
 semantic opportunity signals
 
 Objective / deterministic application data
-    ↓
+↓
 engagement potential
 
 Python
-    ↓
+↓
 final score and classification
 
 This prevents the model from fabricating reaction counts, comment counts, author reach, or other objective metrics.
@@ -840,7 +844,7 @@ rather than:
 
 Engagement Potential = model guess presented as fact
 
-19. Explainability
+Explainability
 
 Opportunity Evaluation must remain interpretable.
 
@@ -885,7 +889,7 @@ cost optimization;
 
 later measurement of classification quality.
 
-20. Example A — High-Value Opportunity
+Example A — High-Value Opportunity
 
 Scenario:
 
@@ -910,8 +914,8 @@ Score:
 95 × 0.20 = 19.00
 80 × 0.15 = 12.00
 65 × 0.10 =  6.50
-              -----
-              88.25
+-----
+88.25
 
 No guardrail is triggered.
 
@@ -923,12 +927,12 @@ Classification = HIGH
 Routing:
 
 HIGH
-  ↓
+↓
 ACCEPTED_FOR_RESEARCH
-  ↓
+↓
 Research
 
-21. Example B — Popular but Low-Value Opportunity
+Example B — Popular but Low-Value Opportunity
 
 Scenario:
 
@@ -958,7 +962,7 @@ This demonstrates:
 
 Audience size alone must not dominate opportunity selection.
 
-22. Example C — Relevant but Research-Expensive Opportunity
+Example C — Relevant but Research-Expensive Opportunity
 
 Scenario:
 
@@ -983,8 +987,8 @@ Score:
 95 × 0.20 = 19.00
 65 × 0.15 =  9.75
 15 × 0.10 =  1.50
-              -----
-              76.75
+-----
+76.75
 
 Result:
 
@@ -994,14 +998,14 @@ Classification = MEDIUM
 Current routing:
 
 MEDIUM
-  ↓
+↓
 QUEUED
-  ↓
+↓
 END
 
 The example demonstrates why Research Cost can reduce priority without dominating strategic value.
 
-23. Relationship with Scout
+Relationship with Scout
 
 Scout answers:
 
@@ -1016,9 +1020,9 @@ The responsibilities remain separate.
 Current integration:
 
 Scout
-  ↓
+↓
 validated PostCandidate
-  ↓
+↓
 Opportunity Evaluation
 
 Current Scout cardinality behavior is:
@@ -1029,12 +1033,12 @@ Current Scout cardinality behavior is:
 1 candidate
 → Opportunity Evaluation
 
->1 distinct candidates
+1 distinct candidates
 → explicit unsupported-condition failure
 
 Multiple-candidate orchestration remains a future design problem rather than being hidden inside Opportunity Evaluation.
 
-24. Relationship with Research
+Relationship with Research
 
 Research occurs only after a HIGH opportunity has been accepted.
 
@@ -1049,14 +1053,14 @@ It does not itself become an unbounded Research agent.
 The boundary is:
 
 Opportunity Evaluation
-        ↓
+↓
 HIGH
-        ↓
+↓
 ACCEPTED_FOR_RESEARCH
-        ↓
+↓
 Research
 
-25. Relationship with Writer
+Relationship with Writer
 
 Opportunity Evaluation does not generate the contribution.
 
@@ -1065,25 +1069,25 @@ Writer is responsible for transforming the approved opportunity and structured R
 Conceptually:
 
 Opportunity decision
-       +
++
 ResearchBrief
-       ↓
+↓
 Writer
-       ↓
+↓
 Draft
 
 This separation prevents strategic prioritization logic from becoming generation logic.
 
-26. Relationship with Quality Evaluator
+Relationship with Quality Evaluator
 
 Opportunity Evaluation and Quality Evaluation solve different problems.
 
 Opportunity Evaluation
-        ↓
+↓
 "Should we spend effort contributing here?"
 
 Quality Evaluator
-        ↓
+↓
 "Is the generated contribution good enough?"
 
 Current downstream quality routing:
@@ -1100,48 +1104,48 @@ REJECT
 
 A Writer revision does not automatically rerun Research.
 
-27. Current Functional Workflow
+Current Functional Workflow
 
 The original target workflow has now become an implemented integrated workflow.
 
 Candidate Sources / Web
-          │
-          ▼
-        SCOUT
-          │
-          ▼
-    PostCandidate
-          │
-          ▼
- OPPORTUNITY EVALUATION
-      ┌───┼────────────┐
-      │   │            │
-     LOW MEDIUM       HIGH
-      │   │            │
-      ▼   ▼            ▼
-     END QUEUED  ACCEPTED_FOR_RESEARCH
-          │            │
-          ▼            ▼
-         END        RESEARCH
-                       │
-                       ▼
-                 ResearchBrief
-                       │
-                       ▼
-                     WRITER
-                       │
-                       ▼
-               QUALITY EVALUATOR
-                  ┌────┼─────┐
-                  ▼    ▼     ▼
-                PASS REVISE REJECT
-                  │    │      │
-                  ▼    └──► WRITER
-             HUMAN / END      END
+│
+▼
+SCOUT
+│
+▼
+PostCandidate
+│
+▼
+OPPORTUNITY EVALUATION
+┌───┼────────────┐
+│   │            │
+LOW MEDIUM       HIGH
+│   │            │
+▼   ▼            ▼
+END QUEUED  ACCEPTED_FOR_RESEARCH
+│            │
+▼            ▼
+END        RESEARCH
+│
+▼
+ResearchBrief
+│
+▼
+WRITER
+│
+▼
+QUALITY EVALUATOR
+┌────┼─────┐
+▼    ▼     ▼
+PASS REVISE REJECT
+│    │      │
+▼    └──► WRITER
+HUMAN / END      END
 
 Publication remains outside autonomous execution.
 
-28. Testing Contract
+Testing Contract
 
 Opportunity Evaluation must remain independently testable without live OpenAI calls for deterministic behavior.
 
@@ -1218,20 +1222,20 @@ LLM Independence
 The deterministic chain must remain independently testable:
 
 OpportunitySignals
-      ↓
+↓
 Research Efficiency
-      ↓
+↓
 Weighted Score
-      ↓
+↓
 Guardrails
-      ↓
+↓
 Classification
-      ↓
+↓
 Routing
 
 Live model calls are not required to validate these deterministic contracts.
 
-29. Calibration Strategy
+Calibration Strategy
 
 Opportunity Evaluation v0.1 remains an initial product hypothesis even though it is implemented.
 
@@ -1265,7 +1269,7 @@ The primary objective remains:
 
 Identify opportunities where Rodrigo can make a relevant and professionally valuable contribution.
 
-30. Current Limitations
+Current Limitations
 
 Opportunity Evaluation v0.1 intentionally retains several limitations.
 
@@ -1313,7 +1317,7 @@ QUEUED → END
 
 but no persistent queue or later promotion lifecycle exists yet.
 
-31. Open Design Decisions
+Open Design Decisions
 
 The following remain intentionally unresolved:
 
@@ -1349,7 +1353,7 @@ how multiple candidate opportunities should be ranked and represented in workflo
 
 These must be resolved explicitly rather than silently encoded into implementation.
 
-32. Decisions Already Established
+Decisions Already Established
 
 Product
 
@@ -1418,44 +1422,43 @@ These are the current v0.1 behavioral contracts.
 
 They remain subject to explicit evidence-based future calibration.
 
-33. Implementation Evolution
+Implementation Evolution
 
 The original implementation sequence was:
 
 Define dimensions/rubrics
-        ↓
+↓
 Define weights/formula/guardrails
-        ↓
+↓
 Define Pydantic schemas
-        ↓
+↓
 Implement deterministic scoring
-        ↓
+↓
 Test deterministic behavior
-        ↓
+↓
 Implement semantic evaluation
-        ↓
+↓
 Test semantic contracts
-        ↓
+↓
 Integrate into workflow
-        ↓
+↓
 Connect HIGH to Research
 
 That sequence has now been completed.
 
-Opportunity Evaluation is currently integrated with:
+Opportunity Evaluation remains integrated with Scout upstream and Research downstream.
 
-Scout upstream
-Research downstream
-Writer downstream of Research
-Quality Evaluator downstream of Writer
+Downstream of Research, the canonical Human-Centered MVP architecture now adds Argument Intelligence, Perspective Generation, Human Perspective Selection, and SelectedPerspective-aware Writer / Voice behavior.
+
+Those specialist components exist, while full orchestration of the new path is completed in the LangGraph Integration increment.
 
 The next project increment is not additional basic Opportunity Evaluation implementation.
 
 It is:
 
-End-to-End Real Workflow Validation v0.1
+LangGraph Integration
 
-34. Current Status Summary
+Current Status Summary
 
 Opportunity Evaluation v0.1
 
@@ -1479,7 +1482,7 @@ Human publication boundary ... PRESERVED
 Real-world calibration ....... FUTURE
 Objective engagement model ... FUTURE
 
-35. Design Summary
+Design Summary
 
 Opportunity Evaluation exists to prevent the LinkedIn Agentic AI System from merely finding visible discussions and generating comments.
 
@@ -1488,36 +1491,36 @@ Its role is to identify conversations where there is a meaningful professional r
 The implemented decision chain is:
 
 Find candidate
-      ↓
+↓
 Evaluate semantic value
-      ↓
+↓
 Produce structured signals
-      ↓
+↓
 Calculate deterministically
-      ↓
+↓
 Apply mandatory guardrails
-      ↓
+↓
 HIGH / MEDIUM / LOW
-      ↓
+↓
 Allocate workflow resources
 
 The full product logic is:
 
 Scout
 "Find a possible opportunity"
-        ↓
+↓
 Opportunity Evaluation
 "Is it strategically worth pursuing?"
-        ↓
+↓
 Research
 "What evidence do we need?"
-        ↓
+↓
 Writer
 "What should we contribute?"
-        ↓
+↓
 Quality Evaluator
 "Is the contribution good enough?"
-        ↓
+↓
 Human
 "Do I want to publish it?"
 
@@ -1529,15 +1532,15 @@ And the architectural pattern remains:
 
 LLM
 "Interpret what requires semantic understanding"
-        ↓
+↓
 Structured Output
 "Represent that interpretation explicitly"
-        ↓
+↓
 Python
 "Calculate and decide deterministically"
-        ↓
+↓
 LangGraph
 "Control what happens next"
-        ↓
+↓
 Human
 "Retain final publication authority"

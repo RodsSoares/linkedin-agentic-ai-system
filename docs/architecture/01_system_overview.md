@@ -2,7 +2,13 @@ System Overview
 
 Purpose
 
-The LinkedIn Agentic AI System is a controlled agentic AI system for discovering strategically relevant professional interaction opportunities, deciding whether they are worth pursuing, researching the evidence required for a defensible contribution, preparing a draft, evaluating its quality, and preserving human authority over publication.
+The LinkedIn Agentic AI System is a controlled, human-centered
+agentic AI system for discovering strategically relevant professional
+conversations, deciding whether they are worth pursuing, researching the
+evidence required for a defensible contribution, expanding that evidence
+into multiple intellectual directions, helping the human choose what is
+worth saying, materializing the selected direction into a draft,
+evaluating its quality, and preserving human authority over publication.
 
 The system is not designed as an autonomous social-media bot.
 
@@ -12,80 +18,244 @@ Its purpose is to reduce the manual effort required to move from:
 
 to:
 
-"Here is a researched, evaluated contribution worth reviewing."
+"What are the defensible directions here, which one do I want to own,
+and how should it be expressed?"
 
-while keeping semantic reasoning, deterministic controls, workflow orchestration, and human authority explicitly separated.
+The system therefore separates semantic reasoning, deterministic
+governance, workflow orchestration, and human judgment.
 
 Core Product Principle
 
+AI expands. Human converges. AI materializes. Human owns.
+
+AI is used where machine intelligence provides leverage:
+
+discovery;
+
+filtering;
+
+research;
+
+evidence retrieval;
+
+synthesis;
+
+tension mapping;
+
+perspective generation;
+
+drafting;
+
+evaluation.
+
+Human judgment remains authoritative for:
+
+intellectual direction;
+
+perspective selection, rejection, or combination;
+
+personal context;
+
+contextual nuance;
+
+final editorial judgment;
+
+publication.
+
+Human-in-the-Loop is therefore not merely a safety gate. It is part of
+the cognitive architecture of the product.
+
+A second established principle remains:
+
 Opportunity != Popularity
 
-A post is not valuable merely because it has high engagement. A useful opportunity depends on whether the user can make a relevant, differentiated, professionally valuable, and defensible contribution.
+A post is not valuable merely because it has high engagement. A useful
+opportunity depends on whether Rodrigo can make a relevant,
+differentiated, professionally valuable, and defensible contribution.
 
-High-Level Architecture
+Frozen MVP Target
 
-External Web / Discussions
-          |
-          v
-        SCOUT
-          |
-          v
-    PostCandidate
-          |
-          v
- OPPORTUNITY EVALUATION
-      /    |     \
-    LOW  MEDIUM  HIGH
-     |      |      |
-    END   QUEUED   v
-             |   RESEARCH
-            END     |
-                    v
-              ResearchBrief
-                    |
-                    v
-                  WRITER
-                    |
-                    v
-            QUALITY EVALUATOR
-              /     |      \
-            PASS  REVISE  REJECT
-             |      |       |
-             v      +->WRITER
-        HUMAN / END          END
+MVP Human-Centered Conversation Intelligence = a system capable of
+finding or receiving an opportunity, qualifying it, researching it,
+transforming evidence into an ArgumentBrief, generating multiple
+defensible perspectives, asking the human for the desired intellectual
+direction, and only then producing and evaluating the final content.
 
-Research is only consumed after an opportunity is explicitly accepted. Publication remains outside autonomous execution.
+The MVP is intentionally narrower than the broader long-term product
+vision.
+
+Performance Analytics, Feedback Learning, adaptive policy calibration,
+advanced UX, autonomous publication, and other post-MVP capabilities are
+not required to close this MVP.
+
+Target MVP Architecture
+
+Human Intent / Theme
+        |
+        v
+Discovery / Scout
+        |
+        v
+Target Qualification
+        |
+        v
+Opportunity Evaluation
+        |
+        +-- LOW -----------------------------> END
+        |
+        +-- MEDIUM --> QUEUED --------------> END
+        |
+        +-- HIGH
+        |
+        v
+Research
+        |
+        v
+ResearchBrief
+        |
+        v
+Argument Intelligence
+        |
+        v
+ArgumentBrief
+        |
+        v
+Perspective Generation
+        |
+        v
+PerspectiveSet
+        |
+        v
+Human Perspective Selection
+        |
+        v
+SelectedPerspective
+        |
+        v
+Rodrigo Voice / Writer
+        |
+        v
+Quality Evaluator
+        |
+        +-- PASS ----------------------------> Human Final Review
+        |
+        +-- REVISE --> Writer --> Evaluator
+        |
+        +-- REJECT --------------------------> END
+                                                  |
+                                                  v
+                                          Manual Publication
+
+Publication remains outside autonomous execution.
+
+The current development roadmap is progressively integrating these
+capabilities into the LangGraph workflow. The target architecture above
+should therefore not be interpreted as a claim that every transition is
+already integrated in the production graph.
 
 Responsibility Layers
 
-LLM — Semantic Intelligence
+LLM --- Semantic Intelligence
 
-The LLM handles tasks where interpretation matters: search strategy, source selection, topic relevance, contribution potential, evidence interpretation, synthesis, writing, and semantic quality assessment.
+The LLM handles tasks where interpretation matters, including:
 
-Python — Deterministic Governance
+search strategy;
 
-Python owns validation, scoring, thresholds, guardrails, action authorization, provenance enforcement, counters, operational limits, context budgets, and factual state mutation.
+source selection;
 
-LangGraph — Workflow Orchestration
+topic relevance;
 
-LangGraph coordinates shared workflow state, node transitions, deterministic routing, bounded revision paths, and termination.
+contribution potential;
 
-Human — Final Authority
+evidence interpretation;
 
-AI discovers
- -> AI evaluates
- -> AI researches
- -> AI drafts
+synthesis;
+
+tension identification;
+
+perspective generation;
+
+writing;
+
+semantic quality assessment.
+
+The LLM may expand the intellectual decision space, but it must not
+silently replace the human-selected intellectual direction.
+
+Python --- Deterministic Governance
+
+Python owns:
+
+validation;
+
+scoring;
+
+thresholds;
+
+guardrails;
+
+action authorization;
+
+provenance enforcement;
+
+counters;
+
+operational limits;
+
+context budgets;
+
+factual state mutation;
+
+validation of explicit human selections.
+
+Semantic proposals do not automatically become authoritative operational
+state.
+
+LangGraph --- Workflow Orchestration
+
+LangGraph coordinates:
+
+shared workflow state;
+
+node transitions;
+
+deterministic routing;
+
+bounded revision paths;
+
+Human-in-the-Loop transitions;
+
+termination.
+
+LangGraph orchestrates specialist components; it should not absorb their
+business logic.
+
+Human --- Intellectual and Publication Authority
+
+The human owns two distinct decision boundaries.
+
+Intellectual convergence
+
+AI researches
+ -> AI builds argument space
+ -> AI generates defensible perspectives
+ -> HUMAN SELECTS / REJECTS / COMBINES / GUIDES
+
+Final ownership
+
+AI materializes selected direction
  -> AI evaluates quality
- -> HUMAN DECIDES
+ -> HUMAN REVIEWS
+ -> HUMAN DECIDES WHETHER TO PUBLISH
 
-Autonomous LinkedIn publication and commenting are explicit non-goals.
+Autonomous LinkedIn publication and commenting remain explicit
+non-goals.
 
-LLM interprets and decides semantically; Python governs execution and limits; LangGraph governs workflow; the human retains publication authority.
+Discovery / Scout
 
-Scout
+Scout is the bounded discovery agent.
 
-Scout is the bounded discovery agent. Its action vocabulary is:
+Its action vocabulary is:
 
 SEARCH
 READ
@@ -111,7 +281,8 @@ Tool execution
    v
 Observation -> State -> next bounded decision
 
-The model decides semantically what it wants to do. Python decides whether the action is legal.
+The model decides semantically what it wants to do. Python decides
+whether the action is legal.
 
 Web Tool Layer
 
@@ -120,12 +291,14 @@ Scout and Research use provider-neutral contracts:
 SearchTool(query) -> list[SearchResult]
 ReadTool(url)     -> str
 
-Two modes are supported:
+Two execution modes are supported:
 
 FAKE MODE -> deterministic tools for isolated tests
 REAL MODE -> Brave Search + bounded HTTP reader
 
-The real reader validates network access and includes controls for URL scheme, DNS resolution, localhost/private destinations, redirects, timeouts, content type, response size, and controlled external failures.
+The real reader validates network access and includes controls for URL
+scheme, DNS resolution, localhost/private destinations, redirects,
+timeouts, content type, response size, and controlled external failures.
 
 Content Preparation
 
@@ -156,7 +329,8 @@ PreparedContext
     v
 LLM-facing input
 
-This prevents arbitrary raw webpages from being treated as clean, unlimited model context.
+This prevents arbitrary raw webpages from being treated as clean,
+unlimited model context.
 
 Current principal budgets:
 
@@ -172,39 +346,29 @@ Opportunity Evaluation answers:
 
 Current weighted dimensions:
 
-Dimension
+Dimension                  Weight
 
-Weight
+Contribution Potential        30%
+Positioning Fit               25%
+Topic Relevance               20%
+Engagement Potential          15%
+Research Efficiency           10%
 
-Contribution Potential
-
-30%
-
-Positioning Fit
-
-25%
-
-Topic Relevance
-
-20%
-
-Engagement Potential
-
-15%
-
-Research Efficiency
-
-10%
-
-The LLM produces semantic signals. Python calculates the weighted score, applies mandatory guardrails, and produces HIGH, MEDIUM, or LOW.
+The LLM produces semantic signals. Python calculates the weighted score,
+applies mandatory guardrails, and produces the operational
+classification.
 
 HIGH   -> ACCEPTED_FOR_RESEARCH -> Research
 MEDIUM -> QUEUED -> END
 LOW    -> END
 
+Opportunity Evaluation is a strategic resource-allocation gate. It does
+not determine Rodrigo's final intellectual position.
+
 Research
 
-Research transforms an accepted opportunity into the minimum evidence package needed for a factual and defensible contribution.
+Research transforms an accepted opportunity into the minimum evidence
+package needed for a factual and defensible contribution.
 
 Actions:
 
@@ -229,7 +393,9 @@ EvidenceItem
     v
 ResearchBrief
 
-A search result is not automatically evidence. A read page is not automatically evidence. Evidence must be explicitly extracted and preserve provenance.
+A search result is not automatically evidence. A read page is not
+automatically evidence. Evidence must be explicitly extracted and
+preserve provenance.
 
 Current principal runtime limits:
 
@@ -239,30 +405,207 @@ max searches         3
 max reads            5
 max evidence items   6
 
-Research may terminate as SUFFICIENT, INSUFFICIENT, or LIMIT_REACHED.
+Research may terminate as SUFFICIENT, INSUFFICIENT, or
+LIMIT_REACHED.
+
+Research should remain independent from the final editorial direction
+whenever practical so that multiple perspectives can reuse the same
+evidence base.
+
+Argument Intelligence
+
+Argument Intelligence sits between Research and final content
+generation.
+
+Its responsibility is not to write the final LinkedIn contribution.
+
+It transforms a ResearchBrief into an ArgumentBrief: a compact
+intellectual decision artifact that can expose, where supported by the
+evidence:
+
+the original thesis;
+
+relevant context;
+
+strongest evidence;
+
+counterevidence;
+
+tensions and trade-offs;
+
+uncertainty;
+
+possible contribution areas;
+
+source references.
+
+Conceptually:
+
+ResearchBrief
+      |
+      v
+Argument Intelligence
+      |
+      v
+ArgumentBrief
+
+This boundary separates researching what is supported from
+deciding what is worth saying.
+
+Perspective Generation
+
+Perspective Generation deliberately preserves divergence before human
+convergence.
+
+Instead of immediately producing one supposedly "best" answer, the
+system generates a small set of materially distinct and defensible
+intellectual directions grounded in the same ArgumentBrief and
+evidence base.
+
+Conceptually:
+
+ArgumentBrief
+      |
+      v
+Perspective Generation
+      |
+      v
+PerspectiveSet
+
+A perspective represents what could be worth saying.
+
+It is not merely a change in tone, style, or wording.
+
+Artificial disagreement should not be created solely to produce multiple
+options.
+
+Human Perspective Selection
+
+Human Perspective Selection is the central convergence boundary of the
+MVP.
+
+The human may:
+
+select a perspective;
+
+reject a proposed direction;
+
+combine ideas where the contract supports it;
+
+add guidance or personal context;
+
+modify the intended direction;
+
+request another direction through the interaction layer.
+
+The selected intellectual direction is represented explicitly through
+SelectedPerspective.
+
+Conceptually:
+
+PerspectiveSet
+      |
+      v
+Human decision
+      |
+      v
+SelectedPerspective
+
+Only after this convergence should the system materialize the complete
+final contribution.
+
+The human selection is authoritative context. Downstream generation must
+not silently substitute another argument.
+
+Perspective Is Not Expression
+
+The architecture explicitly separates:
+
+Perspective
+
+What should be said.
+
+from:
+
+Expression
+
+How the selected idea should be communicated.
+
+A technical perspective can be expressed conversationally. An
+organizational perspective can be expressed humorously. These dimensions
+must not be collapsed into one variable.
+
+Rodrigo Voice
+
+Rodrigo Voice is a personalization layer, not a simulator of Rodrigo's
+beliefs.
+
+Its responsibility is narrower:
+
+"Given this specific human-selected perspective, how might Rodrigo
+naturally express it?"
+
+Rodrigo Voice must not independently infer which intellectual position
+Rodrigo should adopt.
+
+This keeps personalization downstream from human intellectual
+convergence.
 
 Writer
 
-Writer transforms the approved opportunity and ResearchBrief into a professional contribution draft.
+The Writer materializes the human-selected direction into a professional
+contribution draft using the available evidence and personalization
+context.
 
-Writer does not own discovery, opportunity classification, unrestricted research, quality routing, or publication.
+Its role is therefore:
 
-The orchestration layer supplies component-specific input instead of exposing the entire global state indiscriminately.
+SelectedPerspective
+        +
+ResearchBrief / evidence context
+        +
+Rodrigo Voice
+        |
+        v
+Writer
+        |
+        v
+Draft
+
+Writer does not own:
+
+discovery;
+
+opportunity classification;
+
+unrestricted research;
+
+perspective selection;
+
+human belief inference;
+
+quality routing;
+
+publication.
+
+The orchestration layer supplies component-specific input instead of
+exposing the entire global state indiscriminately.
 
 Quality Evaluator
 
 Opportunity Evaluation and Quality Evaluation solve different problems:
 
-Opportunity Evaluation -> "Should we contribute here?"
+Opportunity Evaluation -> "Should we invest effort in this conversation?"
 Quality Evaluation     -> "Is the generated contribution good enough?"
 
 Quality routing:
 
-PASS   -> Human / END
+PASS   -> Human Final Review
 REVISE -> Writer -> Quality Evaluator
 REJECT -> END
 
 Revision is bounded and does not automatically rerun Research.
+
+A quality PASS does not authorize publication.
 
 Structured Contracts
 
@@ -271,12 +614,15 @@ Representative typed contracts include:
 PostCandidate
 OpportunitySignals
 OpportunityEvaluation
+
 ScoutAction
 ScoutSelection
 ScoutState
+
 SearchResult
 SearchTool
 ReadTool
+
 ResearchObjective
 ResearchAction
 ReadSource
@@ -284,11 +630,22 @@ EvidenceItem
 ResearchState
 ResearchBriefSynthesis
 ResearchBrief
+
+ArgumentBrief
+Perspective
+PerspectiveSet
+SelectedPerspective
+
 Writer contracts
 Quality Evaluation contracts
 LinkedInAgentState
 
-Pydantic is preferred at machine-to-machine AI boundaries where practical.
+Pydantic is preferred at machine-to-machine AI boundaries where
+practical.
+
+The new argument contracts create an explicit data boundary between
+evidence, intellectual alternatives, human convergence, and final
+expression.
 
 Failure Model
 
@@ -299,9 +656,16 @@ operational limit
 external infrastructure failure
 programming failure
 
-A recoverable web failure can become agent state and permit another bounded decision. A programming failure should not be silently transformed into plausible-looking data.
+A recoverable web failure can become agent state and permit another
+bounded decision.
 
-Implemented Capability Map
+A programming failure should not be silently transformed into
+plausible-looking data.
+
+A human rejection or request for another intellectual direction is not
+necessarily a system failure; it is a legitimate product outcome.
+
+Capability Map
 
 DISCOVERY
 ├── bounded Scout loop
@@ -314,7 +678,7 @@ WEB INFRASTRUCTURE
 ├── provider-neutral contracts
 ├── Brave Search adapter
 ├── bounded HTTP reader
-├── network/SSRF guardrails
+├── network / SSRF guardrails
 ├── main-content extraction
 └── content-density fallback
 
@@ -339,8 +703,17 @@ RESEARCH
 ├── evidence provenance
 └── ResearchBrief
 
+CONVERSATION INTELLIGENCE
+├── ArgumentBrief contracts
+├── Argument Intelligence
+├── Perspective / PerspectiveSet contracts
+├── Perspective Generation
+├── SelectedPerspective contract
+└── Human Perspective Selection boundary
+
 GENERATION & QUALITY
-├── Research-informed Writer
+├── selected-perspective-aware Writer
+├── Rodrigo Voice personalization
 ├── Quality Evaluator
 └── bounded revision loop
 
@@ -349,65 +722,107 @@ ORCHESTRATION & GOVERNANCE
 ├── explicit shared state
 ├── deterministic routing
 ├── structured contracts
+├── Human-in-the-Loop boundaries
 └── human publication authority
+
+Some Conversation Intelligence capabilities currently exist as
+contracts/components before full LangGraph integration. The capability
+map describes the MVP architecture being assembled and must be read
+together with 02_current_architecture.md for the exact implemented
+topology.
 
 Validation State
 
-Current automated baseline:
+The project has extensive automated unit and integration coverage,
+deterministic fake-tool validation, and real-tool smoke validation.
 
-189 passing tests
-
-Real-tool smoke validation has separately demonstrated:
+Real-tool smoke validation has demonstrated important infrastructure
+boundaries including:
 
 Scout
-  OpenAI reasoning
-  + real search
-  + real reading
-  + content extraction
-  + bounded context
+
+OpenAI reasoning
++ real search
++ real reading
++ content extraction
++ bounded context
 
 Research
-  OpenAI reasoning
-  + real search
-  + real reading
-  + evidence extraction
-  + provenance
-  + ResearchBrief
 
-These validate important real infrastructure boundaries but are not equivalent to production readiness.
+OpenAI reasoning
++ real search
++ real reading
++ evidence extraction
++ provenance
++ ResearchBrief
+
+Automated test counts are development snapshots rather than
+architectural invariants and should be recorded in the current
+implementation/audit context rather than treated as a permanent design
+property of this document.
+
+Roadmap to MVP
+
+#                Increment         Delivery                                           Architectural
+Impact
+
+1                 Argument          ArgumentBrief, Perspective, PerspectiveSet,  Creates the
+Contracts v0.1    SelectedPerspective                              formal language
+of the new
+architecture
+
+2                 Argument          ResearchBrief -> ArgumentBrief                   Separates
+Intelligence v0.1                                                    research from
+positioning
+
+3                 Perspective       ArgumentBrief -> 2–4 defensible perspectives     Implements AI
+Generation v0.1                                                      expands
+
+4                 Human Perspective Human selects / rejects / combines / guides        Implements
+Selection v0.1    perspective                                        Human
+converges
+
+5                 Writer / Voice    SelectedPerspective -> Rodrigo Voice -> Writer   Implements AI
+Integration v0.1                                                     materializes
+
+6                 LangGraph         Complete new flow + HITL + routing                 Transforms
+Integration                                                          components into
+an integrated
+system
+
+The roadmap is sequential at the architectural level, even when
+implementation work overlaps between adjacent increments.
 
 Current Architectural Boundaries
 
-Still intentionally incomplete or unresolved:
+Still intentionally incomplete or unresolved outside the MVP closure
+path:
 
-production LinkedIn-specific discovery
-reliable LinkedIn engagement metadata
-objective Engagement Potential calculation
-multiple-candidate orchestration
-production-grade observability
-production deployment architecture
-long-term model routing and cost telemetry
-real-world scoring calibration
-complete real end-to-end workflow validation
+production LinkedIn-specific discovery;
 
-Next Architectural Validation
+reliable LinkedIn engagement metadata;
 
-The next planned increment is:
+objective Engagement Potential calculation;
 
-End-to-End Real Workflow Validation v0.1
+multiple-candidate orchestration;
 
-Target path:
+production-grade observability;
 
-Real Web
- -> Scout
- -> Opportunity Evaluation
- -> HIGH
- -> Research
- -> Writer
- -> Quality Evaluator
- -> Human / END
+production deployment architecture;
 
-The goal is to validate integrated real behavior without weakening existing guardrails merely to produce a successful demonstration.
+long-term model routing and cost telemetry;
+
+real-world scoring calibration;
+
+advanced Human-in-the-Loop UX;
+
+Performance Analytics and Feedback Learning;
+
+adaptive policy calibration;
+
+autonomous publication.
+
+These items must not distract from closing the frozen MVP.
 
 Architectural Direction
 
@@ -423,10 +838,18 @@ explicit state
         +
 evidence provenance
         +
-cost/context control
+argument intelligence
         +
-human authority
+human intellectual convergence
+        +
+personalized materialization
+        +
+quality evaluation
+        +
+human ownership
 
 The architecture is not optimized for maximum autonomy.
 
-It is optimized for useful autonomy under explicit control.
+It is optimized for useful autonomy under explicit human control,
+with AI expanding the decision space and the human retaining authority
+over both intellectual direction and publication.

@@ -14,6 +14,7 @@ def writer_node(state: LinkedInAgentState) -> dict:
     writer_input = WriterInput(
         post=post,
         research_result=state.get("research_result"),
+        selected_perspective=state.get("selected_perspective"),
         previous_draft=state.get("current_draft"),
         revision_instruction=(
             quality_evaluation.revision_instruction

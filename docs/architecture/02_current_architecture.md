@@ -14,26 +14,40 @@ It should be updated when the implemented workflow, component boundaries, routin
 
 Current Development Snapshot
 
+Current audited HEAD before the active uncommitted increment:
+
+3d77d4c
+feat: add perspective generation with evidence provenance
+
 Current automated baseline:
 
-189 passing tests
+396 passing tests
 
-Current stable baseline before the active increment:
+The Human-Centered Conversation Intelligence implementation has progressed through the following component-level increments:
 
-156aa07
-feat: integrate quality evaluator into opportunity workflow
+Argument Contracts v0.1 — implemented
 
-The current working increment extends that baseline with:
+Argument Intelligence v0.1 — implemented
 
-Real Web Tooling v0.1
-Context Preparation v0.1
-Main Content Extraction v0.2.1
+Perspective Generation v0.1 — implemented
 
-Real Scout and Research smoke validations have also been completed.
+Human Perspective Selection v0.1 — implemented
+
+Writer / Voice Integration v0.1 — implemented
+
+The current working tree contains the completion work for Human Perspective Selection and SelectedPerspective-aware Writer integration.
 
 The next planned capability is:
 
-End-to-End Real Workflow Validation v0.1
+LangGraph Integration
+
+Its purpose is to connect the already implemented conversation-intelligence components into the complete workflow, add the explicit Human-in-the-Loop perspective-selection transition, and establish deterministic routing around that boundary.
+
+Important distinction:
+
+The component layer is ahead of the currently integrated graph topology.
+
+The implemented graph still reflects the earlier direct Research -> Writer path. Argument Intelligence, Perspective Generation, and Human Perspective Selection must not be described as fully orchestrated until LangGraph Integration is complete.
 
 Active Workflow
 
@@ -681,7 +695,7 @@ Automated Test Baseline
 
 Current full suite:
 
-189 passing tests
+396 passing tests
 
 The active test surface includes:
 
@@ -725,7 +739,7 @@ Next Increment
 
 The next planned increment is:
 
-End-to-End Real Workflow Validation v0.1
+LangGraph Integration
 
 The validation target is the actual integrated path:
 
@@ -755,6 +769,39 @@ Human / END boundary
 The objective is not merely to obtain a successful output.
 
 The objective is to verify that the integrated real path respects the same contracts, context limits, provenance rules, routing rules, and failure boundaries already established in isolated capabilities.
+
+Human-Centered Integration Boundary
+
+The canonical product architecture now includes:
+
+ResearchBrief
+→ Argument Intelligence
+→ ArgumentBrief
+→ Perspective Generation
+→ PerspectiveSet
+→ Human Perspective Selection
+→ SelectedPerspective
+→ Rodrigo Voice / Writer
+→ Quality Evaluator
+→ Human Final Review
+
+At the current implementation snapshot, the contracts and specialist components through Writer / Voice Integration exist and are covered by automated tests.
+
+The graph has not yet been fully migrated to this topology.
+
+Therefore:
+
+ArgumentBrief, Perspective, PerspectiveSet, and SelectedPerspective are current implemented contracts;
+
+Argument Intelligence and Perspective Generation are current implemented components;
+
+Human Perspective Selection is a deterministic human-decision boundary;
+
+Writer accepts SelectedPerspective and preserves the selected intellectual direction;
+
+full graph nodes, state transitions, HITL interruption/resume behavior, and routing for the new flow belong to the next LangGraph Integration increment.
+
+This distinction prevents the implementation document from confusing available component capability with completed end-to-end orchestration.
 
 Maintenance Rule
 

@@ -13,22 +13,22 @@ The purpose of this file is therefore to prevent premature infrastructure assump
 Current Status
 
 Production cloud deployment
-    NOT IMPLEMENTED
+NOT IMPLEMENTED
 
 Cloud provider
-    NOT SELECTED
+NOT SELECTED
 
 Production persistence
-    NOT SELECTED
+NOT SELECTED
 
 Production observability stack
-    NOT SELECTED
+NOT SELECTED
 
 Production secret-management solution
-    NOT SELECTED
+NOT SELECTED
 
 Production LinkedIn-native integration
-    NOT IMPLEMENTED
+NOT IMPLEMENTED
 
 The project is currently being validated primarily as an application/runtime architecture.
 
@@ -39,7 +39,10 @@ workflow routing
 tool boundaries
 evidence provenance
 context limits
+argument intelligence
+human perspective selection
 quality evaluation
+human intellectual authority
 human publication authority
 
 before production infrastructure is introduced.
@@ -221,9 +224,11 @@ Human Approval Boundary
 
 Cloud deployment must preserve the rule:
 
-AI prepares
+AI expands
+Human converges
+AI materializes
 AI evaluates
-Human decides
+Human owns
 
 A hosted version must not turn a quality PASS into automatic publication.
 
@@ -243,6 +248,9 @@ Potential future persistence needs may include:
 
 candidate opportunities
 ResearchBrief artifacts
+ArgumentBrief artifacts
+PerspectiveSet artifacts
+SelectedPerspective / human guidance
 generated drafts
 quality evaluations
 human feedback
@@ -263,7 +271,7 @@ Current LangGraph workflow state should not automatically be treated as the long
 There is an important distinction between:
 
 execution state
-        and
+and
 business/history persistence
 
 Future deployment must decide:
@@ -460,13 +468,13 @@ Real external tools should not automatically be enabled in every environment.
 For example:
 
 tests
-    fake/mocked tools
+fake/mocked tools
 
 staging
-    optional controlled real tools
+optional controlled real tools
 
 production
-    configured production tools
+configured production tools
 
 This maintains deterministic automated validation while allowing real integration testing.
 
@@ -532,10 +540,13 @@ discovering
 evaluating opportunity
 researching
 preparing evidence
-writing
+building argument space
+generating perspectives
+waiting for human perspective selection
+writing selected direction
 evaluating quality
 revision required
-ready for human review
+ready for final human review
 
 This UI concern should remain decoupled from the orchestration engine.
 
@@ -566,21 +577,21 @@ Possible Future Topology
 A potential future topology could look like:
 
 User / Review UI
-        |
-        v
+|
+v
 Application API
-        |
-        v
+|
+v
 Workflow Runtime
-   |       |       |
-   v       v       v
- LLM     Search   Reader
+|       |       |
+v       v       v
+LLM     Search   Reader
 Provider Provider  Web
-        |
-        v
+|
+v
 Optional Persistence
-        |
-        v
+|
+v
 Telemetry / Audit
 
 This is illustrative only.
@@ -613,7 +624,7 @@ Deployment Readiness Gates
 
 Before calling the system production-deployable, at minimum the project should establish:
 
-complete real end-to-end workflow validation
+complete Human-Centered real end-to-end workflow validation
 production configuration model
 secret-management approach
 persistent state requirements
@@ -630,13 +641,15 @@ Not all of these must require complex infrastructure, but each must be conscious
 
 Current Next Step
 
-The current next development increment remains:
+The current next development increment is:
 
-End-to-End Real Workflow Validation v0.1
+LangGraph Integration
 
-Deployment work should not displace that validation.
+Deployment work should not displace completion of the frozen Human-Centered MVP.
 
-A successful real integrated run will provide stronger evidence for what the eventual runtime and observability architecture actually need.
+After LangGraph Integration, MVP Validation & Release must validate the complete real flow, regression suite, documentation, and release checkpoint.
+
+A successful Human-Centered integrated run will provide stronger evidence for what the eventual runtime, persistence, HITL, and observability architecture actually need.
 
 Maintenance Rule
 
