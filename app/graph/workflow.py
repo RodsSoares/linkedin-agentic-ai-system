@@ -1,12 +1,22 @@
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
+from app.graph.nodes.argument_intelligence_node import (
+    argument_intelligence_node,
+)
 from app.graph.nodes.evaluator_node import evaluator_node
+from app.graph.nodes.human_perspective_selection_node import (
+    human_perspective_selection_node,
+)
 from app.graph.nodes.opportunity_evaluator_node import (
     opportunity_evaluator_node,
 )
 from app.graph.nodes.opportunity_routing_nodes import (
     accepted_for_research_node,
     queued_opportunity_node,
+)
+from app.graph.nodes.perspective_generation_node import (
+    perspective_generation_node,
 )
 from app.graph.nodes.research_node import research_node
 from app.graph.nodes.scout_node import scout_node
@@ -31,6 +41,40 @@ def _add_quality_evaluation_loop(graph: StateGraph) -> None:
             "human": END,
             "end": END,
         },
+    )
+
+
+def _add_human_centered_generation_flow(
+    graph: StateGraph,
+) -> None:
+    graph.add_node(
+        "argument_intelligence",
+        argument_intelligence_node,
+    )
+    graph.add_node(
+        "perspective_generation",
+        perspective_generation_node,
+    )
+    graph.add_node(
+        "human_perspective_selection",
+        human_perspective_selection_node,
+    )
+
+    graph.add_edge(
+        "research",
+        "argument_intelligence",
+    )
+    graph.add_edge(
+        "argument_intelligence",
+        "perspective_generation",
+    )
+    graph.add_edge(
+        "perspective_generation",
+        "human_perspective_selection",
+    )
+    graph.add_edge(
+        "human_perspective_selection",
+        "writer",
     )
 
 
@@ -68,9 +112,12 @@ def build_opportunity_workflow():
         "queued",
         queued_opportunity_node,
     )
+
     _add_quality_evaluation_loop(graph)
+    _add_human_centered_generation_flow(graph)
 
     graph.set_entry_point("opportunity_evaluator")
+
     graph.add_conditional_edges(
         "opportunity_evaluator",
         route_after_opportunity_evaluation,
@@ -86,15 +133,13 @@ def build_opportunity_workflow():
         "research",
     )
     graph.add_edge(
-        "research",
-        "writer",
-    )
-    graph.add_edge(
         "queued",
         END,
     )
 
-    return graph.compile()
+    return graph.compile(
+        checkpointer=InMemorySaver(),
+    )
 
 
 def build_scout_opportunity_workflow():
@@ -124,9 +169,12 @@ def build_scout_opportunity_workflow():
         "queued",
         queued_opportunity_node,
     )
+
     _add_quality_evaluation_loop(graph)
+    _add_human_centered_generation_flow(graph)
 
     graph.set_entry_point("scout")
+
     graph.add_conditional_edges(
         "scout",
         route_after_scout,
@@ -151,12 +199,10 @@ def build_scout_opportunity_workflow():
         "research",
     )
     graph.add_edge(
-        "research",
-        "writer",
-    )
-    graph.add_edge(
         "queued",
         END,
     )
 
-    return graph.compile()
+    return graph.compile(
+        checkpointer=InMemorySaver(),
+    )

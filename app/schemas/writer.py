@@ -11,3 +11,4 @@ class WriterInput(BaseModel):
     selected_perspective: SelectedPerspective | None = None
     previous_draft: str | None = None
     revision_instruction: str | None = None
+    

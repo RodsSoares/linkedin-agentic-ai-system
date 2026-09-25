@@ -253,4 +253,3 @@ def test_writer_node_passes_exact_selected_perspective_to_writer():
 
     assert writer_input.selected_perspective is selected_perspective
     assert result["current_draft"] == "Perspective-aware draft."
-    
