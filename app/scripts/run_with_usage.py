@@ -8,6 +8,8 @@ from typing import Any
 # Select real web mode before importing application modules.
 os.environ["WEB_TOOL_MODE"] = "real"
 
+from langgraph.types import Command
+
 from app.graph.workflow import build_scout_opportunity_workflow
 from app.telemetry.usage import UsageCollector, capture_usage
 
@@ -185,13 +187,96 @@ def _print_usage_report(
     )
 
 
+def _print_perspectives(interrupt_payload: dict[str, Any]) -> None:
+    perspectives = interrupt_payload.get("perspectives", [])
+
+    print("\n=== HUMAN PERSPECTIVE SELECTION ===")
+
+    for index, perspective in enumerate(perspectives, start=1):
+        print(f"\n[{index}] {perspective.get('label')}")
+        print(
+            "perspective_id:",
+            perspective.get("perspective_id"),
+        )
+        print(
+            "core_argument:",
+            perspective.get("core_argument"),
+        )
+        print(
+            "why_it_matters:",
+            perspective.get("why_it_matters"),
+        )
+        print(
+            "contribution:",
+            perspective.get("contribution"),
+        )
+
+        counterargument = perspective.get("counterargument")
+        uncertainty = perspective.get("uncertainty")
+
+        if counterargument:
+            print("counterargument:", counterargument)
+
+        if uncertainty:
+            print("uncertainty:", uncertainty)
+
+
+def _collect_human_selection(
+    interrupt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    perspectives = interrupt_payload.get("perspectives", [])
+
+    if not perspectives:
+        raise RuntimeError(
+            "Perspective-selection interrupt contained no perspectives."
+        )
+
+    _print_perspectives(interrupt_payload)
+
+    while True:
+        raw_selection = input(
+            "\nSelect perspective number: "
+        ).strip()
+
+        try:
+            selected_index = int(raw_selection) - 1
+        except ValueError:
+            print("Enter a valid perspective number.")
+            continue
+
+        if 0 <= selected_index < len(perspectives):
+            break
+
+        print("Perspective number is out of range.")
+
+    selected = perspectives[selected_index]
+
+    human_guidance = input(
+        "Optional human guidance "
+        "(press Enter for none): "
+    ).strip()
+
+    return {
+        "perspective_id": selected["perspective_id"],
+        "human_guidance": human_guidance or None,
+    }
+
+
 def main() -> None:
-    print("=== END-TO-END TOKEN USAGE BASELINE v0.1 ===")
+    print("=== HUMAN-CENTERED END-TO-END VALIDATION ===")
     print("WEB_TOOL_MODE:", os.environ["WEB_TOOL_MODE"])
+
     print("\n=== SCOUT OBJECTIVE ===")
     print(SCOUT_OBJECTIVE)
 
     workflow = build_scout_opportunity_workflow()
+
+    config = {
+        "configurable": {
+            "thread_id": "live-human-centered-e2e",
+        }
+    }
+
     result: dict[str, Any] | None = None
     failure: Exception | None = None
 
@@ -202,8 +287,41 @@ def main() -> None:
             result = workflow.invoke(
                 {
                     "scout_objective": SCOUT_OBJECTIVE,
-                }
+                },
+                config=config,
             )
+
+            if "__interrupt__" in result:
+                interrupt_payload = result[
+                    "__interrupt__"
+                ][0].value
+
+                if (
+                    interrupt_payload.get("type")
+                    != "perspective_selection"
+                ):
+                    raise RuntimeError(
+                        "Unexpected workflow interrupt: "
+                        f"{interrupt_payload}"
+                    )
+
+                print("\n=== ARGUMENT BRIEF ===")
+                _print_section(
+                    "ARGUMENT BRIEF",
+                    result.get("argument_brief"),
+                )
+
+                human_decision = _collect_human_selection(
+                    interrupt_payload
+                )
+
+                result = workflow.invoke(
+                    Command(
+                        resume=human_decision,
+                    ),
+                    config=config,
+                )
+
         except Exception as exc:
             failure = exc
 
@@ -213,12 +331,24 @@ def main() -> None:
         post = result.get("post")
         opportunity = result.get("opportunity_evaluation")
         research = result.get("research_result")
+        argument = result.get("argument_brief")
+        perspectives = result.get("perspective_set")
+        selected = result.get("selected_perspective")
         draft = result.get("current_draft")
         quality = result.get("quality_evaluation")
 
         _print_section("POST CANDIDATE", post)
-        _print_section("OPPORTUNITY EVALUATION", opportunity)
+        _print_section(
+            "OPPORTUNITY EVALUATION",
+            opportunity,
+        )
         _print_section("RESEARCH BRIEF", research)
+        _print_section("ARGUMENT BRIEF", argument)
+        _print_section("PERSPECTIVE SET", perspectives)
+        _print_section(
+            "SELECTED PERSPECTIVE",
+            selected,
+        )
         _print_section("FINAL DRAFT", draft)
         _print_section("QUALITY EVALUATION", quality)
 
@@ -226,13 +356,17 @@ def main() -> None:
         print("status:", result.get("status"))
         print("next_step:", result.get("next_step"))
         print("iteration:", result.get("iteration"))
-        print("human_feedback:", result.get("human_feedback"))
+        print(
+            "human_feedback:",
+            result.get("human_feedback"),
+        )
 
         classification = (
             getattr(opportunity, "classification", None)
             if opportunity is not None
             else None
         )
+
         quality_decision = (
             getattr(quality, "decision", None)
             if quality is not None
@@ -241,8 +375,20 @@ def main() -> None:
 
         print("\n=== E2E SUMMARY ===")
         print("candidate_found:", post is not None)
-        print("opportunity_classification:", classification)
+        print(
+            "opportunity_classification:",
+            classification,
+        )
         print("research_completed:", research is not None)
+        print("argument_generated:", argument is not None)
+        print(
+            "perspectives_generated:",
+            perspectives is not None,
+        )
+        print(
+            "human_selection_completed:",
+            selected is not None,
+        )
         print("draft_generated:", bool(draft))
         print("quality_decision:", quality_decision)
 
@@ -253,7 +399,10 @@ def main() -> None:
 
     if failure is not None:
         print("\n=== E2E FAILURE ===")
-        print("exception_type:", type(failure).__name__)
+        print(
+            "exception_type:",
+            type(failure).__name__,
+        )
         print("exception:", str(failure))
         print(f"elapsed_seconds: {elapsed:.2f}")
         raise failure

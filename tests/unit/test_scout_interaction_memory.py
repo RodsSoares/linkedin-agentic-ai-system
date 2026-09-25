@@ -95,7 +95,7 @@ def test_search_reports_no_novel_results_when_all_urls_are_known(
     assert state.status != "FINISHED"
 
 
-def test_no_novel_results_finish_at_retry_limit(tmp_path):
+def test_no_novel_results_trigger_diversification_at_retry_limit(tmp_path):
     memory = InteractionMemoryService(
         database_path=tmp_path / "memory.db"
     )
@@ -132,6 +132,7 @@ def test_no_novel_results_finish_at_retry_limit(tmp_path):
 
     assert state.status != "FINISHED"
     assert state.novelty_search_attempts == 1
+    assert state.diversification_count == 0
 
     execute_action(
         action=second_search,
@@ -141,8 +142,11 @@ def test_no_novel_results_finish_at_retry_limit(tmp_path):
         memory_service=memory,
     )
 
-    assert state.novelty_search_attempts == 2
-    assert state.status == "FINISHED"
+    assert state.status == "SEARCHING"
+    assert state.novelty_search_attempts == 0
+    assert state.diversification_count == 1
+    assert state.search_strategy == "diversify"
+    assert state.already_seen == 2
 
 
 def test_novel_result_resets_novelty_attempt_counter(tmp_path):

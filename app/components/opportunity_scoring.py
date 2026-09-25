@@ -44,7 +44,7 @@ def classify_opportunity(
     if has_low_opportunity_guardrail(signals):
         return "LOW"
 
-    if opportunity_score >= 80:
+    if opportunity_score >= 75:
         return "HIGH"
 
     if opportunity_score >= 60:

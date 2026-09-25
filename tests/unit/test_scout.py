@@ -292,6 +292,7 @@ def test_scout_selects_last_read_content_as_candidate():
     )
 
     assert len(state.candidates) == 1
+    assert state.status == "FINISHED"
 
     candidate = state.candidates[0]
 

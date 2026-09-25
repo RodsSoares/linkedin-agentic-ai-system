@@ -40,7 +40,17 @@ class ScoutState(BaseModel):
     max_novelty_search_attempts: int = Field(default=3, ge=1)
 
     steps: int = Field(default=0, ge=0)
-    max_steps: int = Field(default=5, ge=1)
+    max_steps: int = Field(default=24, ge=1)
+    max_searches: int = Field(default=8, ge=1)
+    max_reads: int = Field(default=8, ge=1)
+    read_attempts: int = Field(default=0, ge=0)
+    successful_reads: int = Field(default=0, ge=0)
+    blocked_reads: int = Field(default=0, ge=0)
+    sources_discovered: int = Field(default=0, ge=0)
+    already_seen: int = Field(default=0, ge=0)
+    diversification_count: int = Field(default=0, ge=0)
+    search_strategy: str = "primary"
+    blocked_urls: list[str] = Field(default_factory=list)
 
     status: Literal[
         "READY",
@@ -49,4 +59,3 @@ class ScoutState(BaseModel):
         "FINISHED",
         "FAILED",
     ] = "READY"
-    

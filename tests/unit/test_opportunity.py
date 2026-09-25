@@ -181,7 +181,7 @@ def test_classification_high():
         research_cost=20,
     )
 
-    assert classify_opportunity(signals, 80.0) == "HIGH"
+    assert classify_opportunity(signals, 75.0) == "HIGH"
 
 
 def test_classification_medium():
@@ -193,7 +193,7 @@ def test_classification_medium():
     )
 
     assert classify_opportunity(signals, 60.0) == "MEDIUM"
-    assert classify_opportunity(signals, 79.99) == "MEDIUM"
+    assert classify_opportunity(signals, 74.99) == "MEDIUM"
 
 
 def test_classification_low():
