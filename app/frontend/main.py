@@ -20,14 +20,23 @@ from app.graph.workflow import build_scout_opportunity_workflow
 from app.agents.scout import reset_scout_observer, set_scout_observer
 
 
-SCOUT_OBJECTIVE = """
-Find a current public web article, discussion, or professional publication
-where Rodrigo can make a relevant and differentiated contribution about
-AI agents, intelligent automation, AI applied to business processes,
-supply chain, operations, or AI solution architecture.
+def build_scout_objective(theme: str) -> str:
+    normalized_theme = " ".join(theme.split())
 
-Prefer recent, substantive content where a practical business and
-engineering perspective would add value.
+    if not normalized_theme:
+        raise ValueError("Theme cannot be empty.")
+
+    return f"""
+Find a current public web article, discussion, or professional publication
+about the following human-defined theme:
+
+{normalized_theme}
+
+Look for substantive content where Rodrigo can make a relevant,
+differentiated, professionally valuable, and defensible contribution.
+
+Prefer recent content with enough substance to support research,
+argument development, and multiple intellectual perspectives.
 
 Select exactly one strong candidate when appropriate. Do not force a
 selection if no candidate is good enough.
@@ -679,7 +688,7 @@ footer { visibility: hidden; }
 
 /* Native Streamlit document is the scrollable workspace. */
 [data-testid="stAppViewContainer"] .block-container {
-    padding-top: calc(var(--topbar-height) + 1rem) !important;
+    padding-top: calc(var(--topbar-height) + .15rem) !important;
     padding-right: 1.35rem !important;
     padding-bottom: 3rem !important;
     padding-left: calc(var(--control-width) + 1.35rem) !important;
@@ -698,6 +707,12 @@ footer { visibility: hidden; }
 }
 
 .workspace-anchor { display: none; }
+
+/* Pull the first workspace block directly below the fixed workflow topbar. */
+.element-container:has(.workspace-anchor) + div {
+    margin-top: -3.5rem !important;
+    
+}
 
 
 .control-copy {
@@ -761,6 +776,7 @@ def reset_run() -> None:
     st.session_state.phase = "ready"
     st.session_state.error = None
     st.session_state.human_guidance = ""
+    st.session_state.discovery_theme = ""
     st.session_state.worker = None
     st.session_state.worker_shared = None
     st.session_state.worker_done = False
@@ -1595,7 +1611,7 @@ def _workflow_log(message: str) -> None:
     print(f"[{timestamp}] [WORKFLOW] {message}", flush=True)
 
 
-def start_workflow() -> None:
+def start_workflow(theme: str) -> None:
     _workflow_log("UI START requested")
     st.session_state.started_at = time.perf_counter()
     st.session_state.finished_at = None
@@ -1604,7 +1620,9 @@ def start_workflow() -> None:
     st.session_state.result = {}
     st.session_state.interrupt_payload = None
     st.session_state.selected_perspective_id = None
-    launch_background_run({"scout_objective": SCOUT_OBJECTIVE})
+
+    scout_objective = build_scout_objective(theme)
+    launch_background_run({"scout_objective": scout_objective})
 
 
 def resume_workflow(
@@ -1703,13 +1721,45 @@ if phase == "ready":
         """
     )
 
-    if st.button(
-        "Start workflow",
-        type="primary",
-        use_container_width=True,
-    ):
-        start_workflow()
-        st.rerun()
+    st.markdown("##### Exploration theme")
+
+    preset_ai, preset_supply, preset_data, custom_col, start_col = st.columns(
+        [0.7, 1.15, 0.75, 4.8, 1.55],
+        gap="small",
+    )
+
+    with preset_ai:
+        if st.button("AI", use_container_width=True):
+            st.session_state.discovery_theme = "Artificial Intelligence"
+            st.rerun()
+
+    with preset_supply:
+        if st.button("SUPPLY CHAIN", use_container_width=True):
+            st.session_state.discovery_theme = "Supply Chain"
+            st.rerun()
+
+    with preset_data:
+        if st.button("DATA", use_container_width=True):
+            st.session_state.discovery_theme = "Data and Analytics"
+            st.rerun()
+
+    with custom_col:
+        theme = st.text_input(
+            "Custom exploration theme",
+            placeholder="Type any other theme...",
+            key="discovery_theme",
+            label_visibility="collapsed",
+        )
+
+    with start_col:
+        if st.button(
+            "Start workflow",
+            type="primary",
+            use_container_width=True,
+            disabled=not theme.strip(),
+        ):
+            start_workflow(theme)
+            st.rerun()
 
 elif phase == "human":
     render_opportunity()
