@@ -3,19 +3,11 @@ from unittest.mock import patch
 from langgraph.types import Command
 
 from app.graph.workflow import build_opportunity_workflow
-from app.schemas.argument import (
-    ArgumentBrief,
-    Perspective,
-    PerspectiveSet,
-)
+from app.schemas.argument import ArgumentBrief, Perspective, PerspectiveSet
 from app.schemas.evaluator import QualityEvaluation
 from app.schemas.opportunity import OpportunitySignals
 from app.schemas.post import PostCandidate
-from app.schemas.research import (
-    ResearchBrief,
-    ResearchObjective,
-    ResearchStatus,
-)
+from app.schemas.research import ResearchBrief, ResearchObjective, ResearchStatus
 
 
 def make_post() -> PostCandidate:
@@ -45,13 +37,15 @@ def make_research_brief() -> ResearchBrief:
 
 def make_argument_brief() -> ArgumentBrief:
     return ArgumentBrief(
-        original_thesis=(
-            "AI agents can improve supply chain decision-making."
-        ),
-        relevant_context=[],
+        original_thesis="AI agents can improve supply chain decision-making.",
+        relevant_context=[
+            "Operational value depends on how autonomy is designed."
+        ],
         strongest_evidence=[],
         strongest_counterevidence=[],
-        central_tensions=[],
+        central_tensions=[
+            "Autonomy can improve speed while increasing decision risk."
+        ],
         uncertainties=[],
         contribution_areas=[
             "Operating-model design",
@@ -66,35 +60,31 @@ def make_perspective_set() -> PerspectiveSet:
             Perspective(
                 perspective_id="operating-model",
                 label="Operating model",
-                core_argument=(
-                    "AI-agent value depends on operating-model design."
-                ),
+                core_argument="AI-agent value depends on operating-model design.",
                 why_it_matters=(
-                    "Technical capability alone does not guarantee "
-                    "operational value."
+                    "Technical capability alone does not guarantee operational value."
                 ),
                 supporting_evidence=[],
                 counterargument=None,
                 uncertainty=None,
                 contribution=(
-                    "Focus on operational integration."
+                    "Shift attention from capability to operational integration."
                 ),
             ),
             Perspective(
                 perspective_id="risk-calibrated-autonomy",
                 label="Risk-calibrated autonomy",
                 core_argument=(
-                    "Autonomy should depend on decision risk."
+                    "Agent autonomy should depend on decision risk and reversibility."
                 ),
                 why_it_matters=(
-                    "Different decisions justify different levels "
-                    "of human control."
+                    "Different decisions justify different levels of human control."
                 ),
                 supporting_evidence=[],
                 counterargument=None,
                 uncertainty=None,
                 contribution=(
-                    "Define autonomy boundaries using risk."
+                    "Use risk and reversibility to define autonomy boundaries."
                 ),
             ),
         ]
@@ -110,20 +100,16 @@ def fake_research_node(state):
 
 
 def fake_argument_intelligence_node(state):
-    return {
-        "argument_brief": make_argument_brief(),
-    }
+    return {"argument_brief": make_argument_brief()}
 
 
 def fake_perspective_generation_node(state):
-    return {
-        "perspective_set": make_perspective_set(),
-    }
+    return {"perspective_set": make_perspective_set()}
 
 
 def fake_writer_node(state):
     assert state["selected_perspective"] is not None
-
+    assert state["content_mode"] == "linkedin_reply"
     return {
         "current_draft": "Grounded draft.",
         "iteration": state.get("iteration", 0) + 1,
@@ -156,14 +142,10 @@ def test_high_opportunity_routes_through_human_centered_flow():
 
     with (
         patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics",
+            "app.graph.nodes.opportunity_evaluator_node.evaluate_opportunity_semantics",
             return_value=signals,
         ),
-        patch(
-            "app.graph.workflow.research_node",
-            side_effect=fake_research_node,
-        ),
+        patch("app.graph.workflow.research_node", side_effect=fake_research_node),
         patch(
             "app.graph.workflow.argument_intelligence_node",
             side_effect=fake_argument_intelligence_node,
@@ -172,37 +154,33 @@ def test_high_opportunity_routes_through_human_centered_flow():
             "app.graph.workflow.perspective_generation_node",
             side_effect=fake_perspective_generation_node,
         ),
-        patch(
-            "app.graph.workflow.writer_node",
-            side_effect=fake_writer_node,
-        ),
-        patch(
-            "app.graph.workflow.evaluator_node",
-            side_effect=fake_evaluator_node,
-        ),
+        patch("app.graph.workflow.writer_node", side_effect=fake_writer_node),
+        patch("app.graph.workflow.evaluator_node", side_effect=fake_evaluator_node),
     ):
         workflow = build_opportunity_workflow()
+        config = {"configurable": {"thread_id": "workflow-high-opportunity"}}
 
-        config = {
-            "configurable": {
-                "thread_id": "workflow-high-opportunity",
-            }
-        }
-
-        interrupted = workflow.invoke(
-            {"post": make_post()},
-            config=config,
-        )
-
+        interrupted = workflow.invoke({"post": make_post()}, config=config)
         assert "__interrupt__" in interrupted
+        assert interrupted["__interrupt__"][0].value["type"] == "perspective_selection"
 
-        result = workflow.invoke(
+        content_mode_interrupted = workflow.invoke(
             Command(
                 resume={
                     "perspective_id": "risk-calibrated-autonomy",
                     "human_guidance": None,
                 }
             ),
+            config=config,
+        )
+        assert "__interrupt__" in content_mode_interrupted
+        assert (
+            content_mode_interrupted["__interrupt__"][0].value["type"]
+            == "content_mode_selection"
+        )
+
+        result = workflow.invoke(
+            Command(resume={"content_mode": "linkedin_reply"}),
             config=config,
         )
 
@@ -214,6 +192,7 @@ def test_high_opportunity_routes_through_human_centered_flow():
         result["selected_perspective"].perspective.perspective_id
         == "risk-calibrated-autonomy"
     )
+    assert result["content_mode"] == "linkedin_reply"
     assert result["current_draft"] == "Grounded draft."
     assert result["quality_evaluation"].decision == "PASS"
     assert result["next_step"] == "PASS"
@@ -230,24 +209,20 @@ def test_medium_opportunity_routes_to_queue():
 
     with (
         patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics",
+            "app.graph.nodes.opportunity_evaluator_node.evaluate_opportunity_semantics",
             return_value=signals,
         ),
-        patch(
-            "app.graph.workflow.evaluator_node"
-        ) as quality_evaluator_mock,
+        patch("app.graph.workflow.evaluator_node") as quality_evaluator_mock,
     ):
         workflow = build_opportunity_workflow()
-
         result = workflow.invoke(
             {"post": make_post()},
             config={
-                "configurable": {
-                    "thread_id": "workflow-medium-opportunity",
-                }
-            },
-        )
+              "configurable": {
+                 "thread_id": "workflow-medium-opportunity",
+        }
+    },
+)
 
     assert result["opportunity_evaluation"].classification == "MEDIUM"
     assert result["next_step"] == "queue"
@@ -256,6 +231,7 @@ def test_medium_opportunity_routes_to_queue():
     assert result.get("argument_brief") is None
     assert result.get("perspective_set") is None
     assert result.get("selected_perspective") is None
+    assert result.get("content_mode") is None
     assert result.get("current_draft") is None
     quality_evaluator_mock.assert_not_called()
 
@@ -270,24 +246,21 @@ def test_low_opportunity_ends_workflow():
 
     with (
         patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics",
+            "app.graph.nodes.opportunity_evaluator_node.evaluate_opportunity_semantics",
             return_value=signals,
         ),
-        patch(
-            "app.graph.workflow.evaluator_node"
-        ) as quality_evaluator_mock,
+        patch("app.graph.workflow.evaluator_node") as quality_evaluator_mock,
     ):
         workflow = build_opportunity_workflow()
-
         result = workflow.invoke(
             {"post": make_post()},
             config={
                 "configurable": {
-                    "thread_id": "workflow-low-opportunity",
-                }
-            },
-        )
+                    "thread_id": "workflow-medium-opportunity",
+        }
+    },
+)
+
 
     assert result["opportunity_evaluation"].classification == "LOW"
     assert result.get("next_step") is None
@@ -295,5 +268,6 @@ def test_low_opportunity_ends_workflow():
     assert result.get("argument_brief") is None
     assert result.get("perspective_set") is None
     assert result.get("selected_perspective") is None
+    assert result.get("content_mode") is None
     assert result.get("current_draft") is None
     quality_evaluator_mock.assert_not_called()

@@ -4,18 +4,10 @@ from langgraph.types import Command
 
 from app.graph.workflow import build_opportunity_workflow
 from app.inputs.target_content import load_target_content
-from app.schemas.argument import (
-    ArgumentBrief,
-    Perspective,
-    PerspectiveSet,
-)
+from app.schemas.argument import ArgumentBrief, Perspective, PerspectiveSet
 from app.schemas.evaluator import QualityEvaluation
 from app.schemas.opportunity import OpportunitySignals
-from app.schemas.research import (
-    ResearchBrief,
-    ResearchObjective,
-    ResearchStatus,
-)
+from app.schemas.research import ResearchBrief, ResearchObjective, ResearchStatus
 
 
 TARGET_URL = "https://www.linkedin.com/feed/update/urn:li:activity:123/"
@@ -48,9 +40,10 @@ def make_brief() -> ResearchBrief:
 def make_argument_brief() -> ArgumentBrief:
     return ArgumentBrief(
         original_thesis=(
-            "Before automating a process, understand why it exists."
+            "Before automating a process, understand why it exists "
+            "and what outcome should improve."
         ),
-        relevant_context=[],
+        relevant_context=["Automation should follow process understanding."],
         strongest_evidence=[],
         strongest_counterevidence=[],
         central_tensions=[],
@@ -68,37 +61,32 @@ def make_perspective_set() -> PerspectiveSet:
             Perspective(
                 perspective_id="process-first",
                 label="Process first",
-                core_argument=(
-                    "Automation should follow process understanding."
-                ),
+                core_argument="Process understanding should precede automation.",
                 why_it_matters=(
-                    "Automating an unclear process can preserve "
-                    "or amplify its problems."
+                    "Automating a poorly understood process can scale waste."
                 ),
                 supporting_evidence=[],
                 counterargument=None,
                 uncertainty=None,
                 contribution=(
-                    "Prioritize process diagnosis before automation."
+                    "Connect automation decisions to process understanding."
                 ),
             ),
             Perspective(
                 perspective_id="outcome-first",
                 label="Outcome first",
                 core_argument=(
-                    "Automation should begin with the outcome "
-                    "that needs to improve."
+                    "Automation should be anchored to the outcome "
+                    "the process must improve."
                 ),
                 why_it_matters=(
-                    "Technology should be connected to a measurable "
-                    "operational objective."
+                    "Technology is useful only when it improves "
+                    "a meaningful operational result."
                 ),
                 supporting_evidence=[],
                 counterargument=None,
                 uncertainty=None,
-                contribution=(
-                    "Frame automation around operational outcomes."
-                ),
+                contribution="Shift the automation discussion toward outcomes.",
             ),
         ]
     )
@@ -113,26 +101,17 @@ def fake_research_node(state):
 
 
 def fake_argument_intelligence_node(state):
-    assert state["research_result"] == make_brief()
-
-    return {
-        "argument_brief": make_argument_brief(),
-    }
+    return {"argument_brief": make_argument_brief()}
 
 
 def fake_perspective_generation_node(state):
-    assert state["argument_brief"] == make_argument_brief()
-
-    return {
-        "perspective_set": make_perspective_set(),
-    }
+    return {"perspective_set": make_perspective_set()}
 
 
 def fake_writer_node(state):
     assert state["selected_perspective"] is not None
-
+    assert state["content_mode"] == "linkedin_reply"
     iteration = state.get("iteration", 0) + 1
-
     return {
         "current_draft": f"Grounded target draft v{iteration}.",
         "iteration": iteration,
@@ -165,21 +144,14 @@ def high_signals() -> OpportunitySignals:
 
 
 def test_target_content_enters_existing_opportunity_workflow():
-    candidate = load_target_content(
-        TARGET_URL,
-        read_tool=fake_reader,
-    )
+    candidate = load_target_content(TARGET_URL, read_tool=fake_reader)
 
     with (
         patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics",
+            "app.graph.nodes.opportunity_evaluator_node.evaluate_opportunity_semantics",
             return_value=high_signals(),
         ),
-        patch(
-            "app.graph.workflow.research_node",
-            side_effect=fake_research_node,
-        ),
+        patch("app.graph.workflow.research_node", side_effect=fake_research_node),
         patch(
             "app.graph.workflow.argument_intelligence_node",
             side_effect=fake_argument_intelligence_node,
@@ -188,37 +160,33 @@ def test_target_content_enters_existing_opportunity_workflow():
             "app.graph.workflow.perspective_generation_node",
             side_effect=fake_perspective_generation_node,
         ),
-        patch(
-            "app.graph.workflow.writer_node",
-            side_effect=fake_writer_node,
-        ),
-        patch(
-            "app.graph.workflow.evaluator_node",
-            side_effect=fake_evaluator_node,
-        ),
+        patch("app.graph.workflow.writer_node", side_effect=fake_writer_node),
+        patch("app.graph.workflow.evaluator_node", side_effect=fake_evaluator_node),
     ):
         workflow = build_opportunity_workflow()
+        config = {"configurable": {"thread_id": "target-content-human-centered"}}
 
-        config = {
-            "configurable": {
-                "thread_id": "target-content-human-centered",
-            }
-        }
-
-        interrupted = workflow.invoke(
-            {"post": candidate},
-            config=config,
-        )
-
+        interrupted = workflow.invoke({"post": candidate}, config=config)
         assert "__interrupt__" in interrupted
+        assert interrupted["__interrupt__"][0].value["type"] == "perspective_selection"
 
-        result = workflow.invoke(
+        content_mode_interrupted = workflow.invoke(
             Command(
                 resume={
                     "perspective_id": "process-first",
                     "human_guidance": None,
                 }
             ),
+            config=config,
+        )
+        assert "__interrupt__" in content_mode_interrupted
+        assert (
+            content_mode_interrupted["__interrupt__"][0].value["type"]
+            == "content_mode_selection"
+        )
+
+        result = workflow.invoke(
+            Command(resume={"content_mode": "linkedin_reply"}),
             config=config,
         )
 
@@ -233,9 +201,9 @@ def test_target_content_enters_existing_opportunity_workflow():
         result["selected_perspective"].perspective.perspective_id
         == "process-first"
     )
+    assert result["content_mode"] == "linkedin_reply"
     assert result["current_draft"] == "Grounded target draft v1."
     assert result["quality_evaluation"].decision == "PASS"
     assert result["iteration"] == 1
     assert result["status"] == "EVALUATED"
     assert result["next_step"] == "PASS"
-    

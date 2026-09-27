@@ -5,6 +5,9 @@ from app.graph.nodes.argument_intelligence_node import (
     argument_intelligence_node,
 )
 from app.graph.nodes.evaluator_node import evaluator_node
+from app.graph.nodes.human_content_mode_selection_node import (
+    human_content_mode_selection_node,
+)
 from app.graph.nodes.human_perspective_selection_node import (
     human_perspective_selection_node,
 )
@@ -30,9 +33,16 @@ from app.graph.state import LinkedInAgentState
 
 
 def _add_quality_evaluation_loop(graph: StateGraph) -> None:
-    graph.add_node("evaluator", evaluator_node)
+    graph.add_node(
+        "evaluator",
+        evaluator_node,
+    )
 
-    graph.add_edge("writer", "evaluator")
+    graph.add_edge(
+        "writer",
+        "evaluator",
+    )
+
     graph.add_conditional_edges(
         "evaluator",
         route_after_evaluation,
@@ -59,6 +69,10 @@ def _add_human_centered_generation_flow(
         "human_perspective_selection",
         human_perspective_selection_node,
     )
+    graph.add_node(
+        "human_content_mode_selection",
+        human_content_mode_selection_node,
+    )
 
     graph.add_edge(
         "research",
@@ -74,6 +88,10 @@ def _add_human_centered_generation_flow(
     )
     graph.add_edge(
         "human_perspective_selection",
+        "human_content_mode_selection",
+    )
+    graph.add_edge(
+        "human_content_mode_selection",
         "writer",
     )
 
@@ -81,7 +99,11 @@ def _add_human_centered_generation_flow(
 def build_workflow():
     graph = StateGraph(LinkedInAgentState)
 
-    graph.add_node("writer", writer_node)
+    graph.add_node(
+        "writer",
+        writer_node,
+    )
+
     _add_quality_evaluation_loop(graph)
 
     graph.set_entry_point("writer")
@@ -116,7 +138,9 @@ def build_opportunity_workflow():
     _add_quality_evaluation_loop(graph)
     _add_human_centered_generation_flow(graph)
 
-    graph.set_entry_point("opportunity_evaluator")
+    graph.set_entry_point(
+        "opportunity_evaluator",
+    )
 
     graph.add_conditional_edges(
         "opportunity_evaluator",
@@ -173,7 +197,9 @@ def build_scout_opportunity_workflow():
     _add_quality_evaluation_loop(graph)
     _add_human_centered_generation_flow(graph)
 
-    graph.set_entry_point("scout")
+    graph.set_entry_point(
+        "scout",
+    )
 
     graph.add_conditional_edges(
         "scout",

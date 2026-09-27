@@ -1,4 +1,5 @@
 from unittest.mock import patch
+import pytest
 
 from langgraph.types import Command
 
@@ -136,6 +137,11 @@ def fake_perspective_generation_node(state):
 
 def fake_writer_node(state):
     assert state["selected_perspective"] is not None
+    assert state["content_mode"] in {
+        "linkedin_reply",
+        "linkedin_post",
+        "article",
+    }
 
     iteration = state.get("iteration", 0) + 1
 
@@ -228,14 +234,72 @@ def invoke_until_human_selection(
 def resume_with_selected_perspective(
     workflow,
     config,
+    content_mode: str = "linkedin_reply",
 ):
-    return workflow.invoke(
+    content_mode_interrupted = workflow.invoke(
         Command(
             resume={
                 "perspective_id": "risk-calibrated-autonomy",
                 "human_guidance": (
                     "Connect this with practical operational decision making."
                 ),
+            }
+        ),
+        config=config,
+    )
+
+    assert "__interrupt__" in content_mode_interrupted
+
+    interrupt_payload = content_mode_interrupted["__interrupt__"][0].value
+
+    assert interrupt_payload["type"] == "content_mode_selection"
+    assert [
+        mode["id"]
+        for mode in interrupt_payload["content_modes"]
+    ] == [
+        "linkedin_post",
+        "linkedin_reply",
+        "article",
+    ]
+
+    return workflow.invoke(
+        Command(
+            resume={
+                "content_mode": content_mode,
+            }
+        ),
+        config=config,
+    )
+    content_mode_interrupted = workflow.invoke(
+        Command(
+            resume={
+                "perspective_id": "risk-calibrated-autonomy",
+                "human_guidance": (
+                    "Connect this with practical operational decision making."
+                ),
+            }
+        ),
+        config=config,
+    )
+
+    assert "__interrupt__" in content_mode_interrupted
+
+    interrupt_payload = content_mode_interrupted["__interrupt__"][0].value
+
+    assert interrupt_payload["type"] == "content_mode_selection"
+    assert [
+        mode["id"]
+        for mode in interrupt_payload["content_modes"]
+    ] == [
+        "linkedin_post",
+        "linkedin_reply",
+        "article",
+    ]
+
+    return workflow.invoke(
+        Command(
+            resume={
+                "content_mode": "linkedin_reply",
             }
         ),
         config=config,
@@ -309,6 +373,90 @@ def test_high_opportunity_executes_human_centered_flow_and_passes():
     assert result["iteration"] == 1
     assert result["status"] == "EVALUATED"
     assert result["next_step"] == "PASS"
+
+
+@pytest.mark.parametrize(
+    "content_mode",
+    [
+        "linkedin_reply",
+        "linkedin_post",
+        "article",
+    ],
+)
+def test_selected_perspective_supports_all_content_modes_without_rerunning_upstream(
+    content_mode,
+):
+    research_calls = 0
+    argument_calls = 0
+    perspective_calls = 0
+
+    def counted_research_node(state):
+        nonlocal research_calls
+        research_calls += 1
+        return fake_research_node(state)
+
+    def counted_argument_node(state):
+        nonlocal argument_calls
+        argument_calls += 1
+        return fake_argument_intelligence_node(state)
+
+    def counted_perspective_node(state):
+        nonlocal perspective_calls
+        perspective_calls += 1
+        return fake_perspective_generation_node(state)
+
+    with (
+        patch(
+            "app.graph.nodes.opportunity_evaluator_node."
+            "evaluate_opportunity_semantics",
+            return_value=high_signals(),
+        ),
+        patch(
+            "app.graph.workflow.research_node",
+            side_effect=counted_research_node,
+        ),
+        patch(
+            "app.graph.workflow.argument_intelligence_node",
+            side_effect=counted_argument_node,
+        ),
+        patch(
+            "app.graph.workflow.perspective_generation_node",
+            side_effect=counted_perspective_node,
+        ),
+        patch(
+            "app.graph.workflow.writer_node",
+            side_effect=fake_writer_node,
+        ),
+        patch(
+            "app.graph.workflow.evaluator_node",
+            side_effect=evaluator_with(["PASS"]),
+        ),
+    ):
+        workflow = build_opportunity_workflow()
+
+        config = invoke_until_human_selection(
+            workflow,
+            {"post": make_post()},
+            f"content-mode-{content_mode}",
+        )
+
+        result = resume_with_selected_perspective(
+            workflow,
+            config,
+            content_mode=content_mode,
+        )
+
+    assert research_calls == 1
+    assert argument_calls == 1
+    assert perspective_calls == 1
+
+    assert (
+        result["selected_perspective"].perspective.perspective_id
+        == "risk-calibrated-autonomy"
+    )
+    assert result["content_mode"] == content_mode
+    assert result["current_draft"] == "Grounded draft v1."
+    assert result["quality_evaluation"].decision == "PASS"
 
 
 def test_high_opportunity_revise_returns_only_to_writer_then_passes():

@@ -765,12 +765,35 @@ def get_field(value: Any, field: str, default: Any = None) -> Any:
     return getattr(value, field, default)
 
 
+def normalize_interrupt_payload(value: Any) -> dict[str, Any] | None:
+    """Normalize LangGraph interrupt values into the frontend payload contract."""
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value
+    nested_value = getattr(value, "value", None)
+    if isinstance(nested_value, dict):
+        return nested_value
+    if isinstance(value, (list, tuple)) and value:
+        return normalize_interrupt_payload(value[0])
+    return None
+
+
+def interrupt_node_name(payload: dict[str, Any] | None) -> str:
+    interrupt_type = (payload or {}).get("type")
+    return {
+        "perspective_selection": "human_perspective_selection",
+        "content_mode_selection": "human_content_mode_selection",
+    }.get(interrupt_type, "human_interrupt")
+
+
 def reset_run() -> None:
     st.session_state.workflow = build_scout_opportunity_workflow()
     st.session_state.thread_id = f"frontend-{uuid.uuid4()}"
     st.session_state.result = None
     st.session_state.interrupt_payload = None
     st.session_state.selected_perspective_id = None
+    st.session_state.selected_content_mode = None
     st.session_state.started_at = None
     st.session_state.finished_at = None
     st.session_state.phase = "ready"
@@ -1262,6 +1285,102 @@ def render_perspective_selection() -> None:
         st.rerun()
 
 
+def render_content_mode_selection() -> None:
+    payload = st.session_state.interrupt_payload or {}
+    content_modes = payload.get("content_modes", [])
+
+    if not content_modes:
+        st.warning("No content modes were returned by the workflow.")
+        return
+
+    mode_descriptions = {
+        "linkedin_post": (
+            "Standalone LinkedIn Post",
+            "Materialize the selected perspective as a self-contained LinkedIn post.",
+        ),
+        "linkedin_reply": (
+            "LinkedIn Reply",
+            "Materialize the selected perspective as a focused response to the source content.",
+        ),
+        "article": (
+            "Professional Article",
+            "Develop the selected perspective with greater depth and contextual independence.",
+        ),
+    }
+
+    render_html(
+        """
+        <div style="text-align:center; margin:1.4rem 0 1.1rem 0;">
+            <div class="eyebrow">HUMAN CONVERGES</div>
+            <div style="color:#f5f9ff;font-size:1.35rem;font-weight:800;">
+                Choose the content format
+            </div>
+            <div style="color:#8294aa;font-size:.82rem;margin-top:.35rem;">
+                The intellectual direction is fixed. Choose how the system should materialize it.
+            </div>
+        </div>
+        """
+    )
+
+    cols = st.columns(len(content_modes))
+
+    for index, mode in enumerate(content_modes):
+        mode_id = str(mode.get("id", ""))
+        backend_label = mode.get("label", mode_id)
+        title, description = mode_descriptions.get(
+            mode_id,
+            (backend_label, "Materialize the selected perspective in this format."),
+        )
+        selected = st.session_state.selected_content_mode == mode_id
+
+        with cols[index]:
+            render_html(
+                f"""
+                <div class="artifact-card">
+                    <div class="card-kicker">CONTENT MODE {index + 1:02d}</div>
+                    <div class="card-title">{safe_text(title)}</div>
+                    <div class="card-copy">{safe_text(description)}</div>
+                </div>
+                """
+            )
+
+            if st.button(
+                "✓ Selected" if selected else f"Select {backend_label}",
+                key=f"content_mode_{mode_id}_{index}",
+                use_container_width=True,
+            ):
+                st.session_state.selected_content_mode = mode_id
+                st.rerun()
+
+    selected_mode = st.session_state.selected_content_mode
+    if not selected_mode:
+        return
+
+    valid_mode_ids = {str(item.get("id", "")) for item in content_modes}
+    if selected_mode not in valid_mode_ids:
+        return
+
+    selected_label = next(
+        (
+            item.get("label", selected_mode)
+            for item in content_modes
+            if str(item.get("id", "")) == selected_mode
+        ),
+        selected_mode,
+    )
+
+    st.markdown("---")
+    st.success(f"Selected content mode: {selected_label}")
+
+    if st.button(
+        "Generate content",
+        type="primary",
+        use_container_width=True,
+    ):
+        resume_content_mode_workflow(content_mode=selected_mode)
+        st.rerun()
+
+
 def render_final_result() -> None:
     result = st.session_state.result
     if not result:
@@ -1270,6 +1389,7 @@ def render_final_result() -> None:
     draft = result.get("current_draft")
     quality = result.get("quality_evaluation")
     selected = result.get("selected_perspective")
+    content_mode = result.get("content_mode")
     if not draft:
         return
 
@@ -1281,8 +1401,18 @@ def render_final_result() -> None:
         or get_field(selected, "label", None)
     )
 
+    review_context = []
     if selected_label:
-        st.caption(f"Selected direction · {selected_label}")
+        review_context.append(f"Selected direction · {selected_label}")
+    if content_mode:
+        mode_label = {
+            "linkedin_post": "LinkedIn Post",
+            "linkedin_reply": "LinkedIn Reply",
+            "article": "Article",
+        }.get(content_mode, str(content_mode))
+        review_context.append(f"Content mode · {mode_label}")
+    if review_context:
+        st.caption("  |  ".join(review_context))
 
     left, right = st.columns([1.65, 1])
 
@@ -1353,7 +1483,8 @@ NODE_TO_NEXT_PHASE = {
     "research": "argument",
     "argument_intelligence": "perspectives",
     "perspective_generation": "human",
-    "human_perspective_selection": "writer",
+    "human_perspective_selection": "human",
+    "human_content_mode_selection": "writer",
     "writer": "evaluation",
     "evaluator": "complete",
 }
@@ -1417,16 +1548,23 @@ def _background_graph_run(
 
             if "__interrupt__" in chunk:
                 interrupts = chunk.get("__interrupt__") or ()
-                payload = interrupts[0].value if interrupts else None
+                raw_interrupt = interrupts[0] if interrupts else None
+                payload = normalize_interrupt_payload(raw_interrupt)
+                interrupt_type = (payload or {}).get("type")
+                interrupt_node = interrupt_node_name(payload)
+
                 _workflow_log(
                     "INTERRUPT | type="
-                    + (str(payload.get("type")) if isinstance(payload, dict) else type(payload).__name__)
+                    + (str(interrupt_type) if interrupt_type else "unknown")
                 )
+
                 with lock:
                     shared["interrupt"] = payload
                     shared["done"] = True
-                    shared["last_node"] = "human_perspective_selection"
-                    shared["events"].append("human_perspective_selection")
+                    shared["last_node"] = interrupt_node
+                    shared["events"].append(interrupt_node)
+                    shared["phase"] = "human"
+
                 return
 
             for node_name, update in chunk.items():
@@ -1436,6 +1574,9 @@ def _background_graph_run(
                     shared["result"] = dict(accumulated)
                     shared["last_node"] = node_name
                     shared["events"].append(node_name)
+                    next_phase = NODE_TO_NEXT_PHASE.get(node_name)
+                    if next_phase:
+                        shared["phase"] = next_phase
                 _workflow_log(
                     f"NODE COMPLETE | {node_name} | elapsed={time.perf_counter()-started:.1f}s"
                 )
@@ -1491,6 +1632,7 @@ def _new_shared_state() -> dict[str, Any]:
         "agent_state": {},
         "operational_events": [],
         "current_action": None,
+        "phase": st.session_state.phase,
         "started_monotonic": time.perf_counter(),
     }
 
@@ -1536,6 +1678,7 @@ def sync_background_state() -> None:
         agent_state = dict(shared.get("agent_state") or {})
         operational_events = list(shared.get("operational_events") or [])
         current_action = shared.get("current_action")
+        worker_phase = shared.get("phase")
 
     st.session_state.result = result
     st.session_state.worker_interrupt = interrupt_payload
@@ -1571,9 +1714,16 @@ def sync_background_state() -> None:
         return
 
     if interrupt_payload is not None:
-        if interrupt_payload.get("type") != "perspective_selection":
+        interrupt_payload = normalize_interrupt_payload(interrupt_payload)
+        interrupt_type = (interrupt_payload or {}).get("type")
+
+        if interrupt_type not in {
+            "perspective_selection",
+            "content_mode_selection",
+        }:
             st.session_state.error = (
-                f"Unexpected workflow interrupt: {interrupt_payload}"
+                "Unexpected workflow interrupt payload. "
+                f"Received: {interrupt_payload!r}"
             )
             st.session_state.finished_at = time.perf_counter()
             st.session_state.phase = "error"
@@ -1583,10 +1733,15 @@ def sync_background_state() -> None:
         st.session_state.phase = "human"
         return
 
-    if last_node:
-        next_phase = NODE_TO_NEXT_PHASE.get(last_node)
-        if next_phase:
-            st.session_state.phase = next_phase
+    if worker_phase in {
+        "discovery", "opportunity", "research", "argument",
+        "perspectives", "human", "writer", "evaluation",
+    }:
+        st.session_state.phase = worker_phase
+
+    # Scout-only activity must not leak into later stages.
+    if st.session_state.phase != "discovery":
+        st.session_state.current_action = None
 
     if done:
         st.session_state.finished_at = time.perf_counter()
@@ -1620,6 +1775,7 @@ def start_workflow(theme: str) -> None:
     st.session_state.result = {}
     st.session_state.interrupt_payload = None
     st.session_state.selected_perspective_id = None
+    st.session_state.selected_content_mode = None
 
     scout_objective = build_scout_objective(theme)
     launch_background_run({"scout_objective": scout_objective})
@@ -1631,7 +1787,8 @@ def resume_workflow(
     human_guidance: str | None,
 ) -> None:
     _workflow_log(f"UI RESUME requested | perspective_id={perspective_id}")
-    st.session_state.phase = "writer"
+    # The next graph step is another human decision (content mode), not Writer.
+    st.session_state.phase = "human"
     st.session_state.worker = None
     st.session_state.worker_done = False
     st.session_state.worker_interrupt = None
@@ -1643,6 +1800,23 @@ def resume_workflow(
     decision = {
         "perspective_id": perspective_id,
         "human_guidance": human_guidance,
+    }
+    launch_background_run(Command(resume=decision))
+
+
+def resume_content_mode_workflow(*, content_mode: str) -> None:
+    _workflow_log(f"UI RESUME requested | content_mode={content_mode}")
+    st.session_state.phase = "writer"
+    st.session_state.worker = None
+    st.session_state.worker_done = False
+    st.session_state.worker_interrupt = None
+    st.session_state.worker_error = None
+    st.session_state.worker_traceback = None
+    st.session_state.worker_last_node = None
+    st.session_state.worker_events = []
+
+    decision = {
+        "content_mode": content_mode,
     }
     launch_background_run(Command(resume=decision))
 
@@ -1764,7 +1938,19 @@ if phase == "ready":
 elif phase == "human":
     render_opportunity()
     render_argument_brief()
-    render_perspective_selection()
+
+    payload = normalize_interrupt_payload(st.session_state.interrupt_payload) or {}
+    interrupt_type = payload.get("type")
+
+    if interrupt_type == "perspective_selection":
+        render_perspective_selection()
+    elif interrupt_type == "content_mode_selection":
+        render_content_mode_selection()
+    else:
+        st.error(
+            "Unsupported human interrupt payload. "
+            f"Received: {payload!r}"
+        )
 
 elif phase == "complete":
     render_opportunity()
@@ -1806,7 +1992,13 @@ elif phase == "error":
         st.rerun()
 
 else:
-    render_live_agent_state()
-    render_opportunity()
+    # Keep the live workspace stage-stable. Scout UI is rendered only while
+    # Discovery is active; Opportunity appears only after Discovery has ended.
+    # This prevents transient Scout/Opportunity blocks from mounting and
+    # unmounting on consecutive Streamlit reruns.
+    if phase == "discovery":
+        render_live_agent_state()
+    else:
+        render_opportunity()
 
 schedule_ui_refresh()

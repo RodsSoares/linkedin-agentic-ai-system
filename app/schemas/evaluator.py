@@ -1,12 +1,20 @@
+from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.schemas.post import PostCandidate
 from app.schemas.research import ResearchBrief
 
+ContentMode = Literal[
+    "linkedin_post",
+    "linkedin_reply",
+    "article",
+]
+
 class EvaluatorInput(BaseModel):
     post: PostCandidate
     current_draft: str
     research_result: ResearchBrief | None = None
+    content_mode: ContentMode = "linkedin_reply"
 
 
 class VoiceEvaluation(BaseModel):

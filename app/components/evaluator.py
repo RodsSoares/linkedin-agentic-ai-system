@@ -68,7 +68,10 @@ def evaluator(input_data: EvaluatorInput) -> QualityEvaluation:
     )
 
     user_content = f"""
-ORIGINAL POST:
+CONTENT MODE:
+{input_data.content_mode}
+
+SOURCE CONTENT:
 {input_data.post.post_text}
 
 DRAFT TO EVALUATE:

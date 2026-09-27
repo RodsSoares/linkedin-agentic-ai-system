@@ -8,11 +8,11 @@ into multiple intellectual directions, helping the human choose what is
 worth saying, materializing the selected direction into a draft,
 evaluating its quality, and preserving human authority over publication.
 The system is not designed as an autonomous social-media bot.
-The final MVP experience layer is intended to make the same architecture
-usable as an interactive product: the human can define the exploration
-theme, choose the intellectual direction, choose how that direction should
-be materialized, refine the final expression, request a Portuguese
-translation, and revisit prior runs through navigable run history.
+The final MVP experience layer makes the same architecture usable as an
+interactive product. Editable Theme / Intent and explicit Content Mode
+Selection are now implemented and validated end-to-end. The remaining MVP
+experience work is Final Human Refinement, on-demand Portuguese translation,
+and navigable Run History.
 Its purpose is to reduce the manual effort required to move from:
 "Where should I contribute?"
 to:
@@ -52,10 +52,11 @@ finding or receiving an opportunity, qualifying it, researching it,
 transforming evidence into an ArgumentBrief, generating multiple
 defensible perspectives, asking the human for the desired intellectual
 direction, and only then producing and evaluating the final content. The
-final experience-layer increment extends this target with editable theme
-input, explicit content-mode selection, final human refinement, optional
-Portuguese translation, and navigable run history without changing the
-core human-centered reasoning principle.
+final experience-layer increment extends this target without changing the
+core human-centered reasoning principle. Editable Theme / Intent and
+Content Mode Selection are implemented and validated. Final Human Refinement,
+optional Portuguese translation, and navigable Run History remain to close
+the planned MVP experience layer.
 The MVP is intentionally narrower than the broader long-term product
 vision.
 Performance Analytics, Feedback Learning, adaptive policy calibration,
@@ -123,10 +124,11 @@ Quality Evaluator
                                           Manual Publication
 Publication remains outside autonomous execution.
 The core Human-Centered Conversation Intelligence flow is integrated in
-the LangGraph workflow. The current development focus is the MVP Experience
-Layer described below. Capabilities described as planned experience-layer
-features should not be interpreted as already implemented until validated
-in the current architecture and release documentation.
+the LangGraph workflow. The MVP Experience Layer is now partially
+implemented: Editable Theme / Intent and Content Mode Selection are live and
+validated through the real Streamlit workflow. Final Human Refinement,
+Portuguese translation, and Run History remain planned and must not be
+described as implemented until validated.
 Responsibility Layers
 LLM --- Semantic Intelligence
 The LLM handles tasks where interpretation matters, including:
@@ -386,14 +388,15 @@ The final MVP increment adds a product experience layer without reopening
 the validated core reasoning architecture. Its purpose is to expose the
 existing agentic capabilities through a more flexible and navigable human
 workflow.
-The planned capabilities are:
-Editable Theme / Intent
+The current capabilities and status are:
+Editable Theme / Intent — IMPLEMENTED AND VALIDATED
 The human can define the topic to explore instead of relying on a fixed
 Scout objective. The application converts the human theme into the bounded
 Scout objective while preserving the existing discovery guardrails.
-This is intended to demonstrate that the architecture is not hard-coded to
-a single professional domain.
-Content Mode Selection
+Real Streamlit runs have validated this behavior across different themes,
+demonstrating that the architecture is not hard-coded to a single
+professional domain.
+Content Mode Selection — IMPLEMENTED AND VALIDATED
 After selecting the intellectual perspective, the human chooses how the
 idea should be materialized. Initial MVP modes are:
 LinkedIn Post;
@@ -401,19 +404,22 @@ LinkedIn Reply / Comment;
 Article.
 Content mode is an expression decision, not an intellectual-position
 decision. The same SelectedPerspective may therefore be materialized in
-different formats without rerunning Research or Perspective Generation.
-Final Human Refinement
+different formats without rerunning Research, Argument Intelligence, or
+Perspective Generation. Writer and Quality Evaluator are content-mode-aware,
+and legacy paths default to linkedin_reply for compatibility. Real Streamlit
+E2E has validated both sequential HITL boundaries through Human Final Review.
+Final Human Refinement — NEXT
 After a generated draft passes quality evaluation, the human can provide
 additional editorial guidance for final adjustment, such as tone, emphasis,
 length, framing, or closing. This refinement must preserve the selected
 intellectual direction unless the human explicitly changes it.
-Bilingual Presentation
+Bilingual Presentation — PLANNED
 The MVP remains English-first internally. Final generated content can be
 presented in English and translated to Portuguese on demand through a
 Translate interaction. Translation is treated as a presentation layer so
 that it does not duplicate the complete reasoning pipeline or increase cost
 unnecessarily.
-Run History / Product Memory
+Run History / Product Memory — PLANNED
 The application should expose navigable history for completed runs so that
 the intellectual work produced by the system does not disappear when a new
 workflow starts. A history entry should preserve, at minimum:
@@ -583,10 +589,11 @@ GENERATION & QUALITY
 ├── bounded revision loop
 └── final human refinement
 EXPERIENCE & MEMORY
-├── editable human theme / intent
-├── LinkedIn Post / Reply / Article modes
-├── on-demand Portuguese translation
-├── navigable run history
+├── editable human theme / intent [IMPLEMENTED]
+├── LinkedIn Post / Reply / Article modes [IMPLEMENTED]
+├── final human refinement [NEXT]
+├── on-demand Portuguese translation [PLANNED]
+├── navigable run history [PLANNED]
 └── separation of product history from Interaction Memory
 ORCHESTRATION & GOVERNANCE
 ├── LangGraph workflow
@@ -595,10 +602,11 @@ ORCHESTRATION & GOVERNANCE
 ├── structured contracts
 ├── Human-in-the-Loop boundaries
 └── human publication authority
-The core Conversation Intelligence flow is integrated. Experience-layer
-capabilities may be described here as the approved MVP target before all of
-them are implemented. This capability map must therefore be read together
-with 02_current_architecture.md for the exact implemented topology.
+The core Conversation Intelligence flow is integrated. Editable Theme and
+Content Mode Selection are also implemented in the Experience Layer.
+Remaining experience capabilities are approved target-state items until
+validated. This capability map must therefore be read together with
+02_current_architecture.md for the exact implemented topology.
 Validation State
 The project has extensive automated unit and integration coverage,
 deterministic fake-tool validation, and real-tool smoke validation.
@@ -610,21 +618,36 @@ OpenAI reasoning
 - real reading
 - content extraction
 - bounded context
-Research
-OpenAI reasoning
+  Research
+  OpenAI reasoning
 - real search
 - real reading
 - evidence extraction
 - provenance
 - ResearchBrief
-Automated test counts are development snapshots rather than
-architectural invariants and should be recorded in the current
-implementation/audit context rather than treated as a permanent design
-property of this document.
-Roadmap to MVP
-Increment         Delivery                                           Architectural
-Impact
-1                 Argument          ArgumentBrief, Perspective, PerspectiveSet,  Creates the
+  Automated test counts are development snapshots rather than
+  architectural invariants and should be recorded in the current
+  implementation/audit context rather than treated as a permanent design
+  property of this document.
+  Current MVP validation snapshot:
+  421 automated tests passing;
+  Editable Theme / Intent validated in real Streamlit execution;
+  LOW Opportunity routing validated in real Streamlit execution;
+  HIGH path validated through Research, Argument Intelligence, Perspective
+  Generation, Human Perspective Selection, Human Content Mode Selection,
+  mode-aware Writer, mode-aware Quality Evaluator, and Human Final Review;
+  both sequential LangGraph HITL interrupt/resume boundaries validated;
+  publication remains manual.
+  Current frontend hardening:
+  visual state/phase can lag the backend worker;
+  transient Scout / Opportunity text can flicker during automatic Streamlit
+  reruns.
+  These are presentation-layer defects and must not reopen the validated core
+  reasoning architecture.
+  Roadmap to MVP
+  Increment         Delivery                                           Architectural
+  Impact
+  1                 Argument          ArgumentBrief, Perspective, PerspectiveSet,  Creates the
 Contracts v0.1    SelectedPerspective                              formal language
 of the new
 architecture
@@ -649,6 +672,11 @@ system
                                                                                           experience
 The roadmap is sequential at the architectural level, even when
 implementation work overlaps between adjacent increments.
+Current resume point:
+7.1 Editable Theme / Intent is complete.
+7.2 Content Mode Selection is complete and validated.
+Frontend State Sync / Flicker hardening is active.
+7.3 Final Human Refinement is the next product capability.
 Current Architectural Boundaries
 Still intentionally incomplete or unresolved outside the MVP closure
 path:

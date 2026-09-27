@@ -133,3 +133,43 @@ def test_evaluator_input_accepts_typed_research_brief():
     assert evaluator_input.research_result is research_brief
     assert isinstance(evaluator_input.research_result, ResearchBrief)
     assert evaluator_input.research_result.status == ResearchStatus.SUFFICIENT
+
+
+def test_evaluator_input_defaults_to_linkedin_reply():
+    post = PostCandidate(
+        post_id="test-post-content-mode-default",
+        author_name="Test Author",
+        post_text="A test post.",
+        post_url="https://example.com/content-mode-default",
+        source="test",
+    )
+
+    evaluator_input = EvaluatorInput(
+        post=post,
+        current_draft="A test draft.",
+    )
+
+    assert evaluator_input.content_mode == "linkedin_reply"
+
+
+def test_evaluator_input_accepts_all_content_modes():
+    post = PostCandidate(
+        post_id="test-post-content-modes",
+        author_name="Test Author",
+        post_text="A test post.",
+        post_url="https://example.com/content-modes",
+        source="test",
+    )
+
+    for content_mode in (
+        "linkedin_reply",
+        "linkedin_post",
+        "article",
+    ):
+        evaluator_input = EvaluatorInput(
+            post=post,
+            current_draft="A test draft.",
+            content_mode=content_mode,
+        )
+
+        assert evaluator_input.content_mode == content_mode

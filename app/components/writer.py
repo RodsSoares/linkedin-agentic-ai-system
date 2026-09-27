@@ -54,10 +54,13 @@ def writer(input_data: WriterInput) -> str:
     )
 
     user_content = f"""
-POST AUTHOR:
+CONTENT MODE:
+{input_data.content_mode}
+
+SOURCE CONTENT AUTHOR:
 {input_data.post.author_name}
 
-POST:
+SOURCE CONTENT:
 {input_data.post.post_text}
 
 RESEARCH BRIEF:

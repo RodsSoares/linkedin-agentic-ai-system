@@ -3,19 +3,11 @@ from unittest.mock import patch
 from langgraph.types import Command
 
 from app.graph.workflow import build_scout_opportunity_workflow
-from app.schemas.argument import (
-    ArgumentBrief,
-    Perspective,
-    PerspectiveSet,
-)
+from app.schemas.argument import ArgumentBrief, Perspective, PerspectiveSet
 from app.schemas.evaluator import QualityEvaluation
 from app.schemas.opportunity import OpportunitySignals
 from app.schemas.post import PostCandidate
-from app.schemas.research import (
-    ResearchBrief,
-    ResearchObjective,
-    ResearchStatus,
-)
+from app.schemas.research import ResearchBrief, ResearchObjective, ResearchStatus
 from app.schemas.scout import ScoutState
 
 
@@ -28,9 +20,7 @@ def make_candidate() -> PostCandidate:
     )
 
 
-def make_scout_state(
-    candidates: list[PostCandidate],
-) -> ScoutState:
+def make_scout_state(candidates: list[PostCandidate]) -> ScoutState:
     return ScoutState(
         objective="Find AI + Supply Chain opportunities",
         candidates=candidates,
@@ -55,9 +45,7 @@ def make_research_brief() -> ResearchBrief:
 
 def make_argument_brief() -> ArgumentBrief:
     return ArgumentBrief(
-        original_thesis=(
-            "AI agents can improve supply chain decision-making."
-        ),
+        original_thesis="AI agents can improve supply chain decision-making.",
         relevant_context=[],
         strongest_evidence=[],
         strongest_counterevidence=[],
@@ -76,36 +64,26 @@ def make_perspective_set() -> PerspectiveSet:
             Perspective(
                 perspective_id="operating-model",
                 label="Operating model",
-                core_argument=(
-                    "AI-agent value depends on operating-model design."
-                ),
+                core_argument="AI-agent value depends on operating-model design.",
                 why_it_matters=(
-                    "Technical capability alone does not guarantee "
-                    "operational value."
+                    "Technical capability alone does not guarantee operational value."
                 ),
                 supporting_evidence=[],
                 counterargument=None,
                 uncertainty=None,
-                contribution=(
-                    "Focus on operational integration."
-                ),
+                contribution="Focus on operational integration.",
             ),
             Perspective(
                 perspective_id="risk-calibrated-autonomy",
                 label="Risk-calibrated autonomy",
-                core_argument=(
-                    "Autonomy should depend on decision risk."
-                ),
+                core_argument="Autonomy should depend on decision risk.",
                 why_it_matters=(
-                    "Different decisions justify different levels "
-                    "of human control."
+                    "Different decisions justify different levels of human control."
                 ),
                 supporting_evidence=[],
                 counterargument=None,
                 uncertainty=None,
-                contribution=(
-                    "Define autonomy boundaries using risk."
-                ),
+                contribution="Define autonomy boundaries using risk.",
             ),
         ]
     )
@@ -120,20 +98,16 @@ def fake_research_node(state):
 
 
 def fake_argument_intelligence_node(state):
-    return {
-        "argument_brief": make_argument_brief(),
-    }
+    return {"argument_brief": make_argument_brief()}
 
 
 def fake_perspective_generation_node(state):
-    return {
-        "perspective_set": make_perspective_set(),
-    }
+    return {"perspective_set": make_perspective_set()}
 
 
 def fake_writer_node(state):
     assert state["selected_perspective"] is not None
-
+    assert state["content_mode"] == "linkedin_reply"
     return {
         "current_draft": "Grounded draft.",
         "iteration": state.get("iteration", 0) + 1,
@@ -158,7 +132,6 @@ def fake_evaluator_node(state):
 
 def test_scout_candidate_high_opportunity_routes_through_full_quality_path():
     scout_state = make_scout_state([make_candidate()])
-
     signals = OpportunitySignals(
         topic_relevance=95,
         positioning_fit=95,
@@ -167,19 +140,12 @@ def test_scout_candidate_high_opportunity_routes_through_full_quality_path():
     )
 
     with (
+        patch("app.graph.nodes.scout_node.run_scout", return_value=scout_state),
         patch(
-            "app.graph.nodes.scout_node.run_scout",
-            return_value=scout_state,
-        ),
-        patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics",
+            "app.graph.nodes.opportunity_evaluator_node.evaluate_opportunity_semantics",
             return_value=signals,
         ),
-        patch(
-            "app.graph.workflow.research_node",
-            side_effect=fake_research_node,
-        ),
+        patch("app.graph.workflow.research_node", side_effect=fake_research_node),
         patch(
             "app.graph.workflow.argument_intelligence_node",
             side_effect=fake_argument_intelligence_node,
@@ -188,41 +154,36 @@ def test_scout_candidate_high_opportunity_routes_through_full_quality_path():
             "app.graph.workflow.perspective_generation_node",
             side_effect=fake_perspective_generation_node,
         ),
-        patch(
-            "app.graph.workflow.writer_node",
-            side_effect=fake_writer_node,
-        ),
-        patch(
-            "app.graph.workflow.evaluator_node",
-            side_effect=fake_evaluator_node,
-        ),
+        patch("app.graph.workflow.writer_node", side_effect=fake_writer_node),
+        patch("app.graph.workflow.evaluator_node", side_effect=fake_evaluator_node),
     ):
         workflow = build_scout_opportunity_workflow()
-
-        config = {
-            "configurable": {
-                "thread_id": "scout-full-quality-path",
-            }
-        }
+        config = {"configurable": {"thread_id": "scout-full-quality-path"}}
 
         interrupted = workflow.invoke(
-            {
-                "scout_objective": (
-                    "Find AI + Supply Chain opportunities"
-                ),
-            },
+            {"scout_objective": "Find AI + Supply Chain opportunities"},
             config=config,
         )
-
         assert "__interrupt__" in interrupted
+        assert interrupted["__interrupt__"][0].value["type"] == "perspective_selection"
 
-        result = workflow.invoke(
+        content_mode_interrupted = workflow.invoke(
             Command(
                 resume={
                     "perspective_id": "risk-calibrated-autonomy",
                     "human_guidance": None,
                 }
             ),
+            config=config,
+        )
+        assert "__interrupt__" in content_mode_interrupted
+        assert (
+            content_mode_interrupted["__interrupt__"][0].value["type"]
+            == "content_mode_selection"
+        )
+
+        result = workflow.invoke(
+            Command(resume={"content_mode": "linkedin_reply"}),
             config=config,
         )
 
@@ -235,6 +196,7 @@ def test_scout_candidate_high_opportunity_routes_through_full_quality_path():
         result["selected_perspective"].perspective.perspective_id
         == "risk-calibrated-autonomy"
     )
+    assert result["content_mode"] == "linkedin_reply"
     assert result["current_draft"] == "Grounded draft."
     assert result["quality_evaluation"].decision == "PASS"
     assert result["next_step"] == "PASS"
@@ -245,32 +207,16 @@ def test_scout_without_candidate_ends_before_evaluation():
     scout_state = make_scout_state([])
 
     with (
+        patch("app.graph.nodes.scout_node.run_scout", return_value=scout_state),
         patch(
-            "app.graph.nodes.scout_node.run_scout",
-            return_value=scout_state,
-        ),
-        patch(
-            "app.graph.nodes.opportunity_evaluator_node."
-            "evaluate_opportunity_semantics"
+            "app.graph.nodes.opportunity_evaluator_node.evaluate_opportunity_semantics"
         ) as opportunity_evaluator_mock,
-        patch(
-            "app.graph.workflow.evaluator_node"
-        ) as quality_evaluator_mock,
+        patch("app.graph.workflow.evaluator_node") as quality_evaluator_mock,
     ):
         workflow = build_scout_opportunity_workflow()
-
-        config = {
-            "configurable": {
-                "thread_id": "scout-no-candidate",
-            }
-        }
-
+        config = {"configurable": {"thread_id": "scout-no-candidate"}}
         result = workflow.invoke(
-            {
-                "scout_objective": (
-                    "Find AI + Supply Chain opportunities"
-                ),
-            },
+            {"scout_objective": "Find AI + Supply Chain opportunities"},
             config=config,
         )
 
@@ -281,8 +227,7 @@ def test_scout_without_candidate_ends_before_evaluation():
     assert result.get("argument_brief") is None
     assert result.get("perspective_set") is None
     assert result.get("selected_perspective") is None
+    assert result.get("content_mode") is None
     assert result.get("current_draft") is None
-
     opportunity_evaluator_mock.assert_not_called()
     quality_evaluator_mock.assert_not_called()
-    
