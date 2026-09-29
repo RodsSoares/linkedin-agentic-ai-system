@@ -21,4 +21,5 @@ class WriterInput(BaseModel):
     content_mode: ContentMode = "linkedin_reply"
     previous_draft: str | None = None
     revision_instruction: str | None = None
+    final_refinement_guidance: str | None = None
     

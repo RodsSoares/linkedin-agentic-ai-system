@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import html
+import json
 import os
+import sqlite3
 import textwrap
 import threading
 import time
@@ -14,6 +16,7 @@ from typing import Any
 os.environ["WEB_TOOL_MODE"] = "real"
 
 import streamlit as st
+from openai import OpenAI
 from langgraph.types import Command
 
 from app.graph.workflow import build_scout_opportunity_workflow
@@ -52,6 +55,7 @@ STAGES = [
     ("human", "Human"),
     ("writer", "Writer"),
     ("evaluation", "Evaluation"),
+    ("final_refinement", "Human Review"),
 ]
 
 
@@ -398,6 +402,57 @@ footer { visibility: hidden; }
 [data-testid="stExpander"] summary p,
 [data-testid="stExpander"] summary span {
     color: #17324a !important;
+}
+
+
+/* History: master-detail product memory */
+.history-detail-hero {
+    border: 1px solid rgba(47, 184, 255, .18);
+    border-radius: 15px;
+    padding: 1.1rem 1.2rem;
+    background: linear-gradient(145deg, rgba(8, 27, 47, .88), rgba(7, 20, 35, .78));
+    margin: .5rem 0 1.2rem;
+}
+.history-detail-title {
+    color: var(--white);
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-top: .3rem;
+}
+.history-meta-row {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: .74rem;
+    margin-top: .45rem;
+}
+.history-score-card { min-height: 100%; }
+.history-primary-copy {
+    color: #d8e4f2;
+    font-size: .9rem;
+    line-height: 1.6;
+}
+.history-perspective-card { min-height: 0; }
+.history-inline-meta {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    border: 1px solid rgba(47, 184, 255, .12);
+    border-radius: 10px;
+    padding: .7rem .85rem;
+    background: rgba(8, 25, 43, .48);
+    margin-bottom: .85rem;
+}
+.history-inline-meta strong { color: var(--white); }
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: rgba(47, 184, 255, .14) !important;
+    background: rgba(8, 25, 43, .46) !important;
+    border-radius: 13px !important;
+}
+[data-testid="stCode"] {
+    border: 1px solid rgba(47, 184, 255, .12);
+    border-radius: 10px;
 }
 
 @media (max-width: 900px) {
@@ -784,16 +839,478 @@ def interrupt_node_name(payload: dict[str, Any] | None) -> str:
     return {
         "perspective_selection": "human_perspective_selection",
         "content_mode_selection": "human_content_mode_selection",
+        "final_refinement": "human_final_refinement",
     }.get(interrupt_type, "human_interrupt")
+
+
+
+def translate_to_portuguese(text: str) -> str:
+    """Translate UI content on demand without mutating canonical workflow state."""
+    normalized = str(text or "").strip()
+    if not normalized:
+        return ""
+
+    client = OpenAI()
+    model = os.getenv("TRANSLATION_MODEL", "gpt-5.6-terra")
+    response = client.responses.create(
+        model=model,
+        instructions=(
+            "Translate the supplied professional content from English to Brazilian "
+            "Portuguese. Preserve meaning, structure, technical terminology, numbers, "
+            "URLs, evidence, uncertainty, and tone. Do not summarize, add commentary, "
+            "or change the argument. Return only the translation."
+        ),
+        input=normalized,
+    )
+    return response.output_text.strip()
+
+
+def render_translation(text: str, *, key: str, label: str = "Translate to Portuguese") -> None:
+    """Render an opt-in cached translation; original English remains authoritative."""
+    normalized = str(text or "").strip()
+    if not normalized:
+        return
+
+    cache = st.session_state.translation_cache
+
+    if st.button(label, key=f"translate_{key}", use_container_width=True):
+        try:
+            with st.spinner("Translating to Portuguese..."):
+                cache[key] = translate_to_portuguese(normalized)
+        except Exception as exc:
+            st.error(f"Translation failed: {type(exc).__name__}: {exc}")
+
+    translated = cache.get(key)
+    if translated:
+        with st.expander("Português", expanded=True):
+            st.markdown(translated)
+
+
+# =========================================================
+# Run History / Product Memory
+# =========================================================
+
+HISTORY_DB_PATH = os.getenv(
+    "RUN_HISTORY_DB_PATH",
+    os.path.join("data", "history", "run_history.db"),
+)
+
+
+def _jsonable(value: Any) -> Any:
+    """Recursively convert workflow values into JSON-safe history payloads."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if hasattr(value, "model_dump"):
+        return _jsonable(value.model_dump(mode="json"))
+    if hasattr(value, "value"):
+        return _jsonable(value.value)
+    if isinstance(value, dict):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_jsonable(item) for item in value]
+    return str(value)
+
+
+def _history_connection() -> sqlite3.Connection:
+    directory = os.path.dirname(HISTORY_DB_PATH)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    connection = sqlite3.connect(HISTORY_DB_PATH, timeout=10)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def initialize_run_history() -> None:
+    with _history_connection() as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS workflow_runs (
+                run_id TEXT PRIMARY KEY,
+                thread_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                completed_at TEXT,
+                theme TEXT,
+                status TEXT NOT NULL,
+                opportunity_title TEXT,
+                opportunity_url TEXT,
+                opportunity_score REAL,
+                classification TEXT,
+                content_mode TEXT,
+                selected_perspective_id TEXT,
+                final_refinement_action TEXT,
+                final_draft TEXT,
+                state_json TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_workflow_runs_created_at "
+            "ON workflow_runs(created_at DESC)"
+        )
+
+
+def save_run_history(*, terminal_status: str) -> None:
+    """Persist one terminal workflow snapshot. Safe to call on Streamlit reruns."""
+    result = dict(st.session_state.get("result") or {})
+    run_id = st.session_state.get("run_id") or st.session_state.get("thread_id")
+    thread_id = st.session_state.get("thread_id")
+    created_at = st.session_state.get("run_created_at")
+
+    if not run_id or not thread_id or not created_at:
+        return
+
+    post = result.get("post")
+    opportunity = result.get("opportunity_evaluation")
+    selected = result.get("selected_perspective")
+    selected_perspective = get_field(selected, "perspective", None)
+
+    title = (
+        get_field(post, "title", None)
+        or get_field(post, "content", None)
+    )
+    url = get_field(post, "url", None)
+    score = get_field(opportunity, "opportunity_score", None)
+    classification = get_field(opportunity, "classification", None)
+    selected_perspective_id = (
+        get_field(selected_perspective, "perspective_id", None)
+        or get_field(selected, "perspective_id", None)
+    )
+
+    payload = {
+        "theme": st.session_state.get("run_theme", ""),
+        "terminal_status": terminal_status,
+        "result": _jsonable(result),
+    }
+
+    with _history_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO workflow_runs (
+                run_id, thread_id, created_at, completed_at, theme, status,
+                opportunity_title, opportunity_url, opportunity_score,
+                classification, content_mode, selected_perspective_id,
+                final_refinement_action, final_draft, state_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(run_id) DO UPDATE SET
+                completed_at=excluded.completed_at,
+                theme=excluded.theme,
+                status=excluded.status,
+                opportunity_title=excluded.opportunity_title,
+                opportunity_url=excluded.opportunity_url,
+                opportunity_score=excluded.opportunity_score,
+                classification=excluded.classification,
+                content_mode=excluded.content_mode,
+                selected_perspective_id=excluded.selected_perspective_id,
+                final_refinement_action=excluded.final_refinement_action,
+                final_draft=excluded.final_draft,
+                state_json=excluded.state_json
+            """,
+            (
+                run_id,
+                thread_id,
+                created_at,
+                datetime.now().astimezone().isoformat(timespec="seconds"),
+                st.session_state.get("run_theme", ""),
+                terminal_status,
+                str(title) if title else None,
+                str(url) if url else None,
+                float(score) if isinstance(score, (int, float)) else None,
+                str(classification) if classification is not None else None,
+                str(result.get("content_mode")) if result.get("content_mode") else None,
+                str(selected_perspective_id) if selected_perspective_id else None,
+                str(result.get("final_refinement_action"))
+                if result.get("final_refinement_action") else None,
+                str(result.get("current_draft")) if result.get("current_draft") else None,
+                json.dumps(payload, ensure_ascii=False),
+            ),
+        )
+
+
+def load_run_history(limit: int = 100) -> list[dict[str, Any]]:
+    with _history_connection() as connection:
+        rows = connection.execute(
+            "SELECT * FROM workflow_runs ORDER BY created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_history_run(run_id: str) -> dict[str, Any] | None:
+    with _history_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM workflow_runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def _history_display_time(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return "Unknown time"
+    try:
+        dt = datetime.fromisoformat(raw)
+        return dt.strftime("%b %d · %H:%M")
+    except ValueError:
+        return raw[:16].replace("T", " · ")
+
+
+def _history_classification(value: Any) -> str:
+    raw = str(value or "").strip()
+    return raw.upper() if raw else "—"
+
+
+def _history_content_mode(value: Any) -> str:
+    labels = {
+        "linkedin_post": "LinkedIn Post",
+        "linkedin_reply": "LinkedIn Reply",
+        "article": "Article",
+    }
+    raw = str(value or "").strip()
+    return labels.get(raw, raw.replace("_", " ").title() if raw else "No content generated")
+
+
+def _history_status(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return "Unknown"
+    labels = {
+        "COMPLETE": "Complete",
+        "NO_CANDIDATE": "No candidate",
+        "NO_CANDIDATE_FOUND": "No candidate",
+    }
+    return labels.get(raw, raw.replace("_", " ").title())
+
+
+def _render_history_json(label: str, payload: Any) -> None:
+    # Keep raw workflow payloads available without making them the primary UX.
+    with st.expander(label, expanded=False):
+        st.code(
+            json.dumps(payload, ensure_ascii=False, indent=2),
+            language="json",
+        )
+
+
+def render_history_detail(record: dict[str, Any]) -> None:
+    try:
+        payload = json.loads(record.get("state_json") or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    result = payload.get("result") or {}
+
+    if st.button("← Back to History", key="history_back", use_container_width=False):
+        st.session_state.history_view = "list"
+        st.session_state.history_selected_run_id = None
+        st.rerun()
+
+    created = _history_display_time(record.get("created_at"))
+    classification = _history_classification(record.get("classification"))
+    status = _history_status(record.get("status"))
+    mode = _history_content_mode(record.get("content_mode"))
+    theme = record.get("theme") or "Untitled exploration"
+    score = record.get("opportunity_score")
+
+    render_html(
+        f'''<div class="history-detail-hero">
+            <div class="card-kicker">RUN DETAIL</div>
+            <div class="history-detail-title">{safe_text(theme)}</div>
+            <div class="history-meta-row">
+                <span>{safe_text(created)}</span>
+                <span>•</span><span>{safe_text(classification)}</span>
+                <span>•</span><span>{safe_text(status)}</span>
+                <span>•</span><span>{safe_text(mode)}</span>
+            </div>
+        </div>'''
+    )
+
+    if record.get("opportunity_title"):
+        st.markdown("### Opportunity")
+        left, right = st.columns([5, 1.4])
+        with left:
+            render_html(
+                f'''<div class="artifact-card">
+                    <div class="card-kicker">SELECTED OPPORTUNITY</div>
+                    <div class="card-title">{safe_text(record["opportunity_title"])}</div>
+                    <div class="card-copy">Classification · {safe_text(classification)}</div>
+                </div>'''
+            )
+        with right:
+            if score is not None:
+                render_html(
+                    f'''<div class="artifact-card history-score-card">
+                        <div class="card-kicker">SCORE</div>
+                        <div class="score">{float(score):.1f}</div>
+                        <div class="classification">{safe_text(classification)}</div>
+                    </div>'''
+                )
+        if record.get("opportunity_url"):
+            st.link_button("View source", str(record["opportunity_url"]))
+        render_translation(
+            str(record["opportunity_title"]),
+            key=f"history_opportunity_{record['run_id']}",
+        )
+
+    research = result.get("research_result")
+    if research:
+        st.markdown("### Research Brief")
+        evidence = research.get("evidence") or research.get("evidence_items") or [] if isinstance(research, dict) else []
+        research_status = research.get("status") if isinstance(research, dict) else None
+        summary = research.get("summary") if isinstance(research, dict) else None
+        if summary:
+            st.markdown(str(summary))
+        meta = []
+        if research_status:
+            meta.append(f"Status: {research_status}")
+        if isinstance(evidence, list):
+            meta.append(f"Evidence items: {len(evidence)}")
+        if meta:
+            st.caption(" · ".join(meta))
+        _render_history_json("View complete Research Brief", research)
+        render_translation(
+            json.dumps(research, ensure_ascii=False, indent=2),
+            key=f"history_research_{record['run_id']}",
+        )
+
+    argument = result.get("argument_brief")
+    if argument:
+        st.markdown("### Argument Brief")
+        thesis = argument.get("thesis") or argument.get("core_thesis") if isinstance(argument, dict) else None
+        if thesis:
+            render_html(
+                f'''<div class="artifact-card">
+                    <div class="card-kicker">CENTRAL THESIS</div>
+                    <div class="card-copy history-primary-copy">{safe_text(thesis)}</div>
+                </div>'''
+            )
+        _render_history_json("View complete Argument Brief", argument)
+        render_translation(
+            json.dumps(argument, ensure_ascii=False, indent=2),
+            key=f"history_argument_{record['run_id']}",
+        )
+
+    selected = result.get("selected_perspective")
+    if selected:
+        st.markdown("### Selected Perspective")
+        selected_payload = selected.get("perspective") or selected if isinstance(selected, dict) else selected
+        if isinstance(selected_payload, dict):
+            title = (
+                selected_payload.get("title")
+                or selected_payload.get("label")
+                or selected_payload.get("name")
+                or "Human-selected direction"
+            )
+            body = (
+                selected_payload.get("description")
+                or selected_payload.get("angle")
+                or selected_payload.get("thesis")
+                or selected_payload.get("rationale")
+                or ""
+            )
+            render_html(
+                f'''<div class="perspective-card history-perspective-card">
+                    <div class="perspective-number">HUMAN SELECTED</div>
+                    <div class="perspective-title">{safe_text(title)}</div>
+                    <div class="perspective-copy">{safe_text(body)}</div>
+                </div>'''
+            )
+        else:
+            st.markdown(str(selected_payload))
+        _render_history_json("View structured perspective", selected_payload)
+        render_translation(
+            json.dumps(selected_payload, ensure_ascii=False, indent=2)
+            if isinstance(selected_payload, (dict, list)) else str(selected_payload),
+            key=f"history_perspective_{record['run_id']}",
+        )
+
+    st.markdown("### Content")
+    render_html(
+        f'''<div class="history-inline-meta">
+            <span class="card-kicker">CONTENT MODE</span>
+            <strong>{safe_text(mode)}</strong>
+        </div>'''
+    )
+
+    draft = record.get("final_draft") or result.get("current_draft")
+    if draft:
+        st.markdown("#### Final Draft")
+        render_html(f'<div class="final-draft">{safe_text(draft)}</div>')
+        render_translation(
+            str(draft),
+            key=f"history_draft_{record['run_id']}",
+        )
+    else:
+        st.info("This run ended before a final draft was generated.")
+
+    quality = result.get("quality_evaluation")
+    if quality:
+        st.markdown("### Quality Evaluation")
+        outcome = quality.get("outcome") if isinstance(quality, dict) else None
+        if outcome:
+            st.caption(f"Outcome · {outcome}")
+        _render_history_json("View complete Quality Evaluation", quality)
+
+
+def render_history() -> None:
+    if st.session_state.get("history_view") == "detail":
+        selected_run_id = st.session_state.get("history_selected_run_id")
+        selected_record = get_history_run(selected_run_id) if selected_run_id else None
+        if selected_record:
+            render_history_detail(selected_record)
+            return
+        st.session_state.history_view = "list"
+        st.session_state.history_selected_run_id = None
+
+    st.markdown("## History")
+    st.caption(
+        "Recent workflow runs. Open a run to inspect its complete intellectual chain."
+    )
+
+    records = load_run_history(limit=20)
+    if not records:
+        st.info("No previous runs have been stored yet.")
+        return
+
+    st.markdown("### Recent Runs")
+    for index, record in enumerate(records):
+        created = _history_display_time(record.get("created_at"))
+        theme = record.get("theme") or "Untitled exploration"
+        classification = _history_classification(record.get("classification"))
+        status = _history_status(record.get("status"))
+        mode = _history_content_mode(record.get("content_mode"))
+        score = record.get("opportunity_score")
+        score_text = f"{float(score):.1f}" if score is not None else "—"
+
+        with st.container(border=True):
+            title_col, score_col, open_col = st.columns([6.4, 1.2, 1.25], vertical_alignment="center")
+            with title_col:
+                st.markdown(f"#### {theme}")
+                st.caption(f"{created} · {mode} · {status}")
+            with score_col:
+                st.markdown(f"**{classification}**")
+                st.caption(f"Score · {score_text}")
+            with open_col:
+                if st.button(
+                    "Open →",
+                    key=f"history_open_{record['run_id']}_{index}",
+                    use_container_width=True,
+                ):
+                    st.session_state.history_selected_run_id = record["run_id"]
+                    st.session_state.history_view = "detail"
+                    st.rerun()
 
 
 def reset_run() -> None:
     st.session_state.workflow = build_scout_opportunity_workflow()
     st.session_state.thread_id = f"frontend-{uuid.uuid4()}"
+    st.session_state.run_id = st.session_state.thread_id
+    st.session_state.run_created_at = None
+    st.session_state.run_theme = ""
     st.session_state.result = None
     st.session_state.interrupt_payload = None
     st.session_state.selected_perspective_id = None
     st.session_state.selected_content_mode = None
+    st.session_state.final_refinement_guidance = ""
+    st.session_state.translation_cache = {}
     st.session_state.started_at = None
     st.session_state.finished_at = None
     st.session_state.phase = "ready"
@@ -811,6 +1328,7 @@ def reset_run() -> None:
     st.session_state.agent_state = {}
     st.session_state.operational_events = []
     st.session_state.current_action = None
+    st.session_state.resume_in_flight = False
 
 
 def elapsed_seconds() -> float | None:
@@ -836,12 +1354,12 @@ def stage_status(stage: str) -> str:
     if phase == "ready":
         return "waiting"
 
-    if phase == "human":
-        human_index = order.index("human")
+    if phase in {"human", "final_refinement"}:
+        human_index = order.index(phase)
         stage_index = order.index(stage)
         if stage_index < human_index:
             return "completed"
-        if stage == "human":
+        if stage == phase:
             return "human"
         return "waiting"
 
@@ -965,7 +1483,8 @@ def render_state_panel(container=None) -> None:
         "human": ("HUMAN DECISION", "Choose the intellectual direction the system should materialize."),
         "writer": ("WRITER", "Materializing the selected perspective in Rodrigo Voice."),
         "evaluation": ("EVALUATION", "Checking factual accuracy, relevance and voice alignment."),
-        "complete": ("HUMAN REVIEW", "Workflow complete. Final publication remains your decision."),
+        "final_refinement": ("FINAL HUMAN REVIEW", "Accept the approved draft or request one bounded editorial refinement."),
+        "complete": ("WORKFLOW COMPLETE", "Final publication remains your decision."),
         "no_candidate": ("NO CANDIDATE", "Discovery completed without a suitable opportunity."),
         "error": ("INTERRUPTED", "The workflow ended with an unexpected error."),
     }
@@ -998,7 +1517,7 @@ def render_state_panel(container=None) -> None:
         )
     active_label = (
         "SYSTEM ACTIVE" if running else
-        "HUMAN REQUIRED" if phase == "human" else
+        "HUMAN REQUIRED" if phase in {"human", "final_refinement"} else
         "READY FOR REVIEW" if phase == "complete" else
         "RUN COMPLETE" if phase == "no_candidate" else
         "SYSTEM READY" if phase == "ready" else
@@ -1128,6 +1647,11 @@ def render_opportunity() -> None:
         if source_url:
             st.link_button("View source", str(source_url))
 
+        render_translation(
+            str(title),
+            key="opportunity_title",
+        )
+
     with right:
         render_html(
             f"""
@@ -1175,6 +1699,12 @@ def render_argument_brief() -> None:
 
     with st.expander("View complete Argument Brief"):
         st.json(serialize(argument))
+
+    argument_payload = serialize(argument)
+    render_translation(
+        json.dumps(argument_payload, ensure_ascii=False, indent=2),
+        key="argument_brief",
+    )
 
 
 def render_perspective_selection() -> None:
@@ -1224,6 +1754,23 @@ def render_perspective_selection() -> None:
                     <div class="perspective-copy">{safe_text(contribution)}</div>
                 </div>
                 """
+            )
+
+            perspective_translation_source = "\n\n".join(
+                part
+                for part in [
+                    f"Title: {label}" if label else "",
+                    f"Core argument: {core}" if core else "",
+                    f"Why it matters: {why}" if why else "",
+                    f"Contribution: {contribution}" if contribution else "",
+                    f"Counterargument: {counterargument}" if counterargument else "",
+                    f"Uncertainty: {uncertainty}" if uncertainty else "",
+                ]
+                if part
+            )
+            render_translation(
+                perspective_translation_source,
+                key=f"perspective_{perspective_id}_{index}",
             )
 
             with st.expander("Counterargument & uncertainty"):
@@ -1381,6 +1928,94 @@ def render_content_mode_selection() -> None:
         st.rerun()
 
 
+def render_final_refinement() -> None:
+    payload = st.session_state.interrupt_payload or {}
+    draft = payload.get("current_draft")
+
+    if not draft:
+        st.warning("No draft was returned for final human refinement.")
+        return
+
+    dimensions = payload.get(
+        "refinement_dimensions",
+        ["tone", "emphasis", "length", "framing", "closing"],
+    )
+
+    render_html(
+        """
+        <div style="text-align:center; margin:1.4rem 0 1.1rem 0;">
+            <div class="eyebrow">HUMAN OWNS</div>
+            <div style="color:#f5f9ff;font-size:1.35rem;font-weight:800;">
+                Final editorial decision
+            </div>
+            <div style="color:#8294aa;font-size:.82rem;margin-top:.35rem;">
+                The draft passed the automated quality gate.
+                Accept it as-is or request one final editorial refinement.
+            </div>
+        </div>
+        """
+    )
+
+    st.markdown("#### Approved Draft")
+    render_html(
+        f'<div class="final-draft">{safe_text(draft)}</div>'
+    )
+    render_translation(
+        str(draft),
+        key="approved_draft",
+    )
+
+    st.caption(
+        "Refinement can adjust "
+        + ", ".join(str(item) for item in dimensions)
+        + " while preserving the selected intellectual direction."
+    )
+
+    st.markdown("---")
+    accept_col, refine_col = st.columns([1, 1.4])
+
+    with accept_col:
+        st.markdown("#### Accept")
+        st.caption(
+            "Keep the approved draft unchanged and complete the workflow."
+        )
+
+        if st.button(
+            "Accept current draft",
+            type="primary",
+            use_container_width=True,
+            key="accept_final_draft",
+        ):
+            resume_final_refinement_workflow(action="accept")
+            st.rerun()
+
+    with refine_col:
+        st.markdown("#### Refine")
+        st.caption(
+            "Request one bounded editorial adjustment before completion."
+        )
+
+        guidance = st.text_area(
+            "Final refinement guidance",
+            placeholder=(
+                "Example: Make the closing more concise and decisive."
+            ),
+            key="final_refinement_guidance",
+        )
+
+        if st.button(
+            "Refine draft",
+            use_container_width=True,
+            disabled=not guidance.strip(),
+            key="refine_final_draft",
+        ):
+            resume_final_refinement_workflow(
+                action="refine",
+                guidance=guidance.strip(),
+            )
+            st.rerun()
+
+
 def render_final_result() -> None:
     result = st.session_state.result
     if not result:
@@ -1420,6 +2055,10 @@ def render_final_result() -> None:
         st.markdown("#### Final Draft")
         render_html(
             f'<div class="final-draft">{safe_text(draft)}</div>'
+        )
+        render_translation(
+            str(draft),
+            key="final_draft",
         )
 
     with right:
@@ -1463,6 +2102,7 @@ def render_final_result() -> None:
 
     if st.button("New run", use_container_width=True):
         reset_run()
+        st.session_state.page_mode = "new_run"
         st.rerun()
 
 
@@ -1486,7 +2126,7 @@ NODE_TO_NEXT_PHASE = {
     "human_perspective_selection": "human",
     "human_content_mode_selection": "writer",
     "writer": "evaluation",
-    "evaluator": "complete",
+    "human_final_refinement": "final_refinement",
 }
 
 
@@ -1548,7 +2188,18 @@ def _background_graph_run(
 
             if "__interrupt__" in chunk:
                 interrupts = chunk.get("__interrupt__") or ()
-                raw_interrupt = interrupts[0] if interrupts else None
+
+                # LangGraph may emit an empty __interrupt__ tuple while a resumed
+                # graph is leaving a HITL node and continuing toward END. That is
+                # bookkeeping, not a new human interrupt. Treating it as a real
+                # interrupt leaves the UI in a human phase with payload {}, which
+                # produces the "Unsupported human interrupt payload" error after
+                # ACCEPT. Only a non-empty interrupt collection represents HITL.
+                if not interrupts:
+                    _workflow_log("INTERRUPT MARKER | empty | continuing stream")
+                    continue
+
+                raw_interrupt = interrupts[0]
                 payload = normalize_interrupt_payload(raw_interrupt)
                 interrupt_type = (payload or {}).get("type")
                 interrupt_node = interrupt_node_name(payload)
@@ -1563,7 +2214,11 @@ def _background_graph_run(
                     shared["done"] = True
                     shared["last_node"] = interrupt_node
                     shared["events"].append(interrupt_node)
-                    shared["phase"] = "human"
+                    shared["phase"] = (
+                        "final_refinement"
+                        if interrupt_type == "final_refinement"
+                        else "human"
+                    )
 
                 return
 
@@ -1720,6 +2375,7 @@ def sync_background_state() -> None:
         if interrupt_type not in {
             "perspective_selection",
             "content_mode_selection",
+            "final_refinement",
         }:
             st.session_state.error = (
                 "Unexpected workflow interrupt payload. "
@@ -1729,21 +2385,38 @@ def sync_background_state() -> None:
             st.session_state.phase = "error"
             return
 
+        st.session_state.resume_in_flight = False
         st.session_state.interrupt_payload = interrupt_payload
-        st.session_state.phase = "human"
+        st.session_state.phase = (
+            "final_refinement"
+            if interrupt_type == "final_refinement"
+            else "human"
+        )
         return
 
     if worker_phase in {
         "discovery", "opportunity", "research", "argument",
         "perspectives", "human", "writer", "evaluation",
+        "final_refinement",
     }:
-        st.session_state.phase = worker_phase
+        # A resumed HITL may briefly expose the checkpoint's previous phase
+        # before the graph advances. Never remount a human screen unless a
+        # real, validated interrupt payload accompanies it.
+        stale_human_phase = (
+            st.session_state.get("resume_in_flight", False)
+            and worker_phase in {"human", "final_refinement"}
+            and interrupt_payload is None
+        )
+        if not stale_human_phase:
+            st.session_state.phase = worker_phase
 
     # Scout-only activity must not leak into later stages.
     if st.session_state.phase != "discovery":
         st.session_state.current_action = None
 
     if done:
+        st.session_state.resume_in_flight = False
+        st.session_state.interrupt_payload = None
         st.session_state.finished_at = time.perf_counter()
 
         status = result.get("status")
@@ -1754,12 +2427,14 @@ def sync_background_state() -> None:
             post is None and last_node == "scout"
         ):
             st.session_state.phase = "no_candidate"
+            save_run_history(terminal_status="NO_CANDIDATE")
         elif draft:
             st.session_state.phase = "complete"
-        elif st.session_state.phase not in {"human", "error"}:
-            # A terminal graph state that is neither HITL nor a final draft
-            # should not masquerade as an active workflow.
+            save_run_history(terminal_status="COMPLETE")
+        elif st.session_state.phase not in {"human", "final_refinement", "error"}:
+            # Persist terminal LOW/MEDIUM/REJECT-style runs as well.
             st.session_state.phase = "complete"
+            save_run_history(terminal_status=str(status or "COMPLETE"))
 
 def _workflow_log(message: str) -> None:
     timestamp = datetime.now().strftime("%H:%M:%S")
@@ -1768,6 +2443,9 @@ def _workflow_log(message: str) -> None:
 
 def start_workflow(theme: str) -> None:
     _workflow_log("UI START requested")
+    st.session_state.run_id = st.session_state.thread_id
+    st.session_state.run_created_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    st.session_state.run_theme = " ".join(theme.split())
     st.session_state.started_at = time.perf_counter()
     st.session_state.finished_at = None
     st.session_state.phase = "discovery"
@@ -1776,6 +2454,9 @@ def start_workflow(theme: str) -> None:
     st.session_state.interrupt_payload = None
     st.session_state.selected_perspective_id = None
     st.session_state.selected_content_mode = None
+    st.session_state.final_refinement_guidance = ""
+    st.session_state.translation_cache = {}
+    st.session_state.resume_in_flight = False
 
     scout_objective = build_scout_objective(theme)
     launch_background_run({"scout_objective": scout_objective})
@@ -1821,6 +2502,47 @@ def resume_content_mode_workflow(*, content_mode: str) -> None:
     launch_background_run(Command(resume=decision))
 
 
+def resume_final_refinement_workflow(
+    *,
+    action: str,
+    guidance: str | None = None,
+) -> None:
+    _workflow_log(f"UI RESUME requested | final_refinement={action}")
+
+    if action not in {"accept", "refine"}:
+        raise ValueError("Final refinement action must be accept or refine.")
+
+    if action == "refine" and not (guidance or "").strip():
+        raise ValueError(
+            "Final refinement guidance is required when action is refine."
+        )
+
+    # Once the human resumes the final HITL there is no longer a pending
+    # human interrupt. Keep the UI in an active non-HITL phase until the
+    # background worker reaches END; otherwise an empty interrupt payload
+    # can be rendered transiently after ACCEPT.
+    st.session_state.phase = (
+        "writer" if action == "refine" else "evaluation"
+    )
+    st.session_state.worker = None
+    st.session_state.worker_done = False
+    st.session_state.worker_interrupt = None
+    st.session_state.worker_error = None
+    st.session_state.worker_traceback = None
+    st.session_state.worker_last_node = None
+    st.session_state.worker_events = []
+    st.session_state.interrupt_payload = None
+    st.session_state.resume_in_flight = True
+
+    decision = {
+        "action": action,
+    }
+    if action == "refine":
+        decision["guidance"] = guidance.strip()
+
+    launch_background_run(Command(resume=decision))
+
+
 def render_live_activity() -> None:
     # Activity is permanently visible in the frozen control sidebar.
     return
@@ -1844,7 +2566,11 @@ def schedule_ui_refresh() -> None:
         "evaluation",
     }
 
-    if st.session_state.phase not in active_phases:
+    should_refresh = st.session_state.phase in active_phases or (
+        st.session_state.get("resume_in_flight", False)
+        and st.session_state.phase in {"human", "final_refinement"}
+    )
+    if not should_refresh:
         return
 
     time.sleep(1.0)
@@ -1855,8 +2581,19 @@ def schedule_ui_refresh() -> None:
 # Session
 # =========================================================
 
+initialize_run_history()
+
 if "workflow" not in st.session_state:
     reset_run()
+
+if "page_mode" not in st.session_state:
+    st.session_state.page_mode = "new_run"
+
+if "history_view" not in st.session_state:
+    st.session_state.history_view = "list"
+
+if "history_selected_run_id" not in st.session_state:
+    st.session_state.history_selected_run_id = None
 
 
 # =========================================================
@@ -1878,9 +2615,24 @@ render_architecture()
 render_state_panel()
 render_live_activity()
 
+nav_left, nav_right, nav_space = st.columns([1, 1, 5])
+with nav_left:
+    if st.button("New Run", use_container_width=True, type="primary" if st.session_state.page_mode == "new_run" else "secondary"):
+        st.session_state.page_mode = "new_run"
+        st.rerun()
+with nav_right:
+    if st.button("History", use_container_width=True, type="primary" if st.session_state.page_mode == "history" else "secondary"):
+        st.session_state.page_mode = "history"
+        st.session_state.history_view = "list"
+        st.session_state.history_selected_run_id = None
+        st.rerun()
+
 phase = st.session_state.phase
 
-if phase == "ready":
+if st.session_state.page_mode == "history":
+    render_history()
+
+elif phase == "ready":
     render_html(
         """
         <div class="artifact-card">
@@ -1935,7 +2687,7 @@ if phase == "ready":
             start_workflow(theme)
             st.rerun()
 
-elif phase == "human":
+elif phase in {"human", "final_refinement"}:
     render_opportunity()
     render_argument_brief()
 
@@ -1946,11 +2698,21 @@ elif phase == "human":
         render_perspective_selection()
     elif interrupt_type == "content_mode_selection":
         render_content_mode_selection()
+    elif interrupt_type == "final_refinement":
+        render_final_refinement()
     else:
-        st.error(
-            "Unsupported human interrupt payload. "
-            f"Received: {payload!r}"
-        )
+        # Missing payload during a resume is a transient UI state, not a new
+        # human decision. Keep the workspace stable while the worker advances.
+        worker = st.session_state.get("worker")
+        resume_in_flight = st.session_state.get("resume_in_flight", False)
+        worker_active = worker is not None and worker.is_alive()
+        if resume_in_flight or worker_active:
+            st.info("Resuming workflow...")
+        else:
+            st.error(
+                "Unsupported human interrupt payload. "
+                f"Received: {payload!r}"
+            )
 
 elif phase == "complete":
     render_opportunity()
@@ -2001,4 +2763,5 @@ else:
     else:
         render_opportunity()
 
-schedule_ui_refresh()
+if st.session_state.page_mode == "new_run":
+    schedule_ui_refresh()

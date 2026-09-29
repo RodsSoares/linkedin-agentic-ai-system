@@ -23,9 +23,9 @@ Scout
 PostCandidate
 ↓
 Opportunity Evaluation
-├── LOW    → END
+├── LOW → END
 ├── MEDIUM → QUEUED → END
-└── HIGH   → ACCEPTED_FOR_RESEARCH
+└── HIGH → ACCEPTED_FOR_RESEARCH
 ↓
 Research
 ↓
@@ -34,7 +34,7 @@ ResearchBrief
 Writer
 ↓
 Quality Evaluator
-├── PASS   → Human / END
+├── PASS → Human / END
 ├── REVISE → Writer
 └── REJECT → END
 
@@ -59,7 +59,7 @@ The project has progressed from the original specification into an integrated wo
 
 The broader project currently has:
 
-396 passing tests
+437 passing tests
 
 This document therefore describes the implemented v0.1 contract while preserving the original product rationale and calibration assumptions.
 
@@ -203,12 +203,12 @@ The semantic evaluator directly estimates Research Cost, which Python converts i
 
 All final positive scoring dimensions use:
 
-0–100
+0--100
 higher = better
 
 Research Cost uses:
 
-0–100
+0--100
 higher = more expensive
 
 and is converted by:
@@ -260,23 +260,23 @@ Score
 
 Interpretation
 
-0–20
+0--20
 
 Little can be added beyond generic agreement or repetition.
 
-21–40
+21--40
 
 A contribution is possible but likely weakly differentiated.
 
-41–60
+41--60
 
 Relevant knowledge or experience can add some value.
 
-61–80
+61--80
 
 A concrete insight, example, connection, or useful perspective is available.
 
-81–100
+81--100
 
 A strong, specific, differentiated contribution can materially improve the discussion.
 
@@ -326,23 +326,23 @@ Score
 
 Interpretation
 
-0–20
+0--20
 
 Little or no value to the intended positioning.
 
-21–40
+21--40
 
 Weak or indirect positioning connection.
 
-41–60
+41--60
 
 Partially supports the intended positioning.
 
-61–80
+61--80
 
 Clearly reinforces the intended professional positioning.
 
-81–100
+81--100
 
 Excellent opportunity to demonstrate the intended positioning and its differentiating intersections.
 
@@ -400,23 +400,23 @@ Score
 
 Interpretation
 
-0–20
+0--20
 
 Outside the target professional domains.
 
-21–40
+21--40
 
 Only indirectly related.
 
-41–60
+41--60
 
 Adjacent and somewhat professionally relevant.
 
-61–80
+61--80
 
 Directly related to one or more target domains.
 
-81–100
+81--100
 
 Central to the intended positioning or strongly connects multiple target domains.
 
@@ -471,23 +471,23 @@ Score
 
 Interpretation
 
-0–20
+0--20
 
 Very limited expected professional visibility or interaction.
 
-21–40
+21--40
 
 Low engagement opportunity.
 
-41–60
+41--60
 
 Moderate opportunity for relevant visibility or interaction.
 
-61–80
+61--80
 
 Strong engagement opportunity with a relevant audience.
 
-81–100
+81--100
 
 Exceptional opportunity for relevant professional visibility or discussion.
 
@@ -543,23 +543,23 @@ Score
 
 Interpretation
 
-0–20
+0--20
 
 Little or no additional research required.
 
-21–40
+21--40
 
 Limited research or verification required.
 
-41–60
+41--60
 
 Moderate research necessary.
 
-61–80
+61--80
 
 Significant research required.
 
-81–100
+81--100
 
 Extensive research likely, potentially making the opportunity inefficient.
 
@@ -628,13 +628,13 @@ Opportunity Score =
 
 Contribution Potential × 0.30
 
-Positioning Fit        × 0.25
+Positioning Fit × 0.25
 
-Topic Relevance        × 0.20
+Topic Relevance × 0.20
 
-Engagement Potential   × 0.15
+Engagement Potential × 0.15
 
-Research Efficiency    × 0.10
+Research Efficiency × 0.10
 
 where:
 
@@ -642,7 +642,7 @@ Research Efficiency = 100 - Research Cost
 
 The resulting score remains in:
 
-0–100
+0--100
 
 The implementation rounds the final score according to the current application contract.
 
@@ -654,13 +654,13 @@ A strong score in one dimension must not completely compensate for a critical we
 
 Current deterministic guardrails:
 
-Contribution Potential < 30
+Contribution Potential \< 30
 → LOW
 
-Positioning Fit < 30
+Positioning Fit \< 30
 → LOW
 
-Topic Relevance < 25
+Topic Relevance \< 25
 → LOW
 
 If any mandatory guardrail is triggered:
@@ -671,7 +671,7 @@ regardless of the weighted score.
 
 Boundary Behavior
 
-The guardrails use strict < comparisons.
+The guardrails use strict \< comparisons.
 
 Therefore:
 
@@ -688,22 +688,22 @@ Classification
 
 If no mandatory guardrail is triggered:
 
-score >= 80
+score \>= 80
 → HIGH
 
-score >= 60 and < 80
+score \>= 60 and \< 80
 → MEDIUM
 
-score < 60
+score \< 60
 → LOW
 
 Equivalent conceptual logic:
 
 if guardrail_triggered:
 classification = "LOW"
-elif opportunity_score >= 80:
+elif opportunity_score \>= 80:
 classification = "HIGH"
-elif opportunity_score >= 60:
+elif opportunity_score \>= 60:
 classification = "MEDIUM"
 else:
 classification = "LOW"
@@ -889,7 +889,7 @@ cost optimization;
 
 later measurement of classification quality.
 
-Example A — High-Value Opportunity
+Example A --- High-Value Opportunity
 
 Scenario:
 
@@ -913,7 +913,7 @@ Score:
 95 × 0.25 = 23.75
 95 × 0.20 = 19.00
 80 × 0.15 = 12.00
-65 × 0.10 =  6.50
+65 × 0.10 = 6.50
 -----
 88.25
 
@@ -932,7 +932,7 @@ ACCEPTED_FOR_RESEARCH
 ↓
 Research
 
-Example B — Popular but Low-Value Opportunity
+Example B --- Popular but Low-Value Opportunity
 
 Scenario:
 
@@ -948,9 +948,9 @@ Research Cost ................ 50
 
 Mandatory guardrails trigger:
 
-Contribution Potential < 30
-Positioning Fit < 30
-Topic Relevance < 25
+Contribution Potential \< 30
+Positioning Fit \< 30
+Topic Relevance \< 25
 
 Result:
 
@@ -962,7 +962,7 @@ This demonstrates:
 
 Audience size alone must not dominate opportunity selection.
 
-Example C — Relevant but Research-Expensive Opportunity
+Example C --- Relevant but Research-Expensive Opportunity
 
 Scenario:
 
@@ -985,8 +985,8 @@ Score:
 80 × 0.30 = 24.00
 90 × 0.25 = 22.50
 95 × 0.20 = 19.00
-65 × 0.15 =  9.75
-15 × 0.10 =  1.50
+65 × 0.15 = 9.75
+15 × 0.10 = 1.50
 -----
 76.75
 
@@ -1119,14 +1119,14 @@ PostCandidate
 ▼
 OPPORTUNITY EVALUATION
 ┌───┼────────────┐
-│   │            │
-LOW MEDIUM       HIGH
-│   │            │
-▼   ▼            ▼
-END QUEUED  ACCEPTED_FOR_RESEARCH
-│            │
-▼            ▼
-END        RESEARCH
+│ │ │
+LOW MEDIUM HIGH
+│ │ │
+▼ ▼ ▼
+END QUEUED ACCEPTED_FOR_RESEARCH
+│ │
+▼ ▼
+END RESEARCH
 │
 ▼
 ResearchBrief
@@ -1137,11 +1137,11 @@ WRITER
 ▼
 QUALITY EVALUATOR
 ┌────┼─────┐
-▼    ▼     ▼
+▼ ▼ ▼
 PASS REVISE REJECT
-│    │      │
-▼    └──► WRITER
-HUMAN / END      END
+│ │ │
+▼ └──► WRITER
+HUMAN / END END
 
 Publication remains outside autonomous execution.
 
@@ -1155,7 +1155,7 @@ Schema Validation
 
 Validate:
 
-scores within 0–100
+scores within 0--100
 scores below 0 rejected
 scores above 100 rejected
 required fields enforced
@@ -1188,9 +1188,9 @@ Guardrails
 
 Verify independently:
 
-Contribution Potential < 30 → LOW
-Positioning Fit < 30        → LOW
-Topic Relevance < 25        → LOW
+Contribution Potential \< 30 → LOW
+Positioning Fit \< 30 → LOW
+Topic Relevance \< 25 → LOW
 
 and exact non-trigger boundaries:
 
@@ -1202,10 +1202,10 @@ Classification
 
 Verify:
 
-80       → HIGH
-79.99    → MEDIUM
-60       → MEDIUM
-59.99    → LOW
+80 → HIGH
+79.99 → MEDIUM
+60 → MEDIUM
+59.99 → LOW
 
 or equivalent numeric precision according to the implementation.
 
@@ -1213,9 +1213,9 @@ Workflow Routing
 
 Verify:
 
-HIGH   → ACCEPTED_FOR_RESEARCH → Research
+HIGH → ACCEPTED_FOR_RESEARCH → Research
 MEDIUM → QUEUED → END
-LOW    → END
+LOW → END
 
 LLM Independence
 
@@ -1384,10 +1384,10 @@ Opportunity Evaluation remains separate from Research, Writer, and Quality Evalu
 Scoring
 
 Contribution Potential = 30%
-Positioning Fit        = 25%
-Topic Relevance        = 20%
-Engagement Potential   = 15%
-Research Efficiency    = 10%
+Positioning Fit = 25%
+Topic Relevance = 20%
+Engagement Potential = 15%
+Research Efficiency = 10%
 
 Research Efficiency
 
@@ -1395,15 +1395,15 @@ Research Efficiency = 100 - Research Cost
 
 Guardrails
 
-Contribution Potential < 30 → LOW
-Positioning Fit < 30        → LOW
-Topic Relevance < 25        → LOW
+Contribution Potential \< 30 → LOW
+Positioning Fit \< 30 → LOW
+Topic Relevance \< 25 → LOW
 
 Classification
 
-HIGH   >= 80
-MEDIUM >= 60 and < 80
-LOW    < 60
+HIGH \>= 80
+MEDIUM \>= 60 and \< 80
+LOW \< 60
 
 Routing
 
@@ -1526,7 +1526,7 @@ Human
 
 The guiding product principle remains:
 
-Select the conversations where Rodrigo can add professional value — not simply the conversations with the largest audience.
+Select the conversations where Rodrigo can add professional value --- not simply the conversations with the largest audience.
 
 And the architectural pattern remains:
 
@@ -1544,3 +1544,32 @@ LangGraph
 ↓
 Human
 "Retain final publication authority"
+
+Current Downstream Context
+
+Opportunity Evaluation remains the deterministic/semantic qualification gate
+described in this document.
+
+The Experience Layer additions do not change the scoring dimensions,
+classification responsibility, or LOW / MEDIUM / HIGH routing semantics.
+
+For a HIGH opportunity, the current downstream workflow continues through:
+
+Research
+-\> Argument Intelligence
+-\> Perspective Generation
+-\> Human Perspective Selection
+-\> Human Content Mode Selection
+-\> Writer
+-\> Quality Evaluator
+-\> Human Final Refinement
+
+Run History / Product Memory may persist the resulting opportunity score and
+classification as part of the user-facing historical run record.
+
+Current automated project regression baseline:
+
+437 passing tests
+
+This test count is a development snapshot and is not part of the Opportunity
+Evaluation contract itself.

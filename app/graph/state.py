@@ -16,6 +16,8 @@ class LinkedInAgentState(TypedDict):
     perspective_set: PerspectiveSet | None
     selected_perspective: SelectedPerspective | None
     content_mode: str | None
+    final_refinement_action: str | None
+    final_refinement_guidance: str | None
     current_draft: str | None
     quality_evaluation: QualityEvaluation | None
     iteration: int

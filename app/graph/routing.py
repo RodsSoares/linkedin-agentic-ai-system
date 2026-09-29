@@ -67,3 +67,35 @@ def route_after_evaluation(state: LinkedInAgentState) -> str:
         return "end"
 
     raise ValueError(f"Unknown evaluation decision: {decision}")
+
+
+def route_after_final_refinement(
+    state: LinkedInAgentState,
+) -> str:
+    action = state.get("final_refinement_action")
+
+    if action == "accept":
+        return "end"
+
+    if action == "refine":
+        return "writer"
+
+    raise ValueError(
+        "Final refinement routing requires a valid action."
+    )
+
+
+def route_after_writer(
+    state: LinkedInAgentState,
+) -> str:
+    next_step = state.get("next_step")
+
+    if next_step == "evaluator":
+        return "evaluator"
+
+    if next_step == "final":
+        return "end"
+
+    raise ValueError(
+        "Writer routing requires a valid next_step."
+    )

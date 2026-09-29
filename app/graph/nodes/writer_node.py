@@ -10,6 +10,10 @@ def writer_node(state: LinkedInAgentState) -> dict:
         raise ValueError("Writer node requires a PostCandidate.")
 
     quality_evaluation = state.get("quality_evaluation")
+    final_refinement_action = state.get("final_refinement_action")
+    final_refinement_guidance = state.get("final_refinement_guidance")
+
+    is_final_refinement = final_refinement_action == "refine"
 
     writer_input = WriterInput(
         post=post,
@@ -18,8 +22,17 @@ def writer_node(state: LinkedInAgentState) -> dict:
         content_mode=state.get("content_mode") or "linkedin_reply",
         previous_draft=state.get("current_draft"),
         revision_instruction=(
-            quality_evaluation.revision_instruction
-            if quality_evaluation is not None
+            None
+            if is_final_refinement
+            else (
+                quality_evaluation.revision_instruction
+                if quality_evaluation is not None
+                else None
+            )
+        ),
+        final_refinement_guidance=(
+            final_refinement_guidance
+            if is_final_refinement
             else None
         ),
     )
@@ -29,6 +42,14 @@ def writer_node(state: LinkedInAgentState) -> dict:
     return {
         "current_draft": draft,
         "iteration": state.get("iteration", 0) + 1,
-        "next_step": "evaluator",
-        "status": "DRAFT_READY",
+        "next_step": (
+            "final"
+            if is_final_refinement
+            else "evaluator"
+        ),
+        "status": (
+            "FINAL_REFINEMENT_READY"
+            if is_final_refinement
+            else "DRAFT_READY"
+        ),
     }

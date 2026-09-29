@@ -10,13 +10,13 @@ It is intentionally not a complete architecture specification and
 should not duplicate the historical development record.
 Use the documentation set as follows:
 - 01_system_overview.md --- product model, architectural principles,
-  target MVP architecture, and responsibility boundaries.
+target MVP architecture, and responsibility boundaries.
 - 02_current_architecture.md --- factual view of what is implemented
-  now and how the current components are connected.
+now and how the current components are connected.
 - 04_decision_log.md --- architectural rationale and durable
-  decisions.
+decisions.
 - PROJECT_CONTEXT.md --- current recovery checkpoint and immediate
-  development context.
+development context.
 When architecture and this checkpoint differ,
 02_current_architecture.md is authoritative for implemented topology.
 Current Checkpoint
@@ -28,7 +28,7 @@ Completed Experience Layer increments:
 Next planned product increment:
 - 7.3 --- Final Human Refinement
 Current automated regression baseline:
-421 passing tests
+437 passing tests
 Current real E2E status:
 Validated through Human Review with both sequential HITL boundaries.
 Current frontend hardening status:
@@ -36,7 +36,7 @@ Two UX defects were observed during real Streamlit execution and are
 being corrected:
 1. visual state/phase can lag the backend worker;
 2. transient Scout / Opportunity text can flicker during automatic
-   Streamlit reruns.
+Streamlit reruns.
 These are frontend synchronization/presentation defects. They do not
 require a change to the validated graph, agent contracts, or reasoning
 architecture.
@@ -61,64 +61,64 @@ contribution rather than simply selecting popular content.
 Current Implemented Workflow
 The current primary LangGraph flow is:
 Human Theme / Intent
-        |
-        v
+\|
+v
 Discovery / Scout
-        |
-        v
+\|
+v
 Target Qualification
-        |
-        v
+\|
+v
 Opportunity Evaluation
-        |
-        +-- LOW ------------------------------> END
-        |
-        +-- MEDIUM --> QUEUED ----------------> END
-        |
-        +-- HIGH
-        |
-        v
+\|
++-- LOW ------------------------------\> END
+\|
++-- MEDIUM --\> QUEUED ----------------\> END
+\|
++-- HIGH
+\|
+v
 Research
-        |
-        v
+\|
+v
 ResearchBrief
-        |
-        v
+\|
+v
 Argument Intelligence
-        |
-        v
+\|
+v
 ArgumentBrief
-        |
-        v
+\|
+v
 Perspective Generation
-        |
-        v
+\|
+v
 PerspectiveSet
-        |
-        v
+\|
+v
 Human Perspective Selection
-        |
-        v
+\|
+v
 SelectedPerspective
-        |
-        v
+\|
+v
 Human Content Mode Selection
-        |
-        +-- linkedin_post
-        +-- linkedin_reply
-        +-- article
-        |
-        v
+\|
++-- linkedin_post
++-- linkedin_reply
++-- article
+\|
+v
 Rodrigo Voice / Writer
-        |
-        v
+\|
+v
 Quality Evaluator
-        |
-        +-- PASS -----------------> Human Review
-        |
-        +-- REVISE --> Writer --> Quality Evaluator
-        |
-        +-- REJECT ---------------------------> END
+\|
++-- PASS -----------------\> Human Review
+\|
++-- REVISE --\> Writer --\> Quality Evaluator
+\|
++-- REJECT ---------------------------\> END
 Publication remains outside autonomous execution.
 The Writer revision loop is bounded.
 Ordinary Writer revision does not rerun Research, Argument Intelligence,
@@ -179,10 +179,10 @@ does not rerun:
 - Perspective Generation.
 Real Streamlit E2E successfully reached:
 Human Perspective Selection
--> Human Content Mode Selection
--> Writer
--> Quality Evaluator
--> Human Review
+-\> Human Content Mode Selection
+-\> Writer
+-\> Quality Evaluator
+-\> Human Review
 7.3 --- Final Human Refinement
 Status: NEXT
 Target behavior:
@@ -294,19 +294,19 @@ Python authorizes requested actions.
 The LLM does not control runtime limits.
 Opportunity Evaluation
 Current weighting:
-Contribution Potential   30%
-Positioning Fit          25%
-Topic Relevance          20%
-Engagement Potential     15%
-Research Efficiency      10%
+Contribution Potential 30%
+Positioning Fit 25%
+Topic Relevance 20%
+Engagement Potential 15%
+Research Efficiency 10%
 Mandatory LOW guardrails:
-Contribution Potential < 30
-Positioning Fit        < 30
-Topic Relevance        < 25
+Contribution Potential \< 30
+Positioning Fit \< 30
+Topic Relevance \< 25
 Otherwise:
-HIGH   >= 80
-MEDIUM >= 60 and < 80
-LOW    < 60
+HIGH \>= 80
+MEDIUM \>= 60 and \< 80
+LOW \< 60
 The LLM supplies semantic signals.
 Python owns final score and classification.
 Research
@@ -317,10 +317,10 @@ EXTRACT
 FINISH
 Evidence chain:
 SEARCH
--> READ
--> EXTRACT
--> EvidenceItem
--> ResearchBrief
+-\> READ
+-\> EXTRACT
+-\> EvidenceItem
+-\> ResearchBrief
 Search snippets and raw reads must not silently become Writer-facing
 evidence.
 Principal limits:
@@ -331,9 +331,9 @@ MAX_RESEARCH_READS = 5
 MAX_RESEARCH_EVIDENCE_ITEMS = 6
 Context
 Principal budgets:
-Scout read context                 <= 1800 tokens
-Research per-read context          <= 2500 tokens
-Research cumulative read context   <= 8000 tokens
+Scout read context \<= 1800 tokens
+Research per-read context \<= 2500 tokens
+Research cumulative read context \<= 8000 tokens
 Quality
 The LLM produces semantic quality signals.
 Python owns deterministic PASS / REVISE / REJECT routing.
@@ -391,7 +391,7 @@ These are presentation defects.
 Do not modify the validated core workflow merely to solve them.
 Current Validation Snapshot
 Automated suite:
-421 passing tests
+437 passing tests
 The current regression surface includes:
 - Scout;
 - Opportunity Evaluation;
@@ -413,16 +413,16 @@ The current regression surface includes:
 - upstream non-rerun guarantees.
 Real Streamlit E2E has demonstrated:
 Editable Theme
--> Scout
--> Opportunity Evaluation HIGH
--> Research
--> Argument Intelligence
--> Perspective Generation
--> Human Perspective Selection
--> Human Content Mode Selection
--> Writer
--> Quality Evaluator
--> Human Review
+-\> Scout
+-\> Opportunity Evaluation HIGH
+-\> Research
+-\> Argument Intelligence
+-\> Perspective Generation
+-\> Human Perspective Selection
+-\> Human Content Mode Selection
+-\> Writer
+-\> Quality Evaluator
+-\> Human Review
 A separate real run demonstrated correct LOW termination before
 Research.
 The current test count is a development checkpoint, not an architectural
@@ -462,9 +462,9 @@ Experience Layer feature is being added.
 Recovery Procedure
 When resuming development in a new session:
 1. Read 01_system_overview.md for product principles and target
-   architecture.
+architecture.
 2. Read 02_current_architecture.md for the factual implemented
-   topology.
+topology.
 3. Read this file for the immediate checkpoint.
 4. Inspect git status.
 5. Inspect the latest relevant commit/tag.
@@ -473,7 +473,7 @@ python -m pytest
 Expected baseline at this checkpoint:
 421 passed
 7. If the suite differs, determine whether new committed work
-   legitimately changed the baseline before assuming regression.
+legitimately changed the baseline before assuming regression.
 8. Resume from Immediate Development Sequence above.
 Documentation Maintenance Rule
 Keep this file short and operational.
@@ -495,7 +495,125 @@ At this checkpoint:
 - 421 automated tests pass;
 - the two sequential HITL boundaries work in real Streamlit execution;
 - frontend State Sync and Scout / Opportunity flicker are the active
-  hardening items;
+hardening items;
 - 7.3 Final Human Refinement is the next product capability after
-  frontend hardening.
+frontend hardening.
 Resume here.
+
+Recovery Checkpoint --- 2026-09-29
+
+Automated Regression Baseline
+
+437 passing tests
+
+Current local MVP state
+
+7.1 Editable Theme / Intent:
+IMPLEMENTED AND VALIDATED
+
+7.2 Content Mode Selection:
+IMPLEMENTED AND VALIDATED
+
+7.3 Final Human Refinement:
+IMPLEMENTED AND E2E VALIDATED
+
+7.4 Bilingual Presentation:
+IMPLEMENTED AND E2E VALIDATED
+
+7.5 Run History / Product Memory:
+IMPLEMENTED
+FINAL TERMINAL-STATE PERSISTENCE VALIDATION PENDING
+
+Real E2E status
+
+A real HIGH workflow has been validated through:
+
+Opportunity Evaluation
+-\> Research
+-\> Argument Intelligence
+-\> Perspective Generation
+-\> Human Perspective Selection
+-\> Human Content Mode Selection
+-\> Writer
+-\> Quality Evaluator
+-\> Human Final Refinement ACCEPT
+-\> WORKFLOW COMPLETE
+
+The previous empty interrupt / stale HITL remount failure is no longer present
+in the validated ACCEPT path.
+
+Portuguese translation of the final draft has been validated in the real
+Streamlit experience.
+
+Run History list/detail/back navigation has been visually validated.
+
+Remaining local validation
+
+A completed HIGH run previously exposed a History persistence defect where the
+saved record could appear as:
+
+No candidate
+No content generated
+
+The current persistence implementation has been hardened to prefer
+authoritative terminal LangGraph state and to prevent a later incomplete save
+from degrading a richer completed record.
+
+The full automated regression suite remains green after this change:
+
+437 passing tests
+
+The corrected COMPLETE -\> Run History persistence path still requires one final
+runtime validation before 7.5 is described as fully validated.
+
+Deployment status
+
+Production cloud deployment:
+NOT IMPLEMENTED
+
+Cloud provider:
+NOT SELECTED
+
+Production persistence:
+NOT SELECTED
+
+Local Run History persistence:
+IMPLEMENTED with SQLite at data/history/run_history.db
+
+Immediate resume sequence
+
+1.  Perform one final low-cost real validation of COMPLETE -\> Run History
+    persistence.
+
+2.  If the history record correctly preserves the completed HIGH run and final
+    artifacts, close MVP Experience Layer 7.5.
+
+3.  Begin Cloud Deployment design and implementation without reopening the
+    validated reasoning architecture.
+
+4.  Validate the deployed application with a cloud smoke / E2E run.
+
+5.  Update 05_cloud_deployment.md, PROJECT_CONTEXT.md, and README.md with the
+    actual selected deployment architecture and validated runtime behavior.
+
+6.  Regenerate PROJECT_AUDIT.md from the repository state rather than editing it
+    manually.
+
+Architecture freeze
+
+Unless a genuine defect is found, do not redesign:
+
+Scout
+Opportunity Evaluation
+Research
+Argument Intelligence
+Perspective Generation
+Human Perspective Selection
+Human Content Mode Selection
+Final Human Refinement
+deterministic scoring
+evidence provenance
+manual publication authority
+
+The next phase is persistence validation and deployment, not another reasoning
+architecture redesign.

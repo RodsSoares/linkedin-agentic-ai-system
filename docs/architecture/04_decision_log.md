@@ -6,11 +6,11 @@ It is not a development diary and does not attempt to capture every implementati
 
 Status vocabulary:
 
-Accepted    = current architectural rule
-Superseded  = replaced by a later ADR
-Proposed    = under explicit consideration, not yet binding
+Accepted = current architectural rule
+Superseded = replaced by a later ADR
+Proposed = under explicit consideration, not yet binding
 
-ADR-001 — Component-specific inputs instead of full orchestration state
+ADR-001 --- Component-specific inputs instead of full orchestration state
 
 Status: Accepted
 Date: 2026-09-04
@@ -57,7 +57,7 @@ The orchestration layer becomes responsible for mapping the global state into co
 
 This introduces a small amount of additional code in exchange for clearer component boundaries and better maintainability.
 
-ADR-002 — Human publication authority is mandatory
+ADR-002 --- Human publication authority is mandatory
 
 Status: Accepted
 Date: 2026-09
@@ -100,7 +100,7 @@ future LinkedIn integrations must preserve human authority;
 
 a future approval interface may make the boundary easier to operate, but must not silently remove it.
 
-ADR-003 — Separate semantic reasoning from deterministic operational control
+ADR-003 --- Separate semantic reasoning from deterministic operational control
 
 Status: Accepted
 Date: 2026-09
@@ -159,7 +159,7 @@ deterministic rules should not be reimplemented as prompt instructions when appl
 
 graph nodes should orchestrate rather than absorb specialist business logic.
 
-ADR-004 — Agent autonomy must be bounded
+ADR-004 --- Agent autonomy must be bounded
 
 Status: Accepted
 Date: 2026-09
@@ -206,7 +206,7 @@ max-step, decision, search, read, evidence, retry, and context limits may be ind
 
 reaching a limit is an expected runtime outcome, not necessarily a software defect.
 
-ADR-005 — Opportunity is contribution potential, not popularity
+ADR-005 --- Opportunity is contribution potential, not popularity
 
 Status: Accepted
 Date: 2026-09
@@ -223,11 +223,11 @@ Opportunity Evaluation must consider multiple dimensions.
 
 Current weights are:
 
-Contribution Potential  30%
-Positioning Fit          25%
-Topic Relevance          20%
-Engagement Potential     15%
-Research Efficiency      10%
+Contribution Potential 30%
+Positioning Fit 25%
+Topic Relevance 20%
+Engagement Potential 15%
+Research Efficiency 10%
 
 Contribution Potential receives the highest current weight.
 
@@ -245,7 +245,7 @@ reliable engagement metadata should improve the signal when available;
 
 weights and thresholds remain calibration hypotheses rather than immutable product truths.
 
-ADR-006 — Final Opportunity classification is deterministic
+ADR-006 --- Final Opportunity classification is deterministic
 
 Status: Accepted
 Date: 2026-09
@@ -271,9 +271,9 @@ HIGH / MEDIUM / LOW classification
 
 Current routing is deterministic:
 
-HIGH   -> ACCEPTED_FOR_RESEARCH -> Research
-MEDIUM -> QUEUED -> END
-LOW    -> END
+HIGH -\> ACCEPTED_FOR_RESEARCH -\> Research
+MEDIUM -\> QUEUED -\> END
+LOW -\> END
 
 The current routing contract is documented in the project context.
 
@@ -289,7 +289,7 @@ guardrail behavior is directly testable;
 
 calibration can evolve independently from semantic prompting.
 
-ADR-007 — Typed structured outputs at AI component boundaries
+ADR-007 --- Typed structured outputs at AI component boundaries
 
 Status: Accepted
 Date: 2026-09
@@ -334,7 +334,7 @@ Consequences
 
 Schema changes are architectural changes when they alter component responsibilities or workflow behavior.
 
-ADR-008 — Research evidence must preserve explicit provenance
+ADR-008 --- Research evidence must preserve explicit provenance
 
 Status: Accepted
 Date: 2026-09
@@ -385,7 +385,7 @@ Writer does not independently reinterpret arbitrary Research tool history as evi
 
 unresolved questions and counterpoints may remain explicit rather than being converted into unsupported claims.
 
-ADR-009 — ResearchBrief is the typed Research → Writer boundary
+ADR-009 --- ResearchBrief is the typed Research → Writer boundary
 
 Status: Accepted
 Date: 2026-09
@@ -429,7 +429,7 @@ internal Research mechanics can evolve while preserving the Writer contract;
 
 revisions to Writer do not automatically require Research re-execution.
 
-ADR-010 — Writer revision does not automatically rerun Research
+ADR-010 --- Writer revision does not automatically rerun Research
 
 Status: Accepted
 Date: 2026-09
@@ -470,7 +470,7 @@ the revision loop remains bounded;
 
 if future evaluation can identify an actual evidence gap, a distinct Research-reentry decision may be designed explicitly rather than inferred from generic REVISE.
 
-ADR-011 — Web tools use provider-neutral contracts with fake and real modes
+ADR-011 --- Web tools use provider-neutral contracts with fake and real modes
 
 Status: Accepted
 Date: 2026-09-08
@@ -481,17 +481,17 @@ Scout and Research were initially validated with deterministic fake web tools.
 
 Real web access was then required without coupling agent logic to one search provider or reader implementation.
 
-The current increment implements SearchTool, ReadTool, Brave Search, HTTP Reader, and WEB_TOOL_MODE = fake | real.
+The current increment implements SearchTool, ReadTool, Brave Search, HTTP Reader, and WEB_TOOL_MODE = fake \| real.
 
 Decision
 
 Agent-facing web capabilities use provider-neutral functional contracts:
 
 SearchTool:
-query -> list[SearchResult]
+query -\> list\[SearchResult\]
 
 ReadTool:
-url -> str
+url -\> str
 
 Runtime tool selection supports:
 
@@ -523,7 +523,7 @@ fake tooling remains the default isolated test environment;
 
 real infrastructure is validated separately through explicit smoke/end-to-end runs.
 
-ADR-012 — Agent-accessible web reading is a security boundary
+ADR-012 --- Agent-accessible web reading is a security boundary
 
 Status: Accepted
 Date: 2026-09-08
@@ -567,7 +567,7 @@ supported infrastructure failures use WebToolError;
 
 a future browser-rendered reader must preserve equivalent or stronger controls.
 
-ADR-013 — External content must be prepared under explicit token budgets
+ADR-013 --- External content must be prepared under explicit token budgets
 
 Status: Accepted
 Date: 2026-09-08
@@ -587,13 +587,13 @@ External read content must pass through deterministic context preparation before
 Current principal budgets:
 
 Scout read context
-<= 1800 tokens
+\<= 1800 tokens
 
 Research per-read context
-<= 2500 tokens
+\<= 2500 tokens
 
 Research cumulative stored read context
-<= 8000 tokens
+\<= 8000 tokens
 
 Context preparation records whether truncation occurred.
 
@@ -609,7 +609,7 @@ token budgets can evolve independently by component;
 
 future cost-aware orchestration can build on explicit context accounting.
 
-ADR-014 — Main-content extraction precedes LLM context preparation
+ADR-014 --- Main-content extraction precedes LLM context preparation
 
 Status: Accepted
 Date: 2026-09-08
@@ -650,7 +650,7 @@ the extractor remains deterministic and dependency-light;
 
 a future browser/DOM extraction capability may complement rather than silently replace this contract.
 
-ADR-015 — Expected web infrastructure failures are recoverable agent observations
+ADR-015 --- Expected web infrastructure failures are recoverable agent observations
 
 Status: Accepted
 Date: 2026-09-08
@@ -685,7 +685,7 @@ programming defect
 
 This distinction should be preserved as new tools are added.
 
-ADR-016 — Fake infrastructure remains first-class for automated tests
+ADR-016 --- Fake infrastructure remains first-class for automated tests
 
 Status: Accepted
 Date: 2026-09-08
@@ -720,7 +720,7 @@ real smoke results must not be confused with automated regression coverage;
 
 the next planned increment can validate the full real path while preserving deterministic unit/integration tests.
 
-Open Decisions — Not Yet ADRs
+Open Decisions --- Not Yet ADRs
 
 The following remain intentionally unresolved and must not be silently encoded as permanent architecture.
 
@@ -775,7 +775,7 @@ Existing accepted ADRs should not be rewritten to pretend the original context n
 
 If a decision changes materially, add a new ADR and mark the previous one Superseded.
 
-ADR-017 — Human-Centered Conversation Intelligence is the canonical product architecture
+ADR-017 --- Human-Centered Conversation Intelligence is the canonical product architecture
 
 Status: Accepted
 Date: 2026-09-24
@@ -800,7 +800,7 @@ Human interpretation can depend on professional experience, accumulated knowledg
 
 A separate Human-Centered Conversation Intelligence proposal was created to explore a different product architecture. The implementation has since progressed naturally in that direction through Argument Contracts, Argument Intelligence, Perspective Generation, Human Perspective Selection, and SelectedPerspective-aware Writer / Voice integration.
 
-Maintaining the same architecture as a separate "PROPOSED — NOT CANONICAL" document would now conflict with the actual direction of the system.
+Maintaining the same architecture as a separate "PROPOSED --- NOT CANONICAL" document would now conflict with the actual direction of the system.
 
 Decision
 
@@ -829,9 +829,9 @@ Human Intent / Theme
 
 The human owns two distinct authority boundaries:
 
-Intellectual authority — selection, rejection, combination, guidance, or modification of the direction to be expressed.
+Intellectual authority --- selection, rejection, combination, guidance, or modification of the direction to be expressed.
 
-Publication authority — final review and the decision whether to publish externally.
+Publication authority --- final review and the decision whether to publish externally.
 
 AI may generate multiple defensible intellectual directions, but it must not silently infer or replace the human's selected final position.
 
@@ -920,3 +920,171 @@ LangGraph Integration
 MVP Validation & Release
 
 Performance Analytics, Feedback Learning, adaptive policy calibration, advanced UX, and autonomous publication are outside the frozen MVP.
+
+ADR-019 --- Final Human Refinement is a separate human authority boundary
+
+Status: Accepted
+Date: 2026-09-28
+
+Context
+
+Quality Evaluator PASS indicates that a draft satisfies the automated quality
+contract.
+
+It does not mean that the human has completed editorial ownership of the
+content.
+
+The human may still want a bounded adjustment to tone, emphasis, length,
+framing, or closing without reopening the upstream intellectual reasoning
+pipeline.
+
+Decision
+
+After Quality Evaluator PASS, the workflow will enter an explicit Final Human
+Refinement HITL boundary.
+
+The human may choose:
+
+ACCEPT
+terminate with the current approved draft
+
+REFINE
+provide bounded final editorial guidance and return once to Writer
+
+A REFINE action does not create another automated Quality Evaluator loop.
+
+SelectedPerspective, ContentMode, and factual/evidentiary grounding remain
+authoritative during final refinement.
+
+Rationale
+
+The automated evaluator and the human perform different functions.
+
+Quality Evaluator answers whether the draft satisfies the machine quality
+contract.
+
+Final Human Refinement allows the human to exercise editorial ownership over
+how an already-approved intellectual direction is expressed.
+
+Consequences
+
+final_refinement_action and final_refinement_guidance become explicit
+orchestration-state concepts;
+
+Final Human Refinement is implemented as a LangGraph HITL node rather than a
+frontend-only edit;
+
+machine REVISE and human REFINE remain separate control paths;
+
+publication remains outside autonomous execution;
+
+the final human refinement path must remain bounded and must not silently
+change the selected intellectual direction.
+
+ADR-020 --- Translation is presentation, not reasoning
+
+Status: Accepted
+Date: 2026-09-28
+
+Context
+
+The internal reasoning pipeline is English-first, while the user may need to
+consume generated artifacts in Brazilian Portuguese.
+
+Rerunning the reasoning pipeline in another language would duplicate cost and
+could introduce unnecessary semantic divergence between canonical artifacts.
+
+Decision
+
+On-demand Portuguese translation will be implemented as a presentation-layer
+capability.
+
+The canonical reasoning artifact remains the English version.
+
+Translation must preserve meaning, structure, technical terminology, numbers,
+URLs, evidence, uncertainty, and tone.
+
+Translation does not own workflow routing and does not rerun Scout, Research,
+Argument Intelligence, Perspective Generation, Writer, or Quality Evaluator.
+
+Rationale
+
+Language presentation and intellectual reasoning are different
+responsibilities.
+
+Separating them reduces cost, preserves one canonical reasoning path, and
+makes bilingual UX available without duplicating the agentic workflow.
+
+Consequences
+
+translated content is not a replacement for the canonical workflow artifact;
+
+translation can be requested selectively by the human;
+
+translation caching may be treated as a presentation concern;
+
+future multilingual presentation should preserve the same separation unless a
+different reasoning-language requirement is explicitly introduced.
+
+ADR-021 --- Product Run History is separate from execution state and Interaction Memory
+
+Status: Accepted
+Date: 2026-09-28
+
+Context
+
+The system now produces valuable intellectual artifacts across multiple
+workflow stages.
+
+LangGraph execution state exists to orchestrate a run and support HITL
+interrupt/resume behavior.
+
+Interaction Memory exists for operational agent behavior such as URL
+canonicalization, novelty, and repeated-content avoidance.
+
+Neither responsibility is equivalent to the user's need to revisit completed
+or terminated product runs.
+
+Decision
+
+The product will maintain a separate Run History / Product Memory persistence
+boundary.
+
+Its purpose is to preserve enough information to reconstruct prior user-facing
+executions and their important artifacts.
+
+The current MVP implementation uses a dedicated local SQLite database:
+
+data/history/run_history.db
+
+History records use stable run identifiers and idempotent persistence.
+
+Terminal persistence should prefer authoritative workflow state over a stale
+frontend projection.
+
+A later incomplete rerun must not overwrite a richer completed record.
+
+Rationale
+
+Execution state, behavioral memory, and user-facing product history have
+different lifecycles and responsibilities.
+
+Keeping them separate prevents checkpoint implementation details from becoming
+the product-history contract and prevents Interaction Memory from becoming an
+unstructured archive of workflow results.
+
+Consequences
+
+Run History can evolve independently from Interaction Memory;
+
+the Streamlit product can expose recent-run and run-detail navigation without
+changing agent reasoning;
+
+the local SQLite implementation is an MVP persistence mechanism, not a
+commitment to the final production database;
+
+cloud deployment must explicitly decide durable execution checkpointing and
+durable product-history persistence;
+
+production retention, migration, concurrency, and system-of-record decisions
+remain open.

@@ -577,20 +577,20 @@ Possible Future Topology
 A potential future topology could look like:
 
 User / Review UI
-|
+\|
 v
 Application API
-|
+\|
 v
 Workflow Runtime
-|       |       |
-v       v       v
-LLM     Search   Reader
-Provider Provider  Web
-|
+\| \| \|
+v v v
+LLM Search Reader
+Provider Provider Web
+\|
 v
 Optional Persistence
-|
+\|
 v
 Telemetry / Audit
 
@@ -691,3 +691,127 @@ cost awareness
 human publication authority
 
 The correct cloud architecture should emerge from the validated product and runtime requirements, not precede them.
+
+MVP-Derived Deployment Requirements
+
+The local MVP now establishes additional runtime requirements that the eventual
+cloud architecture must preserve.
+
+These requirements do not select a cloud provider or production database.
+
+Human-in-the-Loop Durability
+
+The implemented workflow contains three explicit Human-in-the-Loop boundaries:
+
+Human Perspective Selection
+Human Content Mode Selection
+Human Final Refinement
+
+The deployed runtime must preserve the ability to interrupt and resume a
+workflow using the same thread identity without losing the authoritative graph
+state.
+
+Local development currently uses LangGraph checkpoint/thread state to support
+this behavior.
+
+Production deployment must explicitly decide how checkpoint state survives:
+
+process restart;
+container restart;
+instance replacement;
+application redeploy;
+multiple concurrent user sessions.
+
+The deployment design must not assume that in-memory state alone is sufficient
+for production HITL resume semantics.
+
+Run History / Product Memory Durability
+
+The local MVP implements product-facing Run History using:
+
+data/history/run_history.db
+
+Current technology:
+
+SQLite
+
+This local database is sufficient for MVP development and validation.
+
+It is not yet selected as the production system of record.
+
+Production deployment must explicitly decide durable storage for Run History /
+Product Memory and preserve the conceptual separation between:
+
+LangGraph execution/checkpoint state;
+Interaction Memory;
+Run History / Product Memory.
+
+A production history store must preserve stable run identity and prevent a
+later incomplete state from degrading a richer completed run.
+
+The production design must also consider:
+
+persistent storage across application redeploys;
+concurrent access;
+backup and recovery;
+schema migration;
+retention;
+operational observability.
+
+Streamlit Runtime Behavior
+
+The frontend uses Streamlit while workflow execution may continue through
+background work and multiple automatic reruns.
+
+The selected hosting model must therefore be validated against:
+
+background workflow execution;
+session continuity;
+HITL interrupt/resume;
+application reruns;
+runtime sleep or restart behavior;
+persistent storage availability.
+
+A platform that can host Streamlit is not automatically sufficient if its
+runtime lifecycle breaks these workflow guarantees.
+
+Bilingual Presentation
+
+Portuguese translation is implemented as an on-demand presentation-layer
+operation.
+
+Deployment therefore does not require a duplicated Portuguese reasoning
+pipeline.
+
+The deployed application only needs controlled model access for explicit
+translation requests in addition to the existing reasoning/model calls.
+
+Secrets and Controlled Egress
+
+The deployed environment must provide secure configuration for external
+services used by the application.
+
+At minimum, deployment design must preserve secret isolation for model and
+search-provider credentials and controlled outbound access required by:
+
+OpenAI-compatible model calls;
+Brave Search;
+bounded HTTP reading.
+
+Secrets must not be committed to the repository or embedded in frontend
+artifacts.
+
+Current Deployment Gate
+
+The local MVP is not yet considered fully closed.
+
+Before cloud deployment begins, the remaining validation target is:
+
+authoritative COMPLETE -\> Run History persistence
+
+Once that local persistence path is validated, deployment can proceed without
+reopening the validated reasoning architecture.
+
+Production provider, database, checkpoint backend, observability stack, and
+secret-management implementation remain intentionally unselected at this
+stage.

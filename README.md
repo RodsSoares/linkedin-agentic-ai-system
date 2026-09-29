@@ -2,20 +2,19 @@
 
 A controlled agentic AI system for discovering high-value LinkedIn interaction opportunities, gathering evidence, drafting contributions, evaluating quality, and preserving human publication authority.
 
-**Current stage:** Token Governance v0.1, Token Usage Observability, Interaction Memory v0.1, and Gap-Driven Research are implemented and validated with a **250-test automated baseline**. An **8-run real-web E2E behavioral baseline** has been captured. The next planned increment is **Controlled Gap-Driven Research Validation** against a known HIGH opportunity.
+**Current stage:** Token Governance v0.1, Token Usage Observability, Interaction Memory v0.1, and Gap-Driven Research are implemented and validated with a **250-test automated baseline**. An **8-run real-web E2E behavioral baseline** has been captured. The next planned increment is **Cloud Deployment after final local History persistence validation** against a known HIGH opportunity.
 
 ## Architecture Overview
 
-![LinkedIn Agentic AI System — Architecture Overview](docs/images/architecture-overview.png)
+![LinkedIn Agentic AI System --- Architecture Overview](docs/images/architecture-overview.png)
 
 The architecture overview presents the main components, responsibilities, technology boundaries, and relationships that compose the solution.
 
 ## End-to-End Agentic Solution Flow
 
-![LinkedIn Agentic AI System — End-to-End Agentic Solution Flow](docs/images/end-to-end-agentic-solution-flow.png)
+![LinkedIn Agentic AI System --- End-to-End Agentic Solution Flow](docs/images/end-to-end-agentic-solution-flow.png)
 
 The end-to-end flow shows how an opportunity moves through the agentic solution, from discovery and evaluation to research, writing, quality evaluation, and the final human decision boundary.
-
 
 ## Why This Project Exists
 
@@ -61,7 +60,7 @@ Engagement matters, but it must not dominate contribution potential, professiona
 
 The active architecture is built around a controlled pipeline:
 
-```text
+``` text
 Candidate Sources / Web
         │
         ▼
@@ -112,7 +111,7 @@ Publication remains outside autonomous execution.
 
 A central architectural decision is to separate semantic reasoning from deterministic operational control.
 
-```text
+``` text
 LLM
 ├── semantic interpretation
 ├── bounded action selection
@@ -154,13 +153,13 @@ Scout is a bounded agentic loop responsible for discovering potentially valuable
 
 Its action vocabulary is:
 
-```text
+``` text
 SEARCH · READ · SELECT · FINISH
 ```
 
 The internal loop follows:
 
-```text
+``` text
 State
   ↓
 LLM chooses next allowed action
@@ -227,35 +226,34 @@ Recoverable tool failures can become part of agent state so the LLM can make ano
 Validated content can be promoted into a PostCandidate:
 
 SEARCH
-  ↓
+↓
 READ
-  ↓
+↓
 SELECT
-  ↓
+↓
 Python validation
-  ↓
+↓
 PostCandidate
-```
 
-The semantic decision to select belongs to the LLM.
 
-Factual construction, validation, deduplication, and state mutation belong to Python.
+    The semantic decision to select belongs to the LLM.
 
-Real Web Tooling
+    Factual construction, validation, deduplication, and state mutation belong to Python.
 
-The project supports a provider-neutral web tool contract:
+    Real Web Tooling
 
-```text
-SearchTool
-(query: str)
-    ↓
-list[SearchResult]
+    The project supports a provider-neutral web tool contract:
 
-ReadTool
-(url: str)
-    ↓
-str
-```
+    ```text
+    SearchTool
+    (query: str)
+        ↓
+    list[SearchResult]
+
+    ReadTool
+    (url: str)
+        ↓
+    str
 
 This allows Scout and Research to operate independently from a specific search or reading provider.
 
@@ -272,7 +270,7 @@ Real Mode
 
 The current real adapters include:
 
-```text
+``` text
 Search
   ↓
 Brave Search adapter
@@ -331,9 +329,12 @@ noscript
 
 When semantic containers are available, the reader prioritizes:
 
+```{=html}
 <article>
+```
+```{=html}
 <main>
-
+```
 When they are absent, content-density scoring can select useful section or div containers based on signals such as:
 
 text length;
@@ -360,7 +361,7 @@ External content is normalized and bounded before it enters LLM-facing context.
 
 The Context Preparation layer:
 
-```text
+``` text
 Raw external text
         │
         ▼
@@ -389,19 +390,19 @@ truncated
 Current configured read-context budgets include:
 
 Scout read context
-    max 1800 tokens
+max 1800 tokens
 
 Research read context
-    max 2500 tokens per read
+max 2500 tokens per read
 
 Research cumulative stored read context
-    max 8000 tokens
+max 8000 tokens
 
 The cumulative Research budget applies to stored read content rather than the entire serialized prompt.
 
 This boundary exists for cost, latency, predictability, context hygiene, and protection against accidentally injecting arbitrarily large external pages into LLM calls.
 
-```text
+``` text
 ## Opportunity Evaluation
 
 Opportunity Evaluation answers:
@@ -473,15 +474,15 @@ The LLM therefore does not silently own the final operational routing decision.
 
 The current guardrails force LOW when:
 
-Contribution Potential < 30
-Positioning Fit        < 30
-Topic Relevance        < 25
+Contribution Potential \< 30
+Positioning Fit \< 30
+Topic Relevance \< 25
 
 If no guardrail is triggered:
 
-HIGH   = score >= 80
-MEDIUM = score >= 60 and < 80
-LOW    = score < 60
+HIGH = score \>= 80
+MEDIUM = score \>= 60 and \< 80
+LOW = score \< 60
 
 These weights and thresholds are initial product hypotheses and should eventually be calibrated using real opportunities and observed outcomes.
 
@@ -499,7 +500,7 @@ This is not a production engagement formula.
 
 Opportunity routing is deterministic:
 
-```text
+``` text
 HIGH
   ↓
 ACCEPTED_FOR_RESEARCH
@@ -514,7 +515,7 @@ END
 ```
 
 LOW
-  ↓
+↓
 END
 
 ACCEPTED_FOR_RESEARCH represents an explicit workflow transition and leads into the integrated Research capability.
@@ -538,103 +539,102 @@ Its action vocabulary is:
 The evidence chain is deliberately explicit:
 
 SEARCH
-  ↓
+↓
 READ
-  ↓
+↓
 EXTRACT
-  ↓
+↓
 EvidenceItem
-  ↓
+↓
 ResearchBrief
-```
 
-Only extracted evidence is allowed to support Writer-facing factual findings.
 
-Semantic Responsibility
+    Only extracted evidence is allowed to support Writer-facing factual findings.
 
-The LLM may determine:
+    Semantic Responsibility
 
-the research objective;
+    The LLM may determine:
 
-focus areas;
+    the research objective;
 
-search strategy;
+    focus areas;
 
-which authorized sources to read;
+    search strategy;
 
-which claims are worth extracting;
+    which authorized sources to read;
 
-whether evidence appears sufficient;
+    which claims are worth extracting;
 
-synthesis of findings;
+    whether evidence appears sufficient;
 
-counterpoints;
+    synthesis of findings;
 
-unresolved questions.
+    counterpoints;
 
-Deterministic Responsibility
+    unresolved questions.
 
-Python owns:
+    Deterministic Responsibility
 
-action authorization;
+    Python owns:
 
-URL provenance;
+    action authorization;
 
-source state;
+    URL provenance;
 
-search/read/evidence counters;
+    source state;
 
-operational limits;
+    search/read/evidence counters;
 
-context budgets;
+    operational limits;
 
-factual state mutation;
+    context budgets;
 
-final brief construction.
+    factual state mutation;
 
-Bounded Runtime
+    final brief construction.
 
-Research is bounded by limits including:
+    Bounded Runtime
 
-max steps          = 10
-max decisions      = 12
-max searches       = 3
-max reads          = 5
-max evidence items = 6
+    Research is bounded by limits including:
 
-Context budgets provide an additional independent boundary.
+    max steps          = 10
+    max decisions      = 12
+    max searches       = 3
+    max reads          = 5
+    max evidence items = 6
 
-Research can terminate with states including:
+    Context budgets provide an additional independent boundary.
 
-SUFFICIENT
-INSUFFICIENT
-LIMIT_REACHED
+    Research can terminate with states including:
 
-The current workflow preserves the bounded Research result for downstream use.
+    SUFFICIENT
+    INSUFFICIENT
+    LIMIT_REACHED
 
-Differentiated routing based on these statuses may be hardened further in a later increment.
+    The current workflow preserves the bounded Research result for downstream use.
 
-Evidence and Provenance
+    Differentiated routing based on these statuses may be hardened further in a later increment.
 
-Research separates discovered sources, read sources, and extracted evidence.
+    Evidence and Provenance
 
-Conceptually:
+    Research separates discovered sources, read sources, and extracted evidence.
 
-```text
-Search result
-    │
-    ▼
-Authorized URL
-    │
-    ▼
-ReadSource
-    │
-    ▼
-EvidenceItem
-    │
-    ▼
-ResearchBrief
-```
+    Conceptually:
+
+    ```text
+    Search result
+        │
+        ▼
+    Authorized URL
+        │
+        ▼
+    ReadSource
+        │
+        ▼
+    EvidenceItem
+        │
+        ▼
+    ResearchBrief
 
 This is intentional.
 
@@ -673,35 +673,34 @@ Quality Evaluator
 Opportunity Evaluation and Quality Evaluation solve different problems:
 
 Opportunity Evaluation
-        │
-        ▼
+│
+▼
 "Should we contribute here?"
 
             vs.
 
 Quality Evaluator
-        │
-        ▼
+│
+▼
 "Is this generated contribution good enough?"
-```
 
-Quality routing is deterministic:
 
-```text
-PASS
-  ↓
-Human / END
+    Quality routing is deterministic:
 
-REVISE
-  ↓
-Writer
-  ↓
-Quality Evaluator
+    ```text
+    PASS
+      ↓
+    Human / END
 
-REJECT
-  ↓
-END
-```
+    REVISE
+      ↓
+    Writer
+      ↓
+    Quality Evaluator
+
+    REJECT
+      ↓
+    END
 
 Revision loops are bounded by a maximum iteration limit.
 
@@ -713,7 +712,7 @@ Human publication authority is mandatory.
 
 The system is designed to assist with:
 
-```text
+``` text
 discovery
     ↓
 prioritization
@@ -776,7 +775,7 @@ The architecture favors component-specific inputs over passing the complete orch
 
 The LangGraph layer is intentionally kept thin.
 
-```text
+``` text
 Schemas
   ↓
 define data contracts
@@ -926,7 +925,7 @@ The current memory layer records canonical URL-level interaction history so prev
 
 Its current purpose includes:
 
-```text
+``` text
 cross-run URL identity
     ↓
 persistent visited/selected history
@@ -952,7 +951,7 @@ The system now includes run-scoped telemetry for LLM and prepared-context usage.
 
 Observed LLM fields can include:
 
-```text
+``` text
 component
 operation
 model
@@ -966,7 +965,7 @@ latency
 
 Context telemetry records:
 
-```text
+``` text
 component
 operation
 original tokens
@@ -976,15 +975,15 @@ truncated
 
 Instrumentation currently covers the main boundaries across:
 
-- Scout;
-- Opportunity Evaluation;
-- Research;
-- Writer;
-- Quality Evaluation.
+-   Scout;
+-   Opportunity Evaluation;
+-   Research;
+-   Writer;
+-   Quality Evaluation.
 
 A real workflow can be executed with telemetry using:
 
-```powershell
+``` powershell
 python -m app.scripts.run_with_usage
 ```
 
@@ -996,7 +995,7 @@ Model pricing is intentionally not hardcoded into the observed usage records. Co
 
 The Research contract now carries explicit semantic sufficiency information:
 
-```text
+``` text
 material_gaps
 next_research_goal
 sufficiency_reason
@@ -1010,27 +1009,27 @@ Once evidence exists, an additional SEARCH requires explicit semantic justificat
 
 The LLM remains responsible for semantic judgments such as:
 
-- claim coverage;
-- source authority;
-- independence;
-- relevance;
-- contradictions;
-- unresolved material gaps;
-- semantic sufficiency.
+-   claim coverage;
+-   source authority;
+-   independence;
+-   relevance;
+-   contradictions;
+-   unresolved material gaps;
+-   semantic sufficiency.
 
 Python remains responsible for:
 
-- authorization;
-- counters;
-- hard limits;
-- provenance;
-- runtime status;
-- tool execution;
-- factual state.
+-   authorization;
+-   counters;
+-   hard limits;
+-   provenance;
+-   runtime status;
+-   tool execution;
+-   factual state.
 
 The evidence chain remains unchanged:
 
-```text
+``` text
 SEARCH
   ↓
 READ
@@ -1042,7 +1041,7 @@ EvidenceItem
 ResearchBrief
 ```
 
-No deterministic rule such as “two evidence items means sufficient” is used.
+No deterministic rule such as "two evidence items means sufficient" is used.
 
 ## Tech Stack
 
@@ -1144,20 +1143,20 @@ Opportunity Evaluation v0.1
 Deterministic Opportunity Routing
 Bounded Research Capability
 Research → Writer Integration
-## Writer
-## Quality Evaluator
+\## Writer
+\## Quality Evaluator
 Controlled Quality Revision Loop
 Structured AI Contracts
 Real/Fake Web Tool Selection
 Brave Search Adapter
 Bounded HTTP Reader
 Web Tool Failure Recovery
-## Main Content Extraction
+\## Main Content Extraction
 Content Density Extraction
-## Context Preparation
+\## Context Preparation
 Per-component Token Budgets
 Research Evidence Provenance
-### Deterministic Guardrails
+\### Deterministic Guardrails
 Human Publication Boundary
 Project Audit / Recovery Discipline
 
@@ -1180,19 +1179,19 @@ Production deployment architecture
 Dynamic model routing / advanced token governance
 Calibration from real-world outcomes
 Post-change controlled HIGH validation of Gap-Driven Research
-Autonomous publication — intentionally excluded
+Autonomous publication --- intentionally excluded
 
 ## Next Development Increment
 
 The next planned capability is:
 
-**Controlled Gap-Driven Research Validation**
+**Cloud Deployment after final local History persistence validation**
 
 The purpose is to compare the current Gap-Driven Research behavior against the original expensive Research baseline using a known HIGH opportunity under controlled conditions.
 
 The comparison should measure:
 
-```text
+``` text
 Research LLM calls
     ↓
 Input / output / total tokens
@@ -1220,15 +1219,15 @@ The new Gap-Driven Research contract is automated-test validated, but it has **n
 
 Eight unchanged real-web E2E runs were captured as a behavioral baseline:
 
-| Outcome | Runs |
-|---|---:|
-| HIGH | 1 / 8 |
-| MEDIUM | 3 / 8 |
-| NO_CANDIDATE_FOUND | 4 / 8 |
+  Outcome                 Runs
+  -------------------- -------
+  HIGH                   1 / 8
+  MEDIUM                 3 / 8
+  NO_CANDIDATE_FOUND     4 / 8
 
 The three MEDIUM opportunities clustered at:
 
-```text
+``` text
 79.45
 79.75
 79.60
@@ -1238,7 +1237,7 @@ This is a calibration signal, not sufficient evidence to lower the current HIGH 
 
 The detailed experimental record is maintained in:
 
-```text
+``` text
 docs/calibration/E2E_BEHAVIOR_BASELINE.md
 ```
 
@@ -1246,26 +1245,26 @@ docs/calibration/E2E_BEHAVIOR_BASELINE.md
 
 The behavioral baseline created three evidence-backed follow-up questions:
 
-1. whether Scout should eventually use an adaptive search budget as persistent memory makes novel discovery progressively harder;
-2. whether web/tool latency should be instrumented separately from LLM latency;
-3. whether the 79.x MEDIUM cluster represents healthy differentiation filtering or requires later opportunity-score calibration.
+1.  whether Scout should eventually use an adaptive search budget as persistent memory makes novel discovery progressively harder;
+2.  whether web/tool latency should be instrumented separately from LLM latency;
+3.  whether the 79.x MEDIUM cluster represents healthy differentiation filtering or requires later opportunity-score calibration.
 
 These are hypotheses for later increments. They do not change current production behavior.
 
-### Future Product Direction — LinkedIn Content Intelligence
+### Future Product Direction --- LinkedIn Content Intelligence
 
 The current implemented workflow remains comment-oriented.
 
 The longer-term architecture is expected to evolve toward two related content intents:
 
-```text
+``` text
 COMMENT
 AUTHORIAL_POST
 ```
 
 These should share the same core intelligence where appropriate:
 
-```text
+``` text
 Discovery
     ↓
 Opportunity Intelligence
@@ -1281,7 +1280,7 @@ Human Review
 
 A future discovery may therefore be classified into outcomes such as:
 
-```text
+``` text
 IGNORE
 COMMENT
 AUTHORIAL_POST
@@ -1355,7 +1354,7 @@ prematurely optimizing scoring weights without operational evidence.
 
 Relevant increments are closed through a recoverable checkpoint process:
 
-```text
+``` text
 Implement
   ↓
 Run full test suite
@@ -1375,7 +1374,7 @@ Push
 
 The repository uses:
 
-```text
+``` text
 code
 +
 tests
@@ -1402,22 +1401,22 @@ docs/architecture/
 Its intended responsibilities are:
 
 01_system_overview.md
-    high-level architectural model
+high-level architectural model
 
 02_current_architecture.md
-    factual implemented architecture
+factual implemented architecture
 
 03_data_model.md
-    schemas, contracts, and state relationships
+schemas, contracts, and state relationships
 
 04_decision_log.md
-    established architectural decisions
+established architectural decisions
 
 05_cloud_deployment.md
-    deployment/runtime architecture when established
+deployment/runtime architecture when established
 
 06_opportunity_evaluation.md
-    deep-dive specification of Opportunity Evaluation
+deep-dive specification of Opportunity Evaluation
 
 Development recovery context is maintained separately in:
 
@@ -1431,7 +1430,7 @@ Behavioral and human-calibration evidence is maintained separately from the arch
 
 Current calibration artifacts include:
 
-```text
+``` text
 docs/calibration/E2E_BEHAVIOR_BASELINE.md
 docs/calibration/RODRIGO_VOICE_GOLDEN_SET.md
 ```
@@ -1467,3 +1466,127 @@ how quality should be evaluated and revised;
 where human authority must remain final.
 
 That distinction is the foundation of the architecture.
+
+Current MVP Experience Layer
+
+The current Streamlit product adds a human-centered experience layer around the
+agentic reasoning architecture.
+
+Implemented capabilities:
+
+Editable Theme / Intent
+
+The human can define the exploration theme that starts the workflow.
+
+Human Perspective Selection
+
+The system expands the researched opportunity into materially distinct,
+defensible intellectual directions. The human selects the direction before
+content is written.
+
+Human Content Mode Selection
+
+After selecting the intellectual direction, the human explicitly chooses how
+the content should be materialized:
+
+linkedin_post
+linkedin_reply
+article
+
+Final Human Refinement
+
+After Quality Evaluator PASS, the workflow reaches a final Human-in-the-Loop
+boundary.
+
+The human can:
+
+ACCEPT
+finish with the approved draft
+
+REFINE
+provide bounded final editorial guidance for one final Writer pass
+
+Publication remains manual.
+
+Bilingual Presentation
+
+The reasoning pipeline remains English-first.
+
+Substantive user-facing artifacts can be translated to Brazilian Portuguese on
+demand without rerunning the complete reasoning workflow.
+
+The English artifact remains canonical.
+
+Run History / Product Memory
+
+The application includes navigable recent-run history backed locally by:
+
+data/history/run_history.db
+
+Current implementation:
+
+SQLite
+
+History is separate from both LangGraph execution/checkpoint state and
+Interaction Memory.
+
+The product history view allows prior workflow artifacts to be revisited rather
+than disappearing when a new run starts.
+
+Current validation status:
+
+History navigation:
+VALIDATED
+
+History persistence implementation:
+IMPLEMENTED
+
+Authoritative terminal COMPLETE -\> History persistence:
+FINAL RUNTIME VALIDATION PENDING
+
+Current Quality Baseline
+
+437 passing tests
+
+The automated suite covers the main deterministic, orchestration, HITL,
+content-generation, evaluation, web-tool, context-preparation, and persistence
+boundaries.
+
+The test count is a development snapshot, not an architectural invariant.
+
+Deployment Status
+
+Local MVP:
+IMPLEMENTED, with final History persistence validation pending
+
+Production cloud deployment:
+NOT IMPLEMENTED
+
+Cloud provider:
+NOT SELECTED
+
+Production persistence:
+NOT SELECTED
+
+The deployment phase will begin after the final local History persistence
+validation.
+
+The deployed architecture must preserve:
+
+Human-in-the-Loop interrupt/resume semantics;
+manual publication authority;
+durable product history;
+secure secrets;
+controlled external web/model access;
+the existing deterministic governance boundaries.
+
+The project must not be described as production-ready before those deployment
+boundaries are implemented and validated.
+
+Core Product Principle
+
+AI expands -\> Human converges -\> AI materializes -\> Human owns
+
+The system is designed to increase the quality and range of human reasoning,
+not to autonomously choose the user's intellectual position or publish on the
+user's behalf.

@@ -85,6 +85,21 @@ Use the provided inputs according to these distinct responsibilities:
    instruction while preserving both the selected intellectual direction
    and the selected content mode.
 
+7. FINAL HUMAN REFINEMENT GUIDANCE
+   When final human refinement guidance is provided, refine the existing
+   draft according to that guidance.
+
+   This is a final editorial adjustment requested by the human after the
+   draft has already passed automated quality evaluation.
+
+   - preserve the human-selected intellectual direction;
+   - preserve the selected content mode;
+   - preserve factual and evidentiary grounding;
+   - change only what is necessary to satisfy the human guidance;
+   - do not introduce a new thesis or materially different perspective;
+   - do not treat final human refinement as permission to expand the scope
+     of the content.
+
 # Legacy compatibility
 
 If no human-selected perspective is provided, use the source content and

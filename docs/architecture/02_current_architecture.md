@@ -7,18 +7,18 @@ What is implemented now, and how are the current components connected?
 It should be updated when the implemented workflow, component boundaries, routing, tooling, state, or runtime limits materially change.
 Current Development Snapshot
 Current automated baseline:
-421 passing tests
+437 passing tests
 The Human-Centered Conversation Intelligence architecture is now integrated
 through the real LangGraph workflow.
 Implemented and validated component / orchestration milestones:
-Argument Contracts v0.1 — implemented
-Argument Intelligence v0.1 — implemented
-Perspective Generation v0.1 — implemented
-Human Perspective Selection v0.1 — implemented and integrated as HITL
-Writer / Voice Integration v0.1 — implemented
-LangGraph Integration — implemented
-MVP Experience Layer 7.1 — Editable Theme / Intent — implemented and validated
-MVP Experience Layer 7.2 — Content Mode Selection — implemented and validated
+Argument Contracts v0.1 --- implemented
+Argument Intelligence v0.1 --- implemented
+Perspective Generation v0.1 --- implemented
+Human Perspective Selection v0.1 --- implemented and integrated as HITL
+Writer / Voice Integration v0.1 --- implemented
+LangGraph Integration --- implemented
+MVP Experience Layer 7.1 --- Editable Theme / Intent --- implemented and validated
+MVP Experience Layer 7.2 --- Content Mode Selection --- implemented and validated
 The current integrated graph contains two sequential Human-in-the-Loop
 boundaries:
 PerspectiveSet
@@ -46,7 +46,7 @@ Legacy execution paths default to linkedin_reply for backward compatibility.
 Real Streamlit E2E has validated the complete path through both HITL
 interrupt/resume boundaries and into Human Review.
 The next planned product capability is:
-MVP Experience Layer 7.3 — Final Human Refinement
+MVP Experience Layer 7.3 --- Final Human Refinement
 Before 7.3, two frontend-only hardening defects observed during real E2E are
 being finalized:
 visual state / phase can lag the backend worker;
@@ -113,8 +113,8 @@ Quality Evaluator
 +-- PASS -----------------> Human Review
 |
 +-- REVISE --> Writer
-|               |
-|               +--> Quality Evaluator
+| |
+| +--> Quality Evaluator
 |
 +-- REJECT ---------------------> END
 Publication remains manual and outside autonomous execution.
@@ -126,57 +126,57 @@ The implementation is organized around the following responsibilities:
 app/
 |
 +-- agents/
-|   +-- scout.py
-|   +-- research.py
+| +-- scout.py
+| +-- research.py
 |
 +-- components/
-|   +-- opportunity_evaluator.py
-|   +-- argument_intelligence.py
-|   +-- perspective_generation.py
-|   +-- perspective_selection.py
-|   +-- writer.py
-|   +-- evaluator.py
+| +-- opportunity_evaluator.py
+| +-- argument_intelligence.py
+| +-- perspective_generation.py
+| +-- perspective_selection.py
+| +-- writer.py
+| +-- evaluator.py
 |
 +-- frontend/
-|   +-- main.py
+| +-- main.py
 |
 +-- graph/
-|   +-- state.py
-|   +-- workflow.py
-|   +-- nodes/
-|       +-- scout_node.py
-|       +-- opportunity_evaluator_node.py
-|       +-- opportunity_routing_nodes.py
-|       +-- research_node.py
-|       +-- argument_intelligence_node.py
-|       +-- perspective_generation_node.py
-|       +-- human_perspective_selection_node.py
-|       +-- human_content_mode_selection_node.py
-|       +-- writer_node.py
-|       +-- evaluator_node.py
+| +-- state.py
+| +-- workflow.py
+| +-- nodes/
+| +-- scout_node.py
+| +-- opportunity_evaluator_node.py
+| +-- opportunity_routing_nodes.py
+| +-- research_node.py
+| +-- argument_intelligence_node.py
+| +-- perspective_generation_node.py
+| +-- human_perspective_selection_node.py
+| +-- human_content_mode_selection_node.py
+| +-- writer_node.py
+| +-- evaluator_node.py
 |
 +-- schemas/
-|   +-- scout.py
-|   +-- opportunity.py
-|   +-- research.py
-|   +-- argument.py
-|   +-- writer.py
-|   +-- evaluator.py
-|   +-- tools.py
+| +-- scout.py
+| +-- opportunity.py
+| +-- research.py
+| +-- argument.py
+| +-- writer.py
+| +-- evaluator.py
+| +-- tools.py
 |
 +-- prompts/
-|   +-- perspective_generation.py
-|   +-- writer.py
-|   +-- evaluator.py
-|   +-- rodrigo_voice.py
+| +-- perspective_generation.py
+| +-- writer.py
+| +-- evaluator.py
+| +-- rodrigo_voice.py
 |
 +-- tools/
-|   +-- web_search.py
-|   +-- web_reader.py
-|   +-- brave_search.py
-|   +-- http_reader.py
-|   +-- web_tools.py
-|   +-- errors.py
+| +-- web_search.py
+| +-- web_reader.py
+| +-- brave_search.py
+| +-- http_reader.py
+| +-- web_tools.py
+| +-- errors.py
 |
 +-- context_preparation.py
 Exact filenames can evolve, but the responsibility boundaries should remain
@@ -195,6 +195,8 @@ selected_perspective
 content_mode
 current_draft
 quality_evaluation
+final_refinement_action
+final_refinement_guidance
 iteration
 next_step
 human_feedback
@@ -276,18 +278,18 @@ The application then derives:
 research_efficiency = 100 - research_cost
 Current score:
 Contribution Potential × 0.30
-Positioning Fit        × 0.25
-Topic Relevance        × 0.20
-Engagement Potential   × 0.15
-Research Efficiency    × 0.10
+Positioning Fit × 0.25
+Topic Relevance × 0.20
+Engagement Potential × 0.15
+Research Efficiency × 0.10
 Current mandatory LOW guardrails:
 Contribution Potential < 30
-Positioning Fit        < 30
-Topic Relevance        < 25
+Positioning Fit < 30
+Topic Relevance < 25
 Otherwise:
-HIGH   >= 80
+HIGH >= 80
 MEDIUM >= 60 and < 80
-LOW    < 60
+LOW < 60
 Where reliable engagement data is unavailable, the current implementation uses a neutral placeholder rather than allowing the model to invent engagement metrics.
 Opportunity Routing
 Routing is deterministic:
@@ -360,11 +362,11 @@ v
 ResearchBrief
 Only extracted evidence is intended to support Writer-facing factual findings.
 Current operational limits:
-max steps           10
-max decisions       12
-max searches         3
-max reads            5
-max evidence items   6
+max steps 10
+max decisions 12
+max searches 3
+max reads 5
+max evidence items 6
 Current completion statuses include:
 SUFFICIENT
 INSUFFICIENT
@@ -503,16 +505,16 @@ Conceptually:
 get_web_tools(mode)
 |
 +-- fake
-|     |
-|     +--> deterministic web_search
-|     +--> deterministic web_reader
+| |
+| +--> deterministic web_search
+| +--> deterministic web_reader
 |
 +-- real
 |
 +--> brave_search
 +--> http_reader
 The returned interface is always:
-tuple[SearchTool, ReadTool]
+tuple\(SearchTool, ReadTool\)
 This keeps Scout and Research independent from the concrete provider.
 Search Adapter
 The current real search implementation uses the Brave Search API.
@@ -546,8 +548,10 @@ Main Content Extraction
 For HTML responses, the reader does not simply return the complete rendered page.
 Current extraction behavior:
 ignore common non-content elements
-prefer non-empty <article>
-otherwise prefer non-empty <main>
+prefer non-empty
+<article>
+otherwise prefer non-empty
+<main>
 otherwise score section/div candidates
 otherwise fall back to cleaned body text
 Ignored structures include:
@@ -599,8 +603,8 @@ Current token encoding defaults to:
 o200k_base
 with a controlled fallback encoding.
 Current configured budgets:
-SCOUT_READ_CONTEXT_MAX_TOKENS       = 1800
-RESEARCH_READ_CONTEXT_MAX_TOKENS    = 2500
+SCOUT_READ_CONTEXT_MAX_TOKENS = 1800
+RESEARCH_READ_CONTEXT_MAX_TOKENS = 2500
 RESEARCH_TOTAL_READ_CONTEXT_MAX_TOKENS = 8000
 The cumulative Research budget applies to stored read context, not the complete serialized Research prompt.
 Scout Context Boundary
@@ -710,7 +714,7 @@ in the real application.
 A separate real run demonstrated correct LOW termination before Research.
 Automated Test Baseline
 Current full suite:
-421 passing tests
+437 passing tests
 The active regression surface includes:
 Scout
 Opportunity Evaluation
@@ -751,22 +755,35 @@ Argument / Perspective artifacts
 Human Perspective Selection
 Human Content Mode Selection
 Writer / Quality Evaluator continuation
-Human Review
+Final Human Refinement
+on-demand Portuguese translation
+Run History / Product Memory
 manual-publication boundary
 The frontend uses a background worker so real Scout and Research execution do
 not block the interactive product experience.
 LangGraph checkpoint/thread state preserves interrupt/resume behavior.
 Current frontend hardening
-Two presentation defects were observed during real E2E:
-visual phase/state can lag the backend worker;
-Scout / Opportunity text can flicker during Streamlit automatic reruns.
-These issues are frontend synchronization concerns.
-They must not reopen the validated core graph or reasoning architecture.
+Frontend state synchronization and Scout / Opportunity flicker hardening are
+implemented. HITL resume handling also ignores empty interrupt markers and uses
+resume-in-flight protection so stale checkpoint phase cannot reopen an empty
+human-review payload while the graph is continuing.
+These are frontend synchronization concerns.
+They do not reopen the validated core graph or reasoning architecture.
+Run History / Product Memory
+The product now uses a dedicated local SQLite history store:
+data/history/run_history.db
+Run History is distinct from Interaction Memory. It exists to preserve and
+navigate prior user-facing executions and intellectual artifacts. The current
+UX presents recent runs first and opens a selected run into a detailed artifact
+view.
+A real E2E exposed a persistence defect where a completed HIGH run could be
+stored from stale frontend state as No Candidate. The current persistence fix
+prefers authoritative terminal LangGraph state and protects richer completed
+records from later incomplete overwrite. This corrected path is implemented
+but still requires final runtime validation.
 Current Known Gaps
-The following MVP Experience Layer capabilities remain incomplete:
-Final Human Refinement
-on-demand Portuguese translation
-persistent navigable Run History
+The remaining local MVP Experience Layer validation item is:
+authoritative COMPLETE -> Run History persistence
 The following remain broader hardening or post-MVP concerns:
 LinkedIn-specific production discovery
 reliable LinkedIn metadata acquisition
@@ -784,7 +801,7 @@ The system must not be described as production-ready while these boundaries
 remain unresolved.
 Next Increment
 The next planned product increment is:
-MVP Experience Layer 7.3 — Final Human Refinement
+MVP Experience Layer 7.3 --- Final Human Refinement
 Target behavior:
 Quality Evaluator PASS
 |
@@ -794,9 +811,9 @@ Human Final Review
 +-- accept current draft
 |
 +-- provide bounded editorial guidance
-            |
-            v
-      final refinement
+|
+v
+final refinement
 The refinement must preserve SelectedPerspective unless the human explicitly
 changes the intellectual direction.
 Before beginning 7.3, the current frontend State Sync / Flicker hardening

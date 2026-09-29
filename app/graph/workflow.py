@@ -11,6 +11,9 @@ from app.graph.nodes.human_content_mode_selection_node import (
 from app.graph.nodes.human_perspective_selection_node import (
     human_perspective_selection_node,
 )
+from app.graph.nodes.human_final_refinement_node import (
+    human_final_refinement_node,
+)
 from app.graph.nodes.opportunity_evaluator_node import (
     opportunity_evaluator_node,
 )
@@ -26,8 +29,10 @@ from app.graph.nodes.scout_node import scout_node
 from app.graph.nodes.writer_node import writer_node
 from app.graph.routing import (
     route_after_evaluation,
+    route_after_final_refinement, 
     route_after_opportunity_evaluation,
     route_after_scout,
+    route_after_writer,
 )
 from app.graph.state import LinkedInAgentState
 
@@ -38,9 +43,18 @@ def _add_quality_evaluation_loop(graph: StateGraph) -> None:
         evaluator_node,
     )
 
-    graph.add_edge(
+    graph.add_node(
+        "human_final_refinement",
+        human_final_refinement_node,
+    )
+
+    graph.add_conditional_edges(
         "writer",
-        "evaluator",
+        route_after_writer,
+        {
+            "evaluator": "evaluator",
+            "end": END,
+        },
     )
 
     graph.add_conditional_edges(
@@ -48,7 +62,16 @@ def _add_quality_evaluation_loop(graph: StateGraph) -> None:
         route_after_evaluation,
         {
             "writer": "writer",
-            "human": END,
+            "human": "human_final_refinement",
+            "end": END,
+        },
+    )
+
+    graph.add_conditional_edges(
+        "human_final_refinement",
+        route_after_final_refinement,
+        {
+            "writer": "writer",
             "end": END,
         },
     )

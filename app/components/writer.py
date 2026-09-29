@@ -74,6 +74,9 @@ PREVIOUS DRAFT:
 
 REVISION INSTRUCTION:
 {input_data.revision_instruction}
+
+FINAL HUMAN REFINEMENT GUIDANCE:
+{input_data.final_refinement_guidance}
 """.strip()
 
     started_at = perf_counter()
@@ -94,3 +97,4 @@ REVISION INSTRUCTION:
     )
 
     return response.output_text.strip()
+    

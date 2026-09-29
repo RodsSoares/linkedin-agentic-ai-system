@@ -31,12 +31,12 @@ Component-specific inputs over global-state exposure
 Specialist components should receive only the data required for their responsibility.
 
 Global State
-|
-+--> Scout input
-+--> Opportunity input
-+--> Research input
-+--> Writer input
-+--> Evaluator input
+\|
++--\> Scout input
++--\> Opportunity input
++--\> Research input
++--\> Writer input
++--\> Evaluator input
 
 They should not automatically receive the complete orchestration state.
 
@@ -105,16 +105,16 @@ PostCandidate is the normalized opportunity object that crosses the boundary fro
 Conceptually:
 
 External discovery
-|
+\|
 v
 Scout observation
-|
+\|
 v
 validated selection
-|
+\|
 v
 PostCandidate
-|
+\|
 v
 Opportunity Evaluation
 
@@ -167,10 +167,10 @@ research_efficiency = 100 - research_cost
 The current weighted score is:
 
 Contribution Potential × 0.30
-Positioning Fit        × 0.25
-Topic Relevance        × 0.20
-Engagement Potential   × 0.15
-Research Efficiency    × 0.10
+Positioning Fit × 0.25
+Topic Relevance × 0.20
+Engagement Potential × 0.15
+Research Efficiency × 0.10
 
 Mandatory guardrails can force a LOW classification independently of the weighted total.
 
@@ -181,19 +181,19 @@ OpportunityEvaluation is the operational evaluation result used by workflow rout
 Conceptually:
 
 PostCandidate
-|
+\|
 v
 LLM
-|
+\|
 v
 OpportunitySignals
-|
+\|
 v
 Python scoring + guardrails
-|
+\|
 v
 OpportunityEvaluation
-|
+\|
 v
 HIGH / MEDIUM / LOW routing
 
@@ -230,7 +230,7 @@ Functional contract:
 
 SearchTool:
 (query: str)
--> list[SearchResult]
+-\> list\[SearchResult\]
 
 It represents capability, not implementation.
 
@@ -248,7 +248,7 @@ Functional contract:
 
 ReadTool:
 (url: str)
--> str
+-\> str
 
 The returned string is content from an authorized read operation.
 
@@ -261,10 +261,10 @@ WebToolError is the infrastructure error boundary for expected web-tool failures
 Conceptually:
 
 external timeout / HTTP / network failure
-|
+\|
 v
 WebToolError
-|
+\|
 v
 Scout / Research recovery policy
 
@@ -288,16 +288,16 @@ The action object represents intent, not permission.
 Conceptually:
 
 LLM
-|
+\|
 v
 ScoutAction
-|
+\|
 v
 Python authorization
-|
-+--> legal   -> execute
-|
-+--> illegal -> reject / bounded recovery
+\|
++--\> legal -\> execute
+\|
++--\> illegal -\> reject / bounded recovery
 
 This distinction is fundamental to bounded autonomy.
 
@@ -328,13 +328,13 @@ The exact chronological action/observation history is not yet a production-grade
 State mutation rule
 
 LLM requests action
-|
+\|
 v
 Python validates action
-|
+\|
 v
 tool executes
-|
+\|
 v
 Python mutates ScoutState
 
@@ -344,10 +344,10 @@ Candidate Cardinality Boundary
 
 The current workflow supports:
 
-0 candidate  -> terminate before Opportunity Evaluation
-1 candidate  -> Opportunity Evaluation
+0 candidate -\> terminate before Opportunity Evaluation
+1 candidate -\> Opportunity Evaluation
 
-1 distinct candidates -> unsupported workflow condition
+1 distinct candidates -\> unsupported workflow condition
 
 Multiple-opportunity ranking/queuing remains an explicit future design problem.
 
@@ -362,10 +362,10 @@ It transforms a broad request to "research this opportunity" into a bounded sema
 Conceptually:
 
 approved opportunity
-|
+\|
 v
 ResearchObjective
-|
+\|
 v
 bounded Research loop
 
@@ -407,13 +407,13 @@ EvidenceItem is an explicitly extracted unit of factual support.
 The provenance chain is:
 
 SearchResult
-|
+\|
 v
 authorized URL
-|
+\|
 v
 ReadSource
-|
+\|
 v
 EvidenceItem
 
@@ -472,15 +472,15 @@ ResearchBrief is the Writer-facing Research artifact.
 Conceptually:
 
 ResearchState
-|
+\|
 v
 validated evidence
 +
 semantic synthesis
-|
+\|
 v
 ResearchBrief
-|
+\|
 v
 Writer
 
@@ -513,13 +513,13 @@ This provides both the prepared text and metadata about what happened to it.
 Current budgets
 
 Scout read context
-<= 1800 tokens
+\<= 1800 tokens
 
 Research per-read context
-<= 2500 tokens
+\<= 2500 tokens
 
 Research cumulative stored read context
-<= 8000 tokens
+\<= 8000 tokens
 
 The cumulative Research limit applies to stored read content, not the complete serialized prompt.
 
@@ -538,10 +538,10 @@ Opportunity context
 ResearchBrief
 +
 revision context when applicable
-|
+\|
 v
 Writer-specific input
-|
+\|
 v
 Writer
 
@@ -564,16 +564,16 @@ The graph node maps that output into the global state, principally the current d
 Conceptually:
 
 Writer input
-|
+\|
 v
 LLM-backed Writer
-|
+\|
 v
 Writer structured output
-|
+\|
 v
 writer_node
-|
+\|
 v
 current_draft
 
@@ -793,22 +793,22 @@ Research is not automatically repeated during draft revision.
 This means the data lifecycle is:
 
 ResearchBrief
-|
+\|
 v
 Writer
-|
+\|
 v
 Draft v1
-|
+\|
 v
 Quality Evaluation
-|
+\|
 v
 revision feedback
-|
+\|
 v
 Writer
-|
+\|
 v
 Draft v2
 
@@ -847,10 +847,10 @@ input contract for every component
 Instead:
 
 LinkedInAgentState
-|
+\|
 v
 node mapping
-|
+\|
 v
 specialist input
 
@@ -861,61 +861,61 @@ End-to-End Data Flow
 The current HIGH path can be represented as:
 
 External Web
-|
+\|
 v
 SearchResult
-|
+\|
 v
 Scout READ
-|
+\|
 v
 Prepared external content
-|
+\|
 v
 ScoutSelection
-|
+\|
 v
 PostCandidate
-|
+\|
 v
 OpportunitySignals
-|
+\|
 v
 OpportunityEvaluation
-|
+\|
 v
 ResearchObjective
-|
+\|
 v
 ResearchAction(s)
-|
-+--> SearchResult(s)
-|
-+--> ReadSource(s)
-|
-+--> EvidenceItem(s)
-|
+\|
++--\> SearchResult(s)
+\|
++--\> ReadSource(s)
+\|
++--\> EvidenceItem(s)
+\|
 v
 ResearchState
-|
+\|
 v
 ResearchBriefSynthesis
-|
+\|
 v
 ResearchBrief
-|
+\|
 v
 Writer structured output
-|
+\|
 v
 current_draft
-|
+\|
 v
 Quality Evaluation
-|
-+--> PASS   -> Human / END
-+--> REVISE -> Writer
-+--> REJECT -> END
+\|
++--\> PASS -\> Human / END
++--\> REVISE -\> Writer
++--\> REJECT -\> END
 
 Trust Boundaries
 
@@ -1039,40 +1039,254 @@ Summary
 The system's data model is designed around a chain of increasingly validated artifacts:
 
 external observation
-|
+\|
 v
 normalized tool result
-|
+\|
 v
 bounded agent state
-|
+\|
 v
 validated candidate
-|
+\|
 v
 semantic opportunity signals
-|
+\|
 v
 deterministic opportunity decision
-|
+\|
 v
 authorized research state
-|
+\|
 v
 provenanced evidence
-|
+\|
 v
 ResearchBrief
-|
+\|
 v
 structured draft
-|
+\|
 v
 structured quality evaluation
-|
+\|
 v
 human decision
 
 The central rule is:
 
 LLMs may propose and interpret; authoritative state is validated, bounded, and moved through explicit contracts.
+
+Final Human Refinement Domain
+
+The MVP Experience Layer adds an explicit final human editorial boundary after
+Quality Evaluator PASS.
+
+The orchestration state now carries:
+
+final_refinement_action
+final_refinement_guidance
+
+final_refinement_action
+
+Represents the validated human decision at the final refinement boundary.
+
+Current allowed values:
+
+accept
+refine
+
+Ownership:
+
+Human
+chooses the action
+
+Python
+validates the allowed action and required guidance
+
+LangGraph
+routes the workflow from the validated action
+
+The action is not an LLM decision.
+
+final_refinement_guidance
+
+Carries the human's bounded final editorial instruction when
+final_refinement_action = refine.
+
+Examples of intended refinement dimensions include:
+
+tone
+emphasis
+length
+framing
+closing
+
+The guidance does not replace SelectedPerspective or ContentMode.
+
+Conceptually:
+
+SelectedPerspective
++
+ContentMode
++
+current_draft
++
+final_refinement_guidance
+\|
+v
+WriterInput
+\|
+v
+Final refined draft
+
+The final refinement path is intentionally distinct from an automated
+Quality Evaluator REVISE instruction.
+
+Machine revision:
+
+Quality Evaluator
+\|
+v
+revision_instruction
+\|
+v
+Writer
+\|
+v
+Quality Evaluator
+
+Final human refinement:
+
+Human
+\|
+v
+final_refinement_guidance
+\|
+v
+Writer
+\|
+v
+END
+
+The final human refinement therefore does not create another automatic
+evaluation loop.
+
+Bilingual Presentation Boundary
+
+Portuguese translation is a presentation-layer artifact rather than an
+orchestration-state authority.
+
+The canonical reasoning artifacts remain English-first.
+
+Translation:
+
+does not mutate SelectedPerspective;
+does not mutate ContentMode;
+does not replace ResearchBrief or ArgumentBrief;
+does not trigger a new Writer pass;
+does not trigger a new Quality Evaluation;
+does not change workflow routing.
+
+A translated artifact is therefore a user-facing representation of an
+existing canonical artifact, not a new reasoning contract.
+
+Run History / Product Memory Domain
+
+Run History is a separate persistence responsibility from both:
+
+LangGraph execution state
+
+and
+
+Interaction Memory.
+
+The distinction is:
+
+Execution State
+supports active workflow orchestration and HITL resume
+
+Interaction Memory
+supports agent behavior such as URL canonicalization, novelty, and
+repeated-content avoidance
+
+Run History / Product Memory
+supports human retrieval of prior executions and user-facing artifacts
+
+Current local persistence:
+
+data/history/run_history.db
+
+Current store:
+
+SQLite
+
+The local history record is keyed by a stable run identifier.
+
+Current persisted fields include:
+
+run_id
+thread_id
+created_at
+completed_at
+theme
+status
+opportunity_title
+opportunity_url
+opportunity_score
+classification
+content_mode
+selected_perspective_id
+final_refinement_action
+final_draft
+state_json
+
+state_json
+
+state_json stores a JSON-safe snapshot of the workflow result required to
+reconstruct richer historical artifacts.
+
+The history detail view can derive user-facing artifacts from this snapshot,
+including, where available:
+
+selected opportunity;
+ResearchBrief;
+ArgumentBrief;
+SelectedPerspective;
+ContentMode;
+final draft;
+Quality Evaluation.
+
+Persistence Invariant
+
+A terminal history record must represent the authoritative completed workflow
+state rather than a stale frontend projection.
+
+The current persistence implementation therefore prefers the final LangGraph
+checkpoint when terminal state is available.
+
+A later incomplete rerun must not overwrite a richer completed record.
+
+History persistence uses idempotent behavior keyed by run_id so repeated
+Streamlit reruns do not create duplicate logical runs.
+
+This local SQLite schema is an implemented MVP persistence contract.
+
+It must not be treated as the final production system-of-record schema.
+
+Production persistence technology, retention policy, checkpoint durability,
+migration strategy, and concurrency model remain deployment decisions.
+
+Current Validation Status
+
+Final Human Refinement contracts and routing:
+IMPLEMENTED AND E2E VALIDATED
+
+Bilingual presentation boundary:
+IMPLEMENTED AND E2E VALIDATED
+
+Run History / Product Memory schema and UX:
+IMPLEMENTED
+
+Authoritative COMPLETE -\> Run History terminal persistence:
+FINAL RUNTIME VALIDATION PENDING
