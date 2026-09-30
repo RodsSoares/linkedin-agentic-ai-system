@@ -12,8 +12,8 @@ Perspective Generation, Human Perspective Selection, Human Content Mode
 Selection, Final Human Refinement, bilingual presentation, Run History /
 Product Memory, and a **437-test automated baseline**. A real HIGH
 end-to-end path has been validated through workflow completion. Cloud
-Deployment is the next major phase after final local History persistence
-runtime validation.
+Deployment is implemented and smoke validated on Render with durable
+Supabase PostgreSQL persistence.
 
 ## Architecture Overview
 
@@ -1481,7 +1481,7 @@ Run History persistence implementation:
 
 Authoritative terminal `COMPLETE` → History persistence fix:
 
-`IMPLEMENTED; FINAL FRONTEND/RUNTIME VALIDATION PENDING`
+`IMPLEMENTED AND VALIDATED`
 
 ### Intentionally incomplete
 
@@ -1496,9 +1496,9 @@ Multiple-candidate orchestration
 Production-grade operational observability beyond current token/context
 telemetry
 
-Production cloud deployment
+Production-grade cloud hardening
 
-Production persistence architecture
+Production-grade persistence hardening
 
 Dynamic model routing / advanced token governance
 
@@ -1510,8 +1510,8 @@ Autonomous publication --- intentionally excluded
 
 The next major phase is:
 
-**Cloud Deployment after final local History persistence
-runtime/frontend validation**
+**Post-MVP hardening and controlled validation of the deployed
+runtime architecture**
 
 The purpose is to compare the current Gap-Driven Research behavior
 against the original expensive Research baseline using a known HIGH
@@ -1667,12 +1667,12 @@ token/context usage telemetry is implemented, while production-grade
 tool latency, cost derivation, and broader decision observability remain
 incomplete;
 
-cloud deployment architecture is not yet established;
+cloud deployment is implemented and smoke validated on Render;
 
-production persistence is not yet selected;
+durable cloud persistence is implemented with Supabase PostgreSQL;
 
-Run History terminal persistence has an implemented authoritative-state
-fix whose final frontend/runtime validation remains pending;
+Run History terminal persistence is implemented and validated through
+the deployed PostgreSQL/Supabase persistence path;
 
 the current Gap-Driven Research contract still requires a controlled
 post-change HIGH validation.
@@ -1976,20 +1976,20 @@ real Streamlit experience.
 
 ``` text
 Local MVP:
-IMPLEMENTED, with final History persistence runtime/frontend validation pending
+IMPLEMENTED AND VALIDATED
 
-Production cloud deployment:
-NOT IMPLEMENTED
+Public cloud deployment:
+IMPLEMENTED AND SMOKE VALIDATED
 
 Cloud provider:
-NOT SELECTED
+RENDER FREE WEB SERVICE
 
-Production persistence:
-NOT SELECTED
+Cloud persistence:
+SUPABASE POSTGRESQL
 ```
 
-The deployment phase will begin after the final local History
-persistence validation.
+The deployment phase is complete for the current portfolio/MVP
+scope and has been smoke validated.
 
 The deployed architecture must preserve:
 
@@ -2000,8 +2000,8 @@ The deployed architecture must preserve:
 -   controlled external web/model access;
 -   the existing deterministic governance boundaries.
 
-The project must not be described as production-ready before those
-deployment boundaries are implemented and validated.
+The project should be described as a deployed portfolio/MVP application;
+production-grade hardening remains intentionally outside the current scope.
 
 ## Core Product Principle
 
