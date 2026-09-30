@@ -7,3 +7,4 @@ httpx
 tiktoken
 psycopg[binary]
 langgraph-checkpoint-postgres
+streamlit
