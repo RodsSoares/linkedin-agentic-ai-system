@@ -1,5 +1,10 @@
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg import Connection
+from psycopg.rows import dict_row
+
+from app.config.database import get_database_url, is_postgres_enabled
 
 from app.graph.nodes.argument_intelligence_node import (
     argument_intelligence_node,
@@ -35,6 +40,25 @@ from app.graph.routing import (
     route_after_writer,
 )
 from app.graph.state import LinkedInAgentState
+
+
+def _build_checkpointer():
+    """
+    Build the workflow checkpointer for the current environment.
+    """
+    if not is_postgres_enabled():
+        return InMemorySaver()
+
+    database_url = get_database_url()
+
+    connection = Connection.connect(
+        database_url,
+        autocommit=True,
+        prepare_threshold=0,
+        row_factory=dict_row,
+    )
+
+    return PostgresSaver(connection)
 
 
 def _add_quality_evaluation_loop(graph: StateGraph) -> None:
@@ -185,7 +209,7 @@ def build_opportunity_workflow():
     )
 
     return graph.compile(
-        checkpointer=InMemorySaver(),
+        checkpointer=_build_checkpointer(),
     )
 
 
@@ -253,5 +277,5 @@ def build_scout_opportunity_workflow():
     )
 
     return graph.compile(
-        checkpointer=InMemorySaver(),
+        checkpointer=_build_checkpointer(),
     )

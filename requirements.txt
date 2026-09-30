@@ -5,3 +5,5 @@ python-dotenv
 pytest
 httpx
 tiktoken
+psycopg[binary]
+langgraph-checkpoint-postgres

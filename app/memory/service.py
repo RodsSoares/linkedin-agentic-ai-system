@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from app.memory.models import (
     InteractionRecord,
@@ -6,7 +7,7 @@ from app.memory.models import (
 )
 from app.memory.repository import (
     DEFAULT_DATABASE_PATH,
-    InteractionMemoryRepository,
+    build_interaction_memory_repository,
 )
 from app.memory.url_normalization import (
     canonicalize_url,
@@ -18,19 +19,19 @@ class InteractionMemoryService:
     Application-facing interface for persistent interaction memory.
 
     Consumers such as Scout should use this service instead of accessing
-    SQLite or URL-normalization behavior directly.
+    persistence or URL-normalization behavior directly.
     """
 
     def __init__(
         self,
-        repository: InteractionMemoryRepository | None = None,
+        repository: Any | None = None,
         *,
         database_path: str | Path = DEFAULT_DATABASE_PATH,
     ) -> None:
         self.repository = (
             repository
             if repository is not None
-            else InteractionMemoryRepository(database_path)
+            else build_interaction_memory_repository(database_path)
         )
 
         self.repository.initialize()

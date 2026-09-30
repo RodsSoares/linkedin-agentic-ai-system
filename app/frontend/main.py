@@ -1,9 +1,9 @@
 from __future__ import annotations
+from app.history.repository import build_run_history_repository
 
 import html
 import json
 import os
-import sqlite3
 import textwrap
 import threading
 import time
@@ -890,11 +890,6 @@ def render_translation(text: str, *, key: str, label: str = "Translate to Portug
 # Run History / Product Memory
 # =========================================================
 
-HISTORY_DB_PATH = os.getenv(
-    "RUN_HISTORY_DB_PATH",
-    os.path.join("data", "history", "run_history.db"),
-)
-
 
 def _jsonable(value: Any) -> Any:
     """Recursively convert workflow values into JSON-safe history payloads."""
@@ -911,42 +906,9 @@ def _jsonable(value: Any) -> Any:
     return str(value)
 
 
-def _history_connection() -> sqlite3.Connection:
-    directory = os.path.dirname(HISTORY_DB_PATH)
-    if directory:
-        os.makedirs(directory, exist_ok=True)
-    connection = sqlite3.connect(HISTORY_DB_PATH, timeout=10)
-    connection.row_factory = sqlite3.Row
-    return connection
-
-
 def initialize_run_history() -> None:
-    with _history_connection() as connection:
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS workflow_runs (
-                run_id TEXT PRIMARY KEY,
-                thread_id TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                completed_at TEXT,
-                theme TEXT,
-                status TEXT NOT NULL,
-                opportunity_title TEXT,
-                opportunity_url TEXT,
-                opportunity_score REAL,
-                classification TEXT,
-                content_mode TEXT,
-                selected_perspective_id TEXT,
-                final_refinement_action TEXT,
-                final_draft TEXT,
-                state_json TEXT NOT NULL
-            )
-            """
-        )
-        connection.execute(
-            "CREATE INDEX IF NOT EXISTS idx_workflow_runs_created_at "
-            "ON workflow_runs(created_at DESC)"
-        )
+    repository = build_run_history_repository()
+    repository.initialize()
 
 
 def save_run_history(*, terminal_status: str) -> None:
@@ -982,66 +944,37 @@ def save_run_history(*, terminal_status: str) -> None:
         "result": _jsonable(result),
     }
 
-    with _history_connection() as connection:
-        connection.execute(
-            """
-            INSERT INTO workflow_runs (
-                run_id, thread_id, created_at, completed_at, theme, status,
-                opportunity_title, opportunity_url, opportunity_score,
-                classification, content_mode, selected_perspective_id,
-                final_refinement_action, final_draft, state_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(run_id) DO UPDATE SET
-                completed_at=excluded.completed_at,
-                theme=excluded.theme,
-                status=excluded.status,
-                opportunity_title=excluded.opportunity_title,
-                opportunity_url=excluded.opportunity_url,
-                opportunity_score=excluded.opportunity_score,
-                classification=excluded.classification,
-                content_mode=excluded.content_mode,
-                selected_perspective_id=excluded.selected_perspective_id,
-                final_refinement_action=excluded.final_refinement_action,
-                final_draft=excluded.final_draft,
-                state_json=excluded.state_json
-            """,
-            (
-                run_id,
-                thread_id,
-                created_at,
-                datetime.now().astimezone().isoformat(timespec="seconds"),
-                st.session_state.get("run_theme", ""),
-                terminal_status,
-                str(title) if title else None,
-                str(url) if url else None,
-                float(score) if isinstance(score, (int, float)) else None,
-                str(classification) if classification is not None else None,
-                str(result.get("content_mode")) if result.get("content_mode") else None,
-                str(selected_perspective_id) if selected_perspective_id else None,
-                str(result.get("final_refinement_action"))
-                if result.get("final_refinement_action") else None,
-                str(result.get("current_draft")) if result.get("current_draft") else None,
-                json.dumps(payload, ensure_ascii=False),
-            ),
-        )
+    values = (
+        run_id,
+        thread_id,
+        created_at,
+        datetime.now().astimezone().isoformat(timespec="seconds"),
+        st.session_state.get("run_theme", ""),
+        terminal_status,
+        str(title) if title else None,
+        str(url) if url else None,
+        float(score) if isinstance(score, (int, float)) else None,
+        str(classification) if classification is not None else None,
+        str(result.get("content_mode")) if result.get("content_mode") else None,
+        str(selected_perspective_id) if selected_perspective_id else None,
+        str(result.get("final_refinement_action"))
+        if result.get("final_refinement_action") else None,
+        str(result.get("current_draft")) if result.get("current_draft") else None,
+        json.dumps(payload, ensure_ascii=False),
+    )
+
+    repository = build_run_history_repository()
+    repository.save(values)
 
 
 def load_run_history(limit: int = 100) -> list[dict[str, Any]]:
-    with _history_connection() as connection:
-        rows = connection.execute(
-            "SELECT * FROM workflow_runs ORDER BY created_at DESC LIMIT ?",
-            (limit,),
-        ).fetchall()
-    return [dict(row) for row in rows]
+    repository = build_run_history_repository()
+    return repository.load_recent(limit)
 
 
 def get_history_run(run_id: str) -> dict[str, Any] | None:
-    with _history_connection() as connection:
-        row = connection.execute(
-            "SELECT * FROM workflow_runs WHERE run_id = ?",
-            (run_id,),
-        ).fetchone()
-    return dict(row) if row else None
+    repository = build_run_history_repository()
+    return repository.get(run_id)
 
 
 def _history_display_time(value: Any) -> str:
