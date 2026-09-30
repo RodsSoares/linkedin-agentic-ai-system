@@ -740,9 +740,9 @@ SelectedPerspective
 revision context
 → Writer
 
-During migration, selected_perspective remains optional for compatibility with the graph path that has not yet been fully migrated.
+The integrated Human-Centered MVP path now carries selected_perspective explicitly through the LangGraph workflow before final materialization.
 
-After LangGraph Integration, the Human-Centered MVP path should make the human convergence boundary explicit before final materialization.
+Legacy compatibility paths may still tolerate an absent selected_perspective where required by older tests/contracts, but the canonical interactive flow treats the explicit human convergence boundary as authoritative.
 
 Rodrigo Voice is expression context, not an authority over the selected intellectual direction.
 
@@ -758,7 +758,7 @@ current draft
 quality evaluation
 HITL / routing status
 
-The exact final LinkedInAgentState representation belongs to LangGraph Integration and should not be documented as implemented before that increment is complete.
+LangGraph Integration is complete for the current MVP. LinkedInAgentState now carries the artifacts required by the integrated human-centered flow, including the explicit human-selection and experience-layer state used by the deployed application.
 
 Quality Domain
 
@@ -824,17 +824,26 @@ It connects specialist nodes without making the specialist components themselves
 
 Current state concepts include:
 
+scout_objective
 post
-opportunity_score
+opportunity_evaluation
 research_result
+argument_brief
+perspective_set
+selected_perspective
+content_mode
 current_draft
 quality_evaluation
+final_refinement_action
+final_refinement_guidance
 iteration
 next_step
 human_feedback
 status
 
-The currently integrated graph still follows Scout/supplied candidate → Opportunity Evaluation → Research → ResearchBrief → Writer → Quality Evaluator, with PASS/REVISE/REJECT routing. The canonical MVP architecture adds Argument Intelligence → Perspective Generation → Human Perspective Selection between Research and Writer; full orchestration of that path belongs to the LangGraph Integration increment.
+The currently integrated graph follows Scout/supplied candidate → Opportunity Evaluation → Research → ResearchBrief → Argument Intelligence → Perspective Generation → Human Perspective Selection → Human Content Mode Selection → Writer → Quality Evaluator → Final Human Refinement, with deterministic routing around the semantic components.
+
+The canonical interactive path therefore carries the human-selected intellectual direction and expression mode explicitly before Writer materialization.
 
 Global State Is Not a Universal Component API
 
@@ -905,6 +914,24 @@ v
 ResearchBrief
 \|
 v
+ArgumentBrief
+\|
+v
+PerspectiveSet
+\|
+v
+Human Perspective Selection
+\|
+v
+SelectedPerspective
+\|
+v
+Human Content Mode Selection
+\|
+v
+content_mode
+\|
+v
 Writer structured output
 \|
 v
@@ -913,9 +940,12 @@ current_draft
 v
 Quality Evaluation
 \|
-+--\> PASS -\> Human / END
++--\> PASS -\> Final Human Refinement
 +--\> REVISE -\> Writer
 +--\> REJECT -\> END
+\|
+v
+final human decision / final draft
 
 Trust Boundaries
 
@@ -957,6 +987,9 @@ These belong to deterministic code.
 
 Human-authoritative
 
+perspective selection
+content-mode selection
+final editorial refinement
 publication decision
 
 Data Invariants
@@ -1290,3 +1323,170 @@ IMPLEMENTED
 
 Authoritative COMPLETE -\> Run History terminal persistence:
 FINAL RUNTIME VALIDATION PENDING
+
+Persistence Data Contracts and Boundaries
+
+The cloud deployment adds durable storage implementations without collapsing the existing typed workflow contracts.
+
+The system now has three separate persistence responsibilities.
+
+LangGraph Checkpoint / HITL State
+
+Purpose:
+
+Preserve authoritative workflow execution state required by LangGraph interrupt/resume semantics.
+
+Primary recovery identity:
+
+thread_id
+
+Local implementation:
+
+InMemorySaver
+
+Cloud implementation:
+
+PostgresSaver backed by Supabase PostgreSQL.
+
+Important invariant:
+
+checkpoint state != product-facing Run History
+
+A LangGraph checkpoint exists to continue execution. It is not the user-facing historical record of the intellectual work.
+
+Interaction Memory
+
+Purpose:
+
+Preserve interaction-level memory used by agent behavior, including canonical URL memory, previously visited content, agentic drafts, human-final content, and interaction status.
+
+Current repository implementations:
+
+SQLiteInteractionMemoryRepository
+PostgresInteractionMemoryRepository
+
+The existing InteractionHistoryRecord domain remains conceptually separate from workflow execution checkpoints and product history.
+
+Run History / Product Memory
+
+Purpose:
+
+Preserve navigable user-facing workflow executions and intellectual artifacts.
+
+Current workflow_runs persistence fields include:
+
+run_id
+thread_id
+created_at
+completed_at
+theme
+status
+opportunity_title
+opportunity_url
+opportunity_score
+classification
+content_mode
+selected_perspective_id
+final_refinement_action
+final_draft
+state_json
+
+run_id is the product-history identity.
+
+thread_id preserves the relationship to the LangGraph execution identity.
+
+state_json stores the serialized user-facing workflow snapshot required by the current History experience.
+
+The repository preserves UPSERT semantics on run_id so a later authoritative snapshot can update the same product run instead of creating an unrelated duplicate.
+
+Current repository implementations:
+
+SQLiteRunHistoryRepository
+PostgresRunHistoryRepository
+
+Important invariant:
+
+Run History != Interaction Memory != LangGraph checkpoint state
+
+The three domains may share PostgreSQL infrastructure in cloud execution, but they serve different consumers and lifecycle semantics.
+
+Persistence Backend Selection Contract
+
+The persistence runtime is selected through two configuration concepts:
+
+DATABASE_URL
+
+Connection information for PostgreSQL.
+
+PERSISTENCE_BACKEND
+
+Explicit backend selector.
+
+Current rule:
+
+PERSISTENCE_BACKEND=postgres
++
+DATABASE_URL configured
+-\>
+PostgreSQL-enabled persistence
+
+Otherwise:
+local persistence remains active.
+
+This is a deterministic configuration boundary.
+
+The presence of credentials alone must not silently change test or local-development state behavior.
+
+Cloud Persistence Validation
+
+The following data/persistence boundaries have been validated against Supabase PostgreSQL:
+
+LangGraph checkpoint creation and recovery by thread_id from a new workflow instance;
+
+Interaction Memory creation, lookup, status evolution, agentic draft persistence, human-final persistence, and recent-history retrieval;
+
+Run History creation, get by run_id, recent-list retrieval, UPSERT, and updated-field recovery.
+
+The deployed Streamlit application has also recovered Run History after a Render process restart.
+
+HITL Recovery Identity Boundary
+
+A persisted LangGraph checkpoint remains recoverable after process replacement when the same thread_id is supplied.
+
+The current Streamlit frontend keeps the active thread_id and UI phase in st.session_state.
+
+Therefore:
+
+durable checkpoint data -\> implemented and validated
+
+automatic reconstruction of active frontend session identity after process/session loss -\> not implemented
+
+The future Resume Run capability should use the persisted relationship between product history and execution identity:
+
+Run History record
+\|
++--\> thread_id
+\|
+v
+PostgresSaver checkpoint
+\|
+v
+reconstructed HITL state
+
+This is a product-resilience backlog item, not a change to the underlying workflow data contracts.
+
+Cloud Storage Does Not Change Contract Authority
+
+Moving from SQLite/InMemorySaver to PostgreSQL/PostgresSaver does not transfer semantic authority to the database.
+
+The existing ownership rules remain:
+
+LLM -\> semantic proposals and synthesis
+
+Python -\> validation, deterministic mutation, scoring, authorization, routing, persistence selection
+
+LangGraph -\> orchestration and execution state
+
+Human -\> intellectual convergence, final editorial judgment, publication authority
+
+PostgreSQL -\> durable storage of the state/artifacts produced under those rules

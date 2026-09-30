@@ -12,8 +12,9 @@ The final MVP experience layer makes the same architecture usable as an
 interactive product. Editable Theme / Intent, explicit Content Mode Selection,
 Final Human Refinement, and on-demand Portuguese translation are now
 implemented and validated end-to-end. Run History / Product Memory is
-implemented with navigable local persistence; final terminal-state persistence
-validation remains before the local MVP experience layer is closed.
+implemented and validated with navigable persistence. The local MVP experience
+layer is closed, and the same product is now deployed on Render with durable
+PostgreSQL/Supabase persistence for cloud execution.
 Its purpose is to reduce the manual effort required to move from:
 "Where should I contribute?"
 to:
@@ -56,9 +57,9 @@ direction, and only then producing and evaluating the final content. The
 final experience-layer increment extends this target without changing the
 core human-centered reasoning principle. Editable Theme / Intent, Content Mode
 Selection, Final Human Refinement, and optional Portuguese translation are
-implemented and validated. Run History / Product Memory is implemented, with
-final terminal-state persistence validation remaining to close the planned MVP
-experience layer.
+implemented and validated. Run History / Product Memory is also implemented
+and validated. The complete MVP experience layer is closed, and cloud deployment
+has been validated without reopening the core reasoning architecture.
 The MVP is intentionally narrower than the broader long-term product
 vision.
 Performance Analytics, Feedback Learning, adaptive policy calibration,
@@ -66,72 +67,71 @@ advanced UX, autonomous publication, and other post-MVP capabilities are
 not required to close this MVP.
 Target MVP Architecture
 Human Intent / Editable Theme
-|
+\|
 v
 Discovery / Scout
-|
+\|
 v
 Target Qualification
-|
+\|
 v
 Opportunity Evaluation
-|
-+-- LOW -----------------------------> END
-|
-+-- MEDIUM --> QUEUED --------------> END
-|
+\|
++-- LOW -----------------------------\> END
+\|
++-- MEDIUM --\> QUEUED --------------\> END
+\|
 +-- HIGH
-|
+\|
 v
 Research
-|
+\|
 v
 ResearchBrief
-|
+\|
 v
 Argument Intelligence
-|
+\|
 v
 ArgumentBrief
-|
+\|
 v
 Perspective Generation
-|
+\|
 v
 PerspectiveSet
-|
+\|
 v
 Human Perspective Selection
-|
+\|
 v
 SelectedPerspective
-|
+\|
 v
 Human Content Mode Selection
 (LinkedIn Post / LinkedIn Reply / Article)
-|
+\|
 v
 Rodrigo Voice / Writer
-|
+\|
 v
 Quality Evaluator
-|
-+-- PASS ----------------------------> Human Final Review
-|
-+-- REVISE --> Writer --> Evaluator
-|
-+-- REJECT --------------------------> END
-|
+\|
++-- PASS ----------------------------\> Human Final Review
+\|
++-- REVISE --\> Writer --\> Evaluator
+\|
++-- REJECT --------------------------\> END
+\|
 v
 Manual Publication
 Publication remains outside autonomous execution.
 The core Human-Centered Conversation Intelligence flow is integrated in
 the LangGraph workflow. The MVP Experience Layer now includes Editable Theme /
 Intent, Content Mode Selection, Final Human Refinement, on-demand Portuguese
-translation, and Run History / Product Memory. The first four capabilities are
-implemented and validated through the real Streamlit workflow. Run History is
-implemented and navigable, while its corrected terminal-state persistence path
-still requires final runtime validation.
+translation, and Run History / Product Memory. All five capabilities are implemented and validated through the real Streamlit
+workflow. Run History is implemented, navigable, and validated both locally and
+through the deployed PostgreSQL/Supabase persistence path.
 Responsibility Layers
 LLM --- Semantic Intelligence
 The LLM handles tasks where interpretation matters, including:
@@ -176,14 +176,14 @@ Human --- Intellectual and Publication Authority
 The human owns two distinct decision boundaries.
 Intellectual convergence
 AI researches
--> AI builds argument space
--> AI generates defensible perspectives
--> HUMAN SELECTS / REJECTS / COMBINES / GUIDES
+-\> AI builds argument space
+-\> AI generates defensible perspectives
+-\> HUMAN SELECTS / REJECTS / COMBINES / GUIDES
 Final ownership
 AI materializes selected direction
--> AI evaluates quality
--> HUMAN REVIEWS
--> HUMAN DECIDES WHETHER TO PUBLISH
+-\> AI evaluates quality
+-\> HUMAN REVIEWS
+-\> HUMAN DECIDES WHETHER TO PUBLISH
 Autonomous LinkedIn publication and commenting remain explicit
 non-goals.
 Discovery / Scout
@@ -195,65 +195,65 @@ SELECT
 FINISH
 Its loop is:
 ScoutState
-|
+\|
 v
 LLM chooses allowed action
-|
+\|
 v
 Structured ScoutAction
-|
+\|
 v
 Python authorization
-|
+\|
 v
 Tool execution
-|
+\|
 v
-Observation -> State -> next bounded decision
+Observation -\> State -\> next bounded decision
 The model decides semantically what it wants to do. Python decides
 whether the action is legal.
 Web Tool Layer
 Scout and Research use provider-neutral contracts:
-SearchTool(query) -> list\(SearchResult\)
-ReadTool(url) -> str
+SearchTool(query) -\> list(SearchResult)
+ReadTool(url) -\> str
 Two execution modes are supported:
-FAKE MODE -> deterministic tools for isolated tests
-REAL MODE -> Brave Search + bounded HTTP reader
+FAKE MODE -\> deterministic tools for isolated tests
+REAL MODE -\> Brave Search + bounded HTTP reader
 The real reader validates network access and includes controls for URL
 scheme, DNS resolution, localhost/private destinations, redirects,
 timeouts, content type, response size, and controlled external failures.
 Content Preparation
 External pages pass through explicit preparation boundaries:
 HTTP response
-|
+\|
 v
 Main Content Extraction
-|
-+-> prefer article/main
-+-> density fallback for section/div
-|
+\|
++-\> prefer article/main
++-\> density fallback for section/div
+\|
 v
 Editorial text
-|
+\|
 v
 Context Preparation
-|
-+-> normalize
-+-> remove exact duplicate lines
-+-> count tokens
-+-> enforce component budget
-|
+\|
++-\> normalize
++-\> remove exact duplicate lines
++-\> count tokens
++-\> enforce component budget
+\|
 v
 PreparedContext
-|
+\|
 v
 LLM-facing input
 This prevents arbitrary raw webpages from being treated as clean,
 unlimited model context.
 Current principal budgets:
-Scout read context <= 1800 tokens
-Research per-read context <= 2500 tokens
-Research cumulative read context <= 8000 tokens
+Scout read context \<= 1800 tokens
+Research per-read context \<= 2500 tokens
+Research cumulative read context \<= 8000 tokens
 Opportunity Evaluation
 Opportunity Evaluation answers:
 "Is this opportunity worth pursuing?"
@@ -267,9 +267,9 @@ Research Efficiency 10%
 The LLM produces semantic signals. Python calculates the weighted score,
 applies mandatory guardrails, and produces the operational
 classification.
-HIGH -> ACCEPTED_FOR_RESEARCH -> Research
-MEDIUM -> QUEUED -> END
-LOW -> END
+HIGH -\> ACCEPTED_FOR_RESEARCH -\> Research
+MEDIUM -\> QUEUED -\> END
+LOW -\> END
 Opportunity Evaluation is a strategic resource-allocation gate. It does
 not determine Rodrigo's final intellectual position.
 Research
@@ -282,16 +282,16 @@ EXTRACT
 FINISH
 Provenance chain:
 SearchResult
-|
+\|
 v
 Authorized URL
-|
+\|
 v
 ReadSource
-|
+\|
 v
 EvidenceItem
-|
+\|
 v
 ResearchBrief
 A search result is not automatically evidence. A read page is not
@@ -325,10 +325,10 @@ possible contribution areas;
 source references.
 Conceptually:
 ResearchBrief
-|
+\|
 v
 Argument Intelligence
-|
+\|
 v
 ArgumentBrief
 This boundary separates researching what is supported from
@@ -342,10 +342,10 @@ intellectual directions grounded in the same ArgumentBrief and
 evidence base.
 Conceptually:
 ArgumentBrief
-|
+\|
 v
 Perspective Generation
-|
+\|
 v
 PerspectiveSet
 A perspective represents what could be worth saying.
@@ -366,10 +366,10 @@ The selected intellectual direction is represented explicitly through
 SelectedPerspective.
 Conceptually:
 PerspectiveSet
-|
+\|
 v
 Human decision
-|
+\|
 v
 SelectedPerspective
 Only after this convergence should the system materialize the complete
@@ -411,19 +411,19 @@ different formats without rerunning Research, Argument Intelligence, or
 Perspective Generation. Writer and Quality Evaluator are content-mode-aware,
 and legacy paths default to linkedin_reply for compatibility. Real Streamlit
 E2E has validated both sequential HITL boundaries through Human Final Review.
-Final Human Refinement --- NEXT
+Final Human Refinement --- IMPLEMENTED AND VALIDATED
 After a generated draft passes quality evaluation, the human can provide
 additional editorial guidance for final adjustment, such as tone, emphasis,
 length, framing, or closing. This refinement must preserve the selected
 intellectual direction unless the human explicitly changes it.
-Bilingual Presentation --- PLANNED
+Bilingual Presentation --- IMPLEMENTED AND VALIDATED
 The MVP remains English-first internally. Final generated content can be
 presented in English and translated to Portuguese on demand through a
 Translate interaction. Translation is treated as a presentation layer so
 that it does not duplicate the complete reasoning pipeline or increase cost
 unnecessarily.
-Run History / Product Memory --- PLANNED
-The application should expose navigable history for completed runs so that
+Run History / Product Memory --- IMPLEMENTED AND VALIDATED
+The application exposes navigable history for workflow runs so that
 the intellectual work produced by the system does not disappear when a new
 workflow starts. A history entry should preserve, at minimum:
 human theme / intent;
@@ -441,16 +441,16 @@ artifacts. Both may use persistent storage, but they have different
 responsibilities.
 The intended experience is therefore:
 Editable Theme
--> Discovery / Qualification / Research
--> Argument Intelligence
--> Perspective Generation
--> Human Perspective Selection
--> Human Content Mode Selection
--> Writer / Quality Evaluation
--> Human Final Refinement
--> Optional Translation
--> Persistent Run History
--> Manual Publication
+-\> Discovery / Qualification / Research
+-\> Argument Intelligence
+-\> Perspective Generation
+-\> Human Perspective Selection
+-\> Human Content Mode Selection
+-\> Writer / Quality Evaluation
+-\> Human Final Refinement
+-\> Optional Translation
+-\> Persistent Run History
+-\> Manual Publication
 The core Scout, Opportunity Evaluation, Research, Argument Intelligence,
 Perspective Generation, and scoring behavior should remain frozen during
 this experience-layer increment except where a genuine defect requires a
@@ -477,10 +477,10 @@ ContentMode
 ResearchBrief / evidence context
 +
 Rodrigo Voice
-|
+\|
 v
 Writer
-|
+\|
 v
 Draft
 Writer does not own:
@@ -495,12 +495,12 @@ The orchestration layer supplies component-specific input instead of
 exposing the entire global state indiscriminately.
 Quality Evaluator
 Opportunity Evaluation and Quality Evaluation solve different problems:
-Opportunity Evaluation -> "Should we invest effort in this conversation?"
-Quality Evaluation -> "Is the generated contribution good enough?"
+Opportunity Evaluation -\> "Should we invest effort in this conversation?"
+Quality Evaluation -\> "Is the generated contribution good enough?"
 Quality routing:
-PASS -> Human Final Review
-REVISE -> Writer -> Quality Evaluator
-REJECT -> END
+PASS -\> Human Final Review
+REVISE -\> Writer -\> Quality Evaluator
+REJECT -\> END
 Revision is bounded and does not automatically rerun Research.
 A quality PASS does not authorize publication.
 Structured Contracts
@@ -592,11 +592,11 @@ GENERATION & QUALITY
 ├── bounded revision loop
 └── final human refinement
 EXPERIENCE & MEMORY
-├── editable human theme / intent \(IMPLEMENTED\)
-├── LinkedIn Post / Reply / Article modes \(IMPLEMENTED\)
-├── final human refinement \(NEXT\)
-├── on-demand Portuguese translation \(PLANNED\)
-├── navigable run history \(PLANNED\)
+├── editable human theme / intent (IMPLEMENTED)
+├── LinkedIn Post / Reply / Article modes (IMPLEMENTED)
+├── final human refinement (IMPLEMENTED)
+├── on-demand Portuguese translation (IMPLEMENTED)
+├── navigable run history (IMPLEMENTED)
 └── separation of product history from Interaction Memory
 ORCHESTRATION & GOVERNANCE
 ├── LangGraph workflow
@@ -605,11 +605,11 @@ ORCHESTRATION & GOVERNANCE
 ├── structured contracts
 ├── Human-in-the-Loop boundaries
 └── human publication authority
-The core Conversation Intelligence flow is integrated. Editable Theme and
-Content Mode Selection are also implemented in the Experience Layer.
-Remaining experience capabilities are approved target-state items until
+The core Conversation Intelligence flow and the complete MVP Experience Layer
+are integrated. Editable Theme, Content Mode Selection, Final Human Refinement,
+on-demand Portuguese translation, and navigable Run History are implemented and
 validated. This capability map must therefore be read together with
-02_current_architecture.md for the exact implemented topology.
+02_current_architecture.md for the exact implemented topology and runtime details.
 Validation State
 The project has extensive automated unit and integration coverage,
 deterministic fake-tool validation, and real-tool smoke validation.
@@ -621,88 +621,283 @@ OpenAI reasoning
 - real reading
 - content extraction
 - bounded context
-  Research
-  OpenAI reasoning
+Research
+OpenAI reasoning
 - real search
 - real reading
 - evidence extraction
 - provenance
 - ResearchBrief
-  Automated test counts are development snapshots rather than
-  architectural invariants and should be recorded in the current
-  implementation/audit context rather than treated as a permanent design
-  property of this document.
-  Current MVP validation snapshot:
-  421 automated tests passing;
-  Editable Theme / Intent validated in real Streamlit execution;
-  LOW Opportunity routing validated in real Streamlit execution;
-  HIGH path validated through Research, Argument Intelligence, Perspective
-  Generation, Human Perspective Selection, Human Content Mode Selection,
-  mode-aware Writer, mode-aware Quality Evaluator, and Human Final Review;
-  both sequential LangGraph HITL interrupt/resume boundaries validated;
-  publication remains manual.
-  Current frontend hardening:
-  visual state/phase can lag the backend worker;
-  transient Scout / Opportunity text can flicker during automatic Streamlit
-  reruns.
-  These are presentation-layer defects and must not reopen the validated core
-  reasoning architecture.
-  Roadmap to MVP
-  Increment Delivery Architectural
-  Impact
-  1 Argument ArgumentBrief, Perspective, PerspectiveSet, Creates the
-  Contracts v0.1 SelectedPerspective formal language
-  of the new
-  architecture
-  2 Argument ResearchBrief -> ArgumentBrief Separates
-  Intelligence v0.1 research from
-  positioning
-  3 Perspective ArgumentBrief -> 2--4 defensible perspectives Implements AI
-  Generation v0.1 expands
-  4 Human Perspective Human selects / rejects / combines / guides Implements
-  Selection v0.1 perspective Human
-  converges
-  5 Writer / Voice SelectedPerspective -> Rodrigo Voice -> Writer Implements AI
-  Integration v0.1 materializes
-  6 LangGraph Complete new flow + HITL + routing Transforms
-  Integration components into
-  an integrated
-  system
-  7 MVP Experience Editable theme, content mode, final human Converts the
-  Layer v1.0 refinement, on-demand translation, run history validated agentic
-  workflow into a
-  navigable product
-  experience
-  The roadmap is sequential at the architectural level, even when
-  implementation work overlaps between adjacent increments.
-  Current resume point:
-  7.1 Editable Theme / Intent is complete and validated.
-  7.2 Content Mode Selection is complete and validated.
-  7.3 Final Human Refinement is complete and E2E validated.
-  7.4 Bilingual Presentation is complete and E2E validated.
-  7.5 Run History / Product Memory is implemented; final terminal-state
-  persistence validation remains.
-  Current automated regression baseline: 437 passing tests.
-  Cloud deployment remains a separate post-local-MVP step.
-  Current Architectural Boundaries
-  Still intentionally incomplete or unresolved outside the MVP closure
-  path:
-  production LinkedIn-specific discovery;
-  reliable LinkedIn engagement metadata;
-  objective Engagement Potential calculation;
-  multiple-candidate orchestration;
-  production-grade observability;
-  production deployment architecture;
-  long-term model routing and cost telemetry;
-  real-world scoring calibration;
-  advanced Human-in-the-Loop UX beyond the MVP Experience Layer;
-  Performance Analytics and Feedback Learning;
-  adaptive policy calibration;
-  autonomous publication.
-  These items must not distract from closing the frozen MVP.
-  Architectural Direction
-  The system is evolving toward:
-  semantic intelligence
+Automated test counts are development snapshots rather than
+architectural invariants and should be recorded in the current
+implementation/audit context rather than treated as a permanent design
+property of this document.
+Current MVP validation snapshot:
+437 automated tests passing;
+Editable Theme / Intent validated in real Streamlit execution;
+LOW Opportunity routing validated in real Streamlit execution;
+HIGH path validated through Research, Argument Intelligence, Perspective
+Generation, Human Perspective Selection, Human Content Mode Selection,
+mode-aware Writer, mode-aware Quality Evaluator, and Human Final Review;
+both sequential LangGraph HITL interrupt/resume boundaries validated;
+publication remains manual.
+Current frontend hardening:
+visual state/phase can lag the backend worker;
+transient Scout / Opportunity text can flicker during automatic Streamlit
+reruns.
+These are presentation-layer defects and must not reopen the validated core
+reasoning architecture.
+Roadmap to MVP
+Increment Delivery Architectural
+Impact
+1 Argument ArgumentBrief, Perspective, PerspectiveSet, Creates the
+Contracts v0.1 SelectedPerspective formal language
+of the new
+architecture
+2 Argument ResearchBrief -\> ArgumentBrief Separates
+Intelligence v0.1 research from
+positioning
+3 Perspective ArgumentBrief -\> 2--4 defensible perspectives Implements AI
+Generation v0.1 expands
+4 Human Perspective Human selects / rejects / combines / guides Implements
+Selection v0.1 perspective Human
+converges
+5 Writer / Voice SelectedPerspective -\> Rodrigo Voice -\> Writer Implements AI
+Integration v0.1 materializes
+6 LangGraph Complete new flow + HITL + routing Transforms
+Integration components into
+an integrated
+system
+7 MVP Experience Editable theme, content mode, final human Converts the
+Layer v1.0 refinement, on-demand translation, run history validated agentic
+workflow into a
+navigable product
+experience
+The roadmap is sequential at the architectural level, even when
+implementation work overlaps between adjacent increments.
+Current resume point:
+7.1 Editable Theme / Intent is complete and validated.
+7.2 Content Mode Selection is complete and validated.
+7.3 Final Human Refinement is complete and E2E validated.
+7.4 Bilingual Presentation is complete and E2E validated.
+7.5 Run History / Product Memory is complete and validated.
+Current automated regression baseline: 437 passing tests.
+Cloud deployment is implemented and smoke validated on Render, with
+Supabase PostgreSQL providing durable cloud persistence.
+Cloud Deployment and Durable Persistence
+The local-first architecture has now been extended into a validated cloud
+runtime without changing the core responsibility model.
+Current deployed topology:
+Browser
+\|
+v
+Render Free Web Service
+\|
++--\> Streamlit frontend
++--\> LangGraph orchestration
++--\> Python deterministic governance
++--\> OpenAI model access
++--\> Brave Search / bounded HTTP reader
+\|
+v
+Supabase PostgreSQL
+The cloud deployment preserves the same separation between semantic
+intelligence, deterministic governance, orchestration, persistence, and human
+authority that exists in local execution.
+Render is the current application runtime.
+Supabase PostgreSQL is the current durable cloud persistence platform.
+The deployment deliberately remains a single application unit because the
+validated MVP does not require distributed microservices, a broker, or a
+container-orchestration platform.
+Persistence Responsibilities
+The deployed system preserves three conceptually distinct persistence domains.
+LangGraph Checkpoint / HITL State
+Purpose:
+preserve authoritative workflow execution state required by LangGraph
+interrupt/resume semantics.
+Local backend:
+InMemorySaver
+Cloud backend:
+PostgresSaver
+Interaction Memory
+Purpose:
+support agent behavior such as canonical URL memory, novelty, visited-content
+tracking, agentic drafts, human-final content, and interaction status.
+Local backend:
+SQLiteInteractionMemoryRepository
+Cloud backend:
+PostgresInteractionMemoryRepository
+Run History / Product Memory
+Purpose:
+preserve navigable user-facing workflow history and intellectual artifacts
+independently from LangGraph execution checkpoints and Interaction Memory.
+Local backend:
+SQLiteRunHistoryRepository
+Cloud backend:
+PostgresRunHistoryRepository
+The three responsibilities currently share one Supabase PostgreSQL service in
+cloud execution, but they must not be collapsed into one conceptual state model.
+Explicit Backend Selection
+Cloud persistence is selected explicitly through environment configuration.
+DATABASE_URL
+provides PostgreSQL connection information.
+PERSISTENCE_BACKEND
+selects persistence behavior.
+Current rule:
+PERSISTENCE_BACKEND=postgres
++
+DATABASE_URL configured
+-\>
+PostgreSQL persistence enabled
+Otherwise:
+local persistence remains active.
+This separation is deliberate. Possessing cloud database credentials must not
+silently change local development or automated-test semantics.
+The explicit selector was introduced after persistent checkpoint state exposed a
+test-isolation problem when a fixed thread_id recovered state from a previous
+PostgreSQL-backed execution. The resulting architecture keeps local/test
+execution isolated by default while allowing the deployed environment to opt in
+to durable PostgreSQL state.
+Cloud Validation
+The cloud deployment has been validated incrementally rather than inferred from
+a successful build.
+Validated runtime behavior includes:
+Render repository build;
+dependency installation;
+Streamlit startup;
+repository-root package imports through PYTHONPATH;
+public application access;
+OpenAI-backed workflow execution;
+Brave Search real mode;
+Supabase PostgreSQL connectivity;
+deployed Run History navigation.
+Validated LangGraph persistence includes:
+PostgresSaver initialization;
+creation of LangGraph checkpoint tables;
+workflow execution with a known thread_id;
+creation of a new workflow instance;
+recovery of the persisted workflow state using the same thread_id.
+Validated Interaction Memory persistence includes:
+PostgreSQL repository selection;
+record creation;
+has_seen behavior;
+agentic draft persistence;
+human-final persistence;
+status evolution;
+recent-history retrieval.
+Validated Run History persistence includes:
+PostgreSQL repository selection;
+table initialization;
+run creation;
+get by run_id;
+recent-list retrieval;
+UPSERT of an existing run;
+updated field recovery;
+deployed History retrieval;
+survival of Render process restart.
+The current automated regression baseline remains:
+437 passing tests.
+HITL Durability Boundary
+The backend checkpoint foundation is durable, but durable backend state does not
+by itself reconstruct a lost Streamlit browser/session state.
+A deliberate Render restart test was performed while the workflow was waiting at
+Human Perspective Selection.
+Observed behavior:
+PostgresSaver checkpoint -\> survived restart
+Run History -\> survived restart
+Streamlit session_state -\> did not survive restart
+The checkpoint itself therefore remains recoverable when the same thread_id is
+supplied. The current frontend does not yet reconstruct the active thread_id and
+interrupt UI after process/session loss.
+This is not treated as a PostgresSaver failure.
+It is a frontend/product-resilience capability.
+Resume HITL After Session Loss --- BACKLOG
+A future product increment should distinguish terminal historical runs from
+resumable interrupted runs.
+Target behavior:
+History
+\|
++--\> terminal run
+\| \|
+\| +--\> Open / Inspect
+\|
++--\> resumable HITL run
+\|
++--\> Resume
+\|
+v
+recover thread_id
+\|
+v
+PostgresSaver checkpoint
+\|
+v
+reconstruct interrupt/UI
+\|
+v
+continue human decision
+This capability is explicitly post-MVP backlog and does not reopen the completed
+cloud-deployment milestone.
+Cloud Runtime Configuration
+The deployed Render service currently uses environment-driven configuration,
+including:
+OPENAI_API_KEY
+BRAVE_SEARCH_API_KEY
+WEB_TOOL_MODE=real
+DATABASE_URL
+PERSISTENCE_BACKEND=postgres
+Secrets remain external to Git.
+Current Render runtime configuration uses:
+Build:
+pip install -r requirements.txt
+Start:
+PYTHONPATH=. streamlit run app/frontend/main.py --server.address 0.0.0.0 --server.port \$PORT
+The explicit PYTHONPATH keeps the repository root importable when Streamlit
+executes app/frontend/main.py.
+The Render filesystem must not be treated as the durable cloud system of record.
+Free-tier process sleep/restart is acceptable because durable application state
+belongs in Supabase PostgreSQL.
+Cloud Deployment Scope
+The current deployment should be described as:
+implemented;
+publicly reachable;
+smoke validated;
+durably persisted for the three current persistence responsibilities;
+appropriate for the current portfolio/MVP scope.
+It should not be described as a fully hardened multi-user production platform.
+Post-MVP production hardening still includes concerns such as:
+authentication and authorization;
+production-grade observability;
+formal retention and deletion policy;
+backup/recovery policy;
+schema migration discipline;
+advanced cost and latency telemetry;
+multi-user concurrency hardening;
+automatic Resume Run UX after frontend session loss;
+LinkedIn-native authenticated integration.
+None of these changes the core product rule:
+AI expands. Human converges. AI materializes. Human owns.
+
+Current Architectural Boundaries
+Still intentionally incomplete or unresolved outside the MVP closure
+path:
+production LinkedIn-specific discovery;
+reliable LinkedIn engagement metadata;
+objective Engagement Potential calculation;
+multiple-candidate orchestration;
+production-grade observability;
+production-grade deployment hardening beyond the current Render/Supabase MVP;
+long-term model routing and cost telemetry;
+real-world scoring calibration;
+advanced Human-in-the-Loop UX beyond the MVP Experience Layer;
+Performance Analytics and Feedback Learning;
+adaptive policy calibration;
+autonomous publication.
+These items are post-MVP hardening or expansion concerns and must not be
+confused with the now-closed frozen MVP scope.
+Architectural Direction
+The system is evolving toward:
+semantic intelligence
 -
 deterministic governance
 +

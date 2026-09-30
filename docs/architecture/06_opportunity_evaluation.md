@@ -31,10 +31,24 @@ Research
 ↓
 ResearchBrief
 ↓
+Argument Intelligence
+↓
+ArgumentBrief
+↓
+Perspective Generation
+↓
+PerspectiveSet
+↓
+Human Perspective Selection
+↓
+SelectedPerspective
+↓
+Human Content Mode Selection
+↓
 Writer
 ↓
 Quality Evaluator
-├── PASS → Human / END
+├── PASS → Final Human Refinement
 ├── REVISE → Writer
 └── REJECT → END
 
@@ -55,7 +69,7 @@ AUTOMATED TEST COVERAGE: IMPLEMENTED
 
 Opportunity Evaluation is no longer a design-only capability.
 
-The project has progressed from the original specification into an integrated workflow where HIGH opportunities lead into the bounded Research capability and then into Writer and Quality Evaluation.
+The project has progressed from the original specification into the complete integrated Human-Centered workflow where HIGH opportunities lead into bounded Research, Argument Intelligence, Perspective Generation, explicit human convergence, Writer, Quality Evaluation, and Final Human Refinement.
 
 The broader project currently has:
 
@@ -726,9 +740,19 @@ Research
 ↓
 ResearchBrief
 ↓
+Argument Intelligence
+↓
+Perspective Generation
+↓
+Human Perspective Selection
+↓
+Human Content Mode Selection
+↓
 Writer
 ↓
 Quality Evaluator
+↓
+Final Human Refinement
 
 ACCEPTED_FOR_RESEARCH records the approval transition before the Research capability executes.
 
@@ -1573,3 +1597,167 @@ Current automated project regression baseline:
 
 This test count is a development snapshot and is not part of the Opportunity
 Evaluation contract itself.
+
+Deployed Runtime Status
+
+Opportunity Evaluation is now exercised inside the deployed Render application
+with real web tooling and PostgreSQL/Supabase persistence enabled.
+
+Cloud deployment does not change the authority model of this capability.
+
+The responsibility split remains:
+
+LLM
+-\> semantic OpportunitySignals
+
+Python
+-\> Research Efficiency
+-\> weighted score
+-\> mandatory guardrails
+-\> HIGH / MEDIUM / LOW classification
+
+LangGraph
+-\> deterministic transition after classification
+
+Human
+-\> downstream intellectual convergence and publication authority
+
+Opportunity Evaluation therefore remains a deterministic resource-allocation
+gate even when the workflow is cloud hosted.
+
+Persistence Relationship
+
+Opportunity Evaluation itself does not own a persistence backend.
+
+Its operational artifact flows through workflow state and may also appear in
+Run History / Product Memory.
+
+The cloud persistence architecture preserves three separate concerns:
+
+LangGraph checkpoint state
+-\> PostgresSaver
+
+Interaction Memory
+-\> PostgreSQL repository
+
+Run History / Product Memory
+-\> PostgreSQL repository
+
+The OpportunityEvaluation contract is not collapsed into any of those storage
+technologies.
+
+Storage remains an implementation concern around the domain artifact, not a new
+semantic owner of the classification.
+
+Run History Representation
+
+The current Run History product schema can preserve opportunity-facing metadata
+including:
+
+opportunity_title
+opportunity_url
+opportunity_score
+classification
+
+This allows the user-facing history to retain the strategic gate result without
+requiring the Opportunity Evaluator to know how PostgreSQL is implemented.
+
+Cloud Validation Relevance
+
+The deployed application has exercised real opportunity routing as part of the
+end-to-end workflow.
+
+Run History has also demonstrated persisted opportunity score/classification in
+the cloud-backed product history.
+
+The current automated project regression baseline remains:
+
+437 passing tests
+
+The deployment therefore changes runtime durability and availability, not the
+Opportunity Evaluation formula, guardrails, or classification ownership.
+
+Human-Centered Downstream Integration
+
+The v0.1 scoring model still answers only:
+
+Should the system invest deeper effort in this opportunity?
+
+It does not answer:
+
+Which intellectual perspective should Rodrigo adopt?
+
+How should that perspective be expressed?
+
+Should the final content be published?
+
+For a HIGH opportunity, those responsibilities remain downstream:
+
+Opportunity Evaluation
+\|
+v
+Research
+\|
+v
+Argument Intelligence
+\|
+v
+Perspective Generation
+\|
+v
+Human Perspective Selection
+\|
+v
+Human Content Mode Selection
+\|
+v
+Writer
+\|
+v
+Quality Evaluator
+\|
+v
+Final Human Refinement
+\|
+v
+Manual Publication
+
+This distinction is especially important after cloud deployment.
+
+A durable HIGH classification does not become durable authority to publish.
+
+Opportunity Evaluation remains an effort-allocation decision, not an
+intellectual-position or publication decision.
+
+Current Calibration Boundary
+
+Cloud deployment did not resolve the existing v0.1 Engagement Potential
+limitation.
+
+Reliable LinkedIn-native engagement metadata remains unavailable in the current
+architecture.
+
+Therefore the current neutral Engagement Potential placeholder and the existing
+deterministic scoring contract remain unchanged until a reliable metadata source
+and normalization strategy are explicitly designed and validated.
+
+The system must not use cloud availability as a reason to invent engagement
+metrics.
+
+Current Post-MVP Opportunity Backlog
+
+The following Opportunity Evaluation concerns remain intentionally open:
+
+reliable LinkedIn-native engagement metadata;
+objective Engagement Potential normalization;
+author reach / relevance modeling;
+real-world score calibration;
+measured Research Cost from observed token/tool usage;
+MEDIUM queue lifecycle beyond terminal QUEUED state;
+multiple-candidate ranking/orchestration;
+longitudinal measurement of classification quality.
+
+These are calibration/product-evolution concerns.
+
+They do not reopen the validated v0.1 deterministic scoring and routing contract
+without an explicit decision.

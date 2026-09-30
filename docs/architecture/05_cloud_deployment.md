@@ -4,33 +4,59 @@ Purpose
 
 This document records the current deployment status, deployment requirements, and architectural constraints for the LinkedIn Agentic AI System.
 
-It does not define a final cloud architecture.
+It documents both the deployment constraints established before hosting and the cloud architecture that has now been implemented and validated for the current MVP.
 
-No cloud provider, hosting topology, persistence technology, message broker, observability stack, or autoscaling strategy has been formally selected yet.
+The initial provider/runtime and persistence decisions are now established:
 
-The purpose of this file is therefore to prevent premature infrastructure assumptions while establishing the constraints that any future deployment must preserve.
+Render Free Web Service for the Python/Streamlit application runtime;
+
+Supabase PostgreSQL for durable cloud persistence;
+
+PostgresSaver for LangGraph checkpoint/HITL state;
+
+PostgreSQL repositories for Interaction Memory and Run History / Product Memory.
+
+A message broker, distributed autoscaling architecture, production-grade observability stack, and multi-user authentication model remain intentionally unselected because the current validated MVP does not require them.
+
+The purpose of this file is therefore twofold:
+
+preserve the original deployment constraints that prevented premature infrastructure coupling;
+
+record the actual deployed topology and the remaining post-MVP hardening boundaries.
 
 Current Status
 
-Production cloud deployment
+Public cloud deployment
+IMPLEMENTED AND SMOKE VALIDATED
+
+Application hosting
+RENDER FREE WEB SERVICE
+
+Cloud persistence
+SUPABASE POSTGRESQL
+
+LangGraph cloud checkpoint backend
+POSTGRESSAVER
+
+Interaction Memory cloud backend
+POSTGRESQL
+
+Run History / Product Memory cloud backend
+POSTGRESQL
+
+Production-grade observability stack
+NOT YET SELECTED
+
+Production-grade multi-user authentication
 NOT IMPLEMENTED
 
-Cloud provider
-NOT SELECTED
-
-Production persistence
-NOT SELECTED
-
-Production observability stack
-NOT SELECTED
-
-Production secret-management solution
-NOT SELECTED
+Secret handling for current deployment
+RENDER ENVIRONMENT VARIABLES / SECRETS
 
 Production LinkedIn-native integration
 NOT IMPLEMENTED
 
-The project is currently being validated primarily as an application/runtime architecture.
+The project has now been validated as both an application/runtime architecture and a deployed portfolio/MVP application.
 
 The active priority remains correctness of:
 
@@ -47,13 +73,13 @@ human publication authority
 
 before production infrastructure is introduced.
 
-Why Deployment Is Intentionally Deferred
+Why Deployment Was Intentionally Deferred
 
-A deployment architecture should serve the validated product architecture.
+The deployment architecture was intentionally deferred until it could serve the validated product architecture rather than force premature infrastructure decisions into the application.
 
-It should not force premature decisions into the application.
+That sequencing is now complete for the current MVP: the product architecture was validated first, then deployed without reopening its core reasoning boundaries.
 
-Current unresolved product/runtime questions include:
+Post-MVP product/runtime questions still include:
 
 LinkedIn-native access
 multiple-candidate orchestration
@@ -66,11 +92,11 @@ engagement metadata acquisition
 
 These can materially influence the right deployment design.
 
-Selecting infrastructure too early could create unnecessary coupling or rework.
+The selected Render/Supabase topology was introduced only after the core workflow and experience layer were sufficiently stable, reducing unnecessary coupling and rework.
 
 Deployment Principle
 
-Future deployment must preserve the same architectural boundaries established in local execution.
+Cloud deployment preserves the same architectural boundaries established in local execution.
 
 Cloud deployment must not collapse:
 
@@ -86,7 +112,7 @@ A deployment platform is an execution environment, not a replacement for applica
 
 Minimum Runtime Components
 
-A future deployed system will likely require at least the following logical runtime roles.
+The deployed system contains the following logical runtime roles.
 
 Application / Orchestration Runtime
 
@@ -99,9 +125,9 @@ routing
 state transitions
 configuration loading
 
-This may initially run as a single service.
+This currently runs as a single Render Web Service.
 
-The architecture does not currently require distributed microservices.
+The architecture does not require distributed microservices for the current validated scope.
 
 LLM Provider Access
 
@@ -124,7 +150,7 @@ Web Search Provider Access
 
 Current real search uses Brave Search through the provider-neutral SearchTool interface.
 
-A deployed environment must provide outbound HTTPS access to the configured search provider.
+The deployed Render environment provides outbound HTTPS access to the configured search provider.
 
 The application-facing contract must remain provider-neutral.
 
@@ -176,9 +202,9 @@ future OAuth secrets
 
 Local development can use ignored environment files.
 
-A production deployment should use the selected platform's secret-management mechanism once a provider is chosen.
+The current Render deployment stores environment-specific secrets outside Git through the platform environment configuration.
 
-No specific secret-management product is mandated yet.
+A separate enterprise secret-management product is not required by the current portfolio/MVP scope.
 
 Network Security
 
@@ -206,19 +232,21 @@ They should not replace them.
 
 Inbound Surface
 
-The current project does not yet define a production public API or frontend contract.
+The current deployed product surface is the Streamlit web UI.
 
-A future deployment may expose:
+It exposes:
 
-HTTP API
-web UI
-human approval interface
-agent-execution status
-results/review interface
+editable human theme / intent;
+workflow progress;
+opportunity artifacts;
+research / argument / perspective artifacts;
+Human Perspective Selection;
+Human Content Mode Selection;
+Final Human Refinement;
+on-demand Portuguese translation;
+Run History / Product Memory.
 
-but those interfaces should be designed as separate product capabilities.
-
-They should not be invented solely to make the project deployable.
+A separate public HTTP API is not required by the current MVP and should not be invented solely to make the project appear more production-like.
 
 Human Approval Boundary
 
@@ -242,7 +270,7 @@ as separate states.
 
 Persistence
 
-Persistent storage is not yet formally designed.
+Persistent storage is now implemented for the current MVP, while longer-term retention, migration, backup, and multi-user governance remain future hardening concerns.
 
 Potential future persistence needs may include:
 
@@ -260,9 +288,9 @@ token/cost metrics
 tool-call metadata
 outcome history
 
-The current application should not be prematurely coupled to a specific database.
+The application remains repository/checkpointer-driven rather than coupling semantic components directly to database-specific behavior.
 
-A persistence architecture should be designed when the lifecycle and retention requirements are clear.
+For cloud execution, Supabase PostgreSQL is the selected durable store. Local execution retains InMemorySaver/SQLite implementations.
 
 State Durability
 
@@ -274,19 +302,17 @@ execution state
 and
 business/history persistence
 
-Future deployment must decide:
+The current implementation resolves the principal MVP durability questions:
 
-which workflow state must survive process failure;
+LangGraph workflow/HITL checkpoint state survives through PostgresSaver;
 
-which artifacts should be retained historically;
+Interaction Memory persists through its PostgreSQL repository;
 
-which data should be ephemeral;
+Run History / Product Memory persists through its PostgreSQL repository;
 
-whether human approval requires durable checkpoints;
+Streamlit session_state remains ephemeral.
 
-how retries and resumed executions should behave.
-
-These decisions remain open.
+Automatic frontend reconstruction of an interrupted HITL run after process/session loss remains open as a product-resilience backlog item.
 
 Queueing and Asynchronous Execution
 
@@ -409,7 +435,7 @@ Premature microservice decomposition is not an architectural goal.
 
 Deployment Unit
 
-The likely initial deployment shape is a single application unit containing:
+The current deployment shape is a single application unit containing:
 
 Python application
 LangGraph orchestration
@@ -419,7 +445,7 @@ web-tool adapters
 context preparation
 configuration
 
-This is a logical direction, not a frozen provider-specific deployment decision.
+This is now the implemented provider-specific deployment shape for the current MVP.
 
 Specialist components should remain modular in code even if they share one process.
 
@@ -554,7 +580,7 @@ The workflow should emit meaningful state/events; the frontend should decide how
 
 Cloud Provider Selection Criteria
 
-When a provider decision becomes necessary, evaluate candidates against the application rather than choosing by habit.
+The initial provider decision was evaluated against the application rather than chosen as a target architecture in advance.
 
 Important criteria include:
 
@@ -572,7 +598,7 @@ ability to preserve human approval state
 
 Provider lock-in should be justified by material product value.
 
-Possible Future Topology
+Earlier Illustrative Topology and Current Realization
 
 A potential future topology could look like:
 
@@ -594,20 +620,21 @@ Optional Persistence
 v
 Telemetry / Audit
 
-This is illustrative only.
+This diagram was originally illustrative. The implemented MVP is simpler: Streamlit, LangGraph, and the Python application share one Render service, while Supabase PostgreSQL provides durable cloud persistence.
 
-It is not a committed deployment architecture.
+Infrastructure That Must Not Be Assumed
 
-What Must Not Be Assumed Yet
+Do not describe the project as currently using infrastructure that has not been implemented.
 
-Do not describe the project as currently using:
+Current explicit infrastructure includes PostgreSQL through Supabase.
+
+The project should not be described as using:
 
 AWS
 Azure
 Google Cloud
 Kubernetes
-serverless
-PostgreSQL
+serverless architecture
 Redis
 Kafka
 Celery
@@ -641,15 +668,316 @@ Not all of these must require complex infrastructure, but each must be conscious
 
 Current Next Step
 
-The current next development increment is:
+The frozen Human-Centered MVP, Experience Layer, and current cloud-deployment milestone are complete.
 
-LangGraph Integration
+The immediate work is documentation reconciliation and release hygiene while preserving the 437-test regression baseline.
 
-Deployment work should not displace completion of the frozen Human-Centered MVP.
+Post-MVP work should be selected from explicit backlog items rather than reopening validated core reasoning architecture.
 
-After LangGraph Integration, MVP Validation & Release must validate the complete real flow, regression suite, documentation, and release checkpoint.
+One concrete resilience backlog item is automatic Resume Run after Streamlit session/process loss.
 
-A successful Human-Centered integrated run will provide stronger evidence for what the eventual runtime, persistence, HITL, and observability architecture actually need.
+Implemented Cloud Topology
+
+The current deployed topology is:
+
+Browser
+\|
+v
+Render Free Web Service
+\|
++--\> Streamlit frontend
++--\> LangGraph orchestration
++--\> Python deterministic governance
++--\> Scout / Research bounded agents
++--\> Argument Intelligence / Perspective Generation
++--\> Writer / Quality Evaluator
+\|
++--\> OpenAI API
++--\> Brave Search API
++--\> bounded HTTP reader
+\|
+v
+Supabase PostgreSQL
+\|
++--\> LangGraph checkpoint / HITL state
++--\> Interaction Memory
++--\> Run History / Product Memory
+
+Render Configuration
+
+Repository branch:
+
+main
+
+Build command:
+
+pip install -r requirements.txt
+
+Start command:
+
+PYTHONPATH=. streamlit run app/frontend/main.py --server.address 0.0.0.0 --server.port \$PORT
+
+The explicit repository-root PYTHONPATH is required because Streamlit executes
+app/frontend/main.py and the application imports modules through the app package.
+
+The initial deployment attempt exposed this boundary directly: the application
+built successfully but could not resolve the app package until the runtime
+PYTHONPATH was made explicit.
+
+Declared Runtime Dependencies
+
+The deployed requirements include the application dependencies plus cloud
+persistence/runtime dependencies required by the selected topology.
+
+Relevant additions include:
+
+psycopg\[binary\]
+langgraph-checkpoint-postgres
+streamlit
+
+The Streamlit package must be declared explicitly in requirements because Render
+installs only the repository dependency set.
+
+Environment Configuration
+
+The deployed Render service uses environment configuration including:
+
+OPENAI_API_KEY
+BRAVE_SEARCH_API_KEY
+WEB_TOOL_MODE=real
+DATABASE_URL
+PERSISTENCE_BACKEND=postgres
+
+Secret values are never part of this document and must remain outside Git.
+
+Supabase Connection Mode
+
+The cloud database connection uses the Supabase Session Pooler rather than
+assuming a direct IPv6-capable PostgreSQL route.
+
+This was selected after direct connection testing exposed network/DNS
+compatibility constraints in the deployment path.
+
+The application treats DATABASE_URL as connection information, not as an
+implicit persistence selector.
+
+Persistence Backend Selection
+
+app/config/database.py separates:
+
+credentials
+from
+runtime behavior
+
+Current semantics:
+
+get_database_url()
+-\> reads DATABASE_URL
+
+get_persistence_backend()
+-\> reads PERSISTENCE_BACKEND
+-\> defaults to local
+
+is_postgres_enabled()
+-\> true only when backend == postgres and DATABASE_URL exists
+
+This design was introduced after a full-suite test demonstrated that persistent
+PostgresSaver state can contaminate a deterministic test when a fixed thread_id
+is reused.
+
+The resulting rule is:
+
+local / tests
+PERSISTENCE_BACKEND absent
+-\> local persistence
+
+Render
+PERSISTENCE_BACKEND=postgres
+-\> PostgreSQL persistence
+
+LangGraph Cloud Checkpointing
+
+The workflow checkpointer is environment-aware.
+
+Local:
+InMemorySaver
+
+Cloud:
+PostgresSaver
+
+The cloud PostgresSaver path uses a psycopg connection appropriate for the
+LangGraph checkpoint implementation.
+
+Validation created the LangGraph checkpoint tables in Supabase and then proved
+cross-instance recovery:
+
+workflow instance 1
+-\> execute state with known thread_id
+-\> PostgresSaver
+-\> Supabase
+
+workflow instance 2
+-\> same thread_id
+-\> recover persisted state
+
+This establishes that the checkpoint is not tied to one Python process.
+
+Interaction Memory Cloud Persistence
+
+Interaction Memory retains separate local and cloud repository
+implementations.
+
+Local:
+SQLiteInteractionMemoryRepository
+
+Cloud:
+PostgresInteractionMemoryRepository
+
+The cloud implementation was validated for:
+
+repository selection;
+initialization;
+record creation;
+has_seen;
+agentic draft persistence;
+status transition;
+human-final persistence;
+recent-history retrieval.
+
+Run History Cloud Persistence
+
+Run History / Product Memory also retains separate local and cloud repository
+implementations.
+
+Local:
+SQLiteRunHistoryRepository
+
+Cloud:
+PostgresRunHistoryRepository
+
+The frontend consumes the repository abstraction rather than owning
+database-specific SQLite logic.
+
+Cloud validation covered:
+
+repository selection;
+initialization;
+create;
+get by run_id;
+recent-list retrieval;
+UPSERT;
+updated field recovery.
+
+The deployed Streamlit History also remained available after a Render restart.
+
+Render Restart / HITL Recovery Experiment
+
+A real deployed workflow was intentionally left at the Human Perspective
+Selection interrupt.
+
+The Render service was then restarted.
+
+Before restart:
+
+workflow state
+-\> HUMAN REQUIRED
+-\> HUMAN DECISION
+
+After restart:
+
+PostgresSaver checkpoint
+-\> still persisted
+
+Run History
+-\> still persisted
+
+Streamlit session_state
+-\> lost
+
+frontend
+-\> SYSTEM READY
+
+Interpretation:
+
+backend checkpoint durability is validated;
+
+product-history durability is validated;
+
+automatic frontend session reconstruction is not implemented.
+
+The missing capability is not additional database durability.
+
+The missing capability is reconnecting a user-facing run to its persisted
+thread_id and rebuilding the correct interrupt UI.
+
+Resume Run Backlog
+
+Future target:
+
+History
+\|
++--\> terminal run
+\| \|
+\| +--\> Open / inspect
+\|
++--\> resumable HITL run
+\|
++--\> Resume
+\|
+v
+recover thread_id
+\|
+v
+PostgresSaver
+\|
+v
+authoritative checkpoint
+\|
+v
+reconstruct interrupt/UI
+\|
+v
+continue human decision
+
+This capability is explicitly backlog.
+
+It does not block the current deployment milestone.
+
+Free-Tier Runtime Constraint
+
+Render Free may spin down after inactivity and may introduce cold-start latency.
+
+That behavior is acceptable for the current portfolio/MVP target.
+
+It reinforces one architectural rule:
+
+the Render local filesystem is ephemeral infrastructure, not the durable cloud
+system of record.
+
+Durable state belongs in Supabase PostgreSQL.
+
+Current Deployment Assessment
+
+The current deployment is appropriately described as:
+
+public;
+cloud hosted;
+real-tool enabled;
+durably persisted;
+smoke validated;
+suitable for the current portfolio/MVP scope.
+
+It should not be described as:
+
+fully hardened multi-user production SaaS;
+production-authenticated;
+production-observable at enterprise depth;
+horizontally scaled;
+autonomously publishing to LinkedIn.
+
+Current automated regression baseline:
+
+437 passing tests.
 
 Maintenance Rule
 
@@ -673,11 +1001,11 @@ When a major choice becomes durable, also record the rationale in 04_decision_lo
 
 Summary
 
-The current deployment architecture is intentionally:
+The current MVP deployment architecture is now:
 
-UNDECIDED
+IMPLEMENTED AND VALIDATED FOR CURRENT SCOPE
 
-but the deployment constraints are not.
+while the original deployment constraints remain authoritative.
 
 Any future hosting solution must preserve:
 
@@ -690,14 +1018,14 @@ observable workflow execution
 cost awareness
 human publication authority
 
-The correct cloud architecture should emerge from the validated product and runtime requirements, not precede them.
+The selected Render/Supabase architecture emerged from the validated product and runtime requirements rather than preceding them.
 
 MVP-Derived Deployment Requirements
 
 The local MVP now establishes additional runtime requirements that the eventual
 cloud architecture must preserve.
 
-These requirements do not select a cloud provider or production database.
+These requirements informed the selected Render/Supabase deployment and remain constraints on future evolution.
 
 Human-in-the-Loop Durability
 
@@ -714,16 +1042,17 @@ state.
 Local development currently uses LangGraph checkpoint/thread state to support
 this behavior.
 
-Production deployment must explicitly decide how checkpoint state survives:
+Cloud deployment now uses PostgresSaver so checkpoint state can survive
+process restart, instance replacement, and application redeploy.
 
-process restart;
-container restart;
-instance replacement;
-application redeploy;
-multiple concurrent user sessions.
+A direct persistence test recovered state from a newly constructed workflow
+instance using the same thread_id.
 
-The deployment design must not assume that in-memory state alone is sufficient
-for production HITL resume semantics.
+The deployment therefore does not rely on in-memory checkpoint state for cloud
+HITL durability.
+
+Multiple concurrent user sessions and automatic frontend reconstruction after
+session loss remain separate hardening concerns.
 
 Run History / Product Memory Durability
 
@@ -731,20 +1060,25 @@ The local MVP implements product-facing Run History using:
 
 data/history/run_history.db
 
-Current technology:
+Local technology:
 
 SQLite
 
-This local database is sufficient for MVP development and validation.
+Cloud technology:
 
-It is not yet selected as the production system of record.
+PostgreSQL through Supabase
 
-Production deployment must explicitly decide durable storage for Run History /
-Product Memory and preserve the conceptual separation between:
+SQLite remains appropriate for local development. PostgreSQL is the durable
+cloud system of record for the deployed MVP.
+
+The cloud deployment preserves the conceptual separation between:
 
 LangGraph execution/checkpoint state;
 Interaction Memory;
 Run History / Product Memory.
+
+All three use Supabase PostgreSQL infrastructure in cloud execution, but through
+separate persistence abstractions and responsibilities.
 
 A production history store must preserve stable run identity and prevent a
 later incomplete state from degrading a richer completed run.
@@ -803,15 +1137,27 @@ artifacts.
 
 Current Deployment Gate
 
-The local MVP is not yet considered fully closed.
+The local MVP and current cloud-deployment milestone are closed for the agreed
+portfolio/MVP scope.
 
-Before cloud deployment begins, the remaining validation target is:
+The former validation gate:
 
 authoritative COMPLETE -\> Run History persistence
 
-Once that local persistence path is validated, deployment can proceed without
-reopening the validated reasoning architecture.
+has been completed.
 
-Production provider, database, checkpoint backend, observability stack, and
-secret-management implementation remain intentionally unselected at this
-stage.
+The current deployment has also validated:
+
+Render build and Streamlit startup;
+public application access;
+OpenAI-backed workflow execution;
+Brave Search real mode;
+Supabase connectivity;
+PostgresSaver checkpoint recovery by thread_id;
+Interaction Memory PostgreSQL behavior;
+Run History PostgreSQL create/read/list/upsert behavior;
+Run History survival across Render restart.
+
+Production-grade observability, multi-user authentication, formal data
+retention/backup policy, and automatic frontend Resume Run remain post-MVP
+hardening concerns.

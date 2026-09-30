@@ -706,7 +706,7 @@ deterministic fake/mocked external dependencies
 Real validation
 explicit smoke and end-to-end runs
 
-The complete current automated suite passes 189 tests, while real Scout and Research smoke validation have separately passed.
+At the time of this decision, the automated suite used deterministic external dependencies while real Scout and Research smoke validation were performed separately. The current project-wide regression baseline has since reached 437 passing tests.
 
 Rationale
 
@@ -748,6 +748,292 @@ real LinkedIn integration while preserving human authority
 These open areas are also explicitly tracked in the current project context.
 
 When one becomes established, it should receive a new ADR rather than being retroactively hidden inside implementation.
+
+ADR-022 --- Persistence backend selection is explicit
+
+Status: Accepted
+Date: 2026-09-30
+
+Context
+
+Cloud persistence introduced a subtle test-isolation problem.
+
+DATABASE_URL may legitimately exist in a developer environment even when local execution and automated tests should continue using isolated local persistence.
+
+During PostgreSQL checkpoint validation, a workflow integration test that reused a fixed thread_id recovered durable state from a previous execution. The behavior demonstrated that using database credentials alone as an implicit backend selector would couple local/test semantics to persistent cloud state.
+
+Decision
+
+Persistence technology is selected explicitly through PERSISTENCE_BACKEND.
+
+DATABASE_URL provides connection information but does not independently enable PostgreSQL behavior.
+
+Current rule:
+
+PERSISTENCE_BACKEND=postgres
++
+DATABASE_URL configured
+-\>
+PostgreSQL enabled
+
+Otherwise:
+local persistence remains active.
+
+Rationale
+
+Credentials and runtime behavior are different concerns.
+
+An explicit selector preserves deterministic local/test execution while allowing the deployed environment to opt into durable PostgreSQL state.
+
+Consequences
+
+local development remains local by default;
+
+automated tests do not bind to Supabase merely because DATABASE_URL exists;
+
+Render must explicitly configure PERSISTENCE_BACKEND=postgres;
+
+fixed thread identifiers remain a test-isolation concern when PostgreSQL is intentionally enabled;
+
+database configuration becomes a deterministic application boundary.
+
+ADR-023 --- Cloud persistence uses PostgreSQL while preserving three logical persistence domains
+
+Status: Accepted
+Date: 2026-09-30
+
+Context
+
+The deployed application must survive process sleep, restart, and replacement on Render.
+
+The system already has three materially different persistence responsibilities:
+
+LangGraph execution/checkpoint state;
+
+Interaction Memory used by agent behavior;
+
+Run History / Product Memory used by the human-facing product.
+
+Using one cloud database can reduce infrastructure cost, but sharing infrastructure must not erase the conceptual boundaries between those responsibilities.
+
+Decision
+
+Supabase PostgreSQL is the current cloud persistence platform.
+
+The three logical domains remain separate:
+
+LangGraph checkpoint / HITL state
+- local: InMemorySaver
+- cloud: PostgresSaver
+
+Interaction Memory
+- local: SQLiteInteractionMemoryRepository
+- cloud: PostgresInteractionMemoryRepository
+
+Run History / Product Memory
+- local: SQLiteRunHistoryRepository
+- cloud: PostgresRunHistoryRepository
+
+Rationale
+
+One PostgreSQL service is sufficient for the current MVP scale and cost target.
+
+Separate application abstractions preserve different ownership, lifecycle, and consumer semantics without requiring three separate infrastructure products.
+
+Consequences
+
+checkpoint state must not be treated as product history;
+
+Interaction Memory must not be treated as Run History;
+
+repositories can evolve independently;
+
+the Render filesystem is not the durable cloud system of record;
+
+Redis, Kafka, and additional stateful infrastructure are not required by the current validated scope.
+
+ADR-024 --- Initial cloud runtime is Render plus Supabase PostgreSQL
+
+Status: Accepted
+Date: 2026-09-30
+
+Context
+
+The current MVP is a Python/Streamlit application with LangGraph orchestration, bounded web access, explicit HITL decisions, and modest portfolio-scale traffic.
+
+The deployment goal prioritizes:
+
+zero or very low infrastructure cost;
+
+learning value;
+
+minimal operational complexity;
+
+preservation of the existing single-application architecture.
+
+Decision
+
+The initial cloud topology is:
+
+Render Free Web Service
+- Python runtime
+- Streamlit frontend
+- LangGraph orchestration
+
+Supabase Free PostgreSQL
+- LangGraph checkpoints
+- Interaction Memory
+- Run History / Product Memory
+
+External services remain:
+
+OpenAI API
+
+Brave Search API
+
+bounded HTTP reader
+
+The Render service uses the repository main branch.
+
+Current build command:
+
+pip install -r requirements.txt
+
+Current start command:
+
+PYTHONPATH=. streamlit run app/frontend/main.py --server.address 0.0.0.0 --server.port \$PORT
+
+Secrets and environment-specific configuration remain external to Git.
+
+Rationale
+
+The topology is sufficient for the validated MVP and avoids premature distributed infrastructure.
+
+It preserves the same component boundaries already validated locally.
+
+Consequences
+
+Render Free may sleep and introduce cold-start latency;
+
+the application process and local filesystem are ephemeral;
+
+durable state belongs in PostgreSQL;
+
+deployment configuration is partly external to the repository and must remain documented;
+
+a successful Git commit alone does not fully describe the deployed runtime configuration;
+
+production-grade authentication, observability, and distributed scaling remain separate hardening concerns.
+
+ADR-025 --- Durable LangGraph checkpoints do not imply automatic frontend session recovery
+
+Status: Accepted
+Date: 2026-09-30
+
+Context
+
+PostgresSaver was validated by recovering workflow state from a new workflow instance using the same thread_id.
+
+A later production-runtime test intentionally left a deployed workflow waiting at Human Perspective Selection and restarted the Render service.
+
+After restart:
+
+the PostgreSQL checkpoint survived;
+
+Run History survived;
+
+Streamlit st.session_state did not survive;
+
+the frontend returned to its ready state instead of reconstructing the interrupted HITL screen.
+
+The backend state was therefore durable, but the frontend no longer held the active thread_id required to reopen it automatically.
+
+Decision
+
+Automatic recovery of an interrupted HITL run after Streamlit session/process loss is not part of the closed MVP/cloud-deployment milestone.
+
+It is moved to backlog as an explicit Resume Run capability.
+
+Target future behavior:
+
+History
+\|
++--\> resumable run
+\|
+v
+Resume
+\|
+v
+recover thread_id
+\|
+v
+PostgresSaver checkpoint
+\|
+v
+reconstruct interrupt/UI
+\|
+v
+continue human decision
+
+Rationale
+
+The persistence foundation is working as designed.
+
+The missing behavior is product-level reconstruction of session identity and UI state, not a failure of PostgreSQL or LangGraph checkpoint durability.
+
+Consequences
+
+cloud deployment remains closed for the current MVP scope;
+
+interrupted backend state remains recoverable when thread_id is known;
+
+History currently remains primarily a product-memory / inspection surface;
+
+future History UX should distinguish terminal runs from resumable HITL runs;
+
+Resume Run should not require collapsing Run History and checkpoint persistence into one data model.
+
+ADR-026 --- Cloud deployment does not change human publication authority
+
+Status: Accepted
+Date: 2026-09-30
+
+Context
+
+Moving the application from local execution to a publicly reachable cloud runtime increases operational availability but does not change the product's authority model.
+
+A hosted agentic application could otherwise create pressure to equate workflow completion with autonomous external action.
+
+Decision
+
+Cloud deployment does not authorize autonomous LinkedIn publication.
+
+The governing principle remains:
+
+AI expands.
+Human converges.
+AI materializes.
+Human owns.
+
+Quality PASS, Final Human Refinement, durable persistence, and public hosting do not grant the application publication authority.
+
+Publication remains manual and outside autonomous execution.
+
+Rationale
+
+Hosting topology is an infrastructure decision.
+
+Publication authority is a product-governance decision.
+
+The two must remain independent.
+
+Consequences
+
+future LinkedIn-native integration must preserve an explicit human publication boundary;
+
+cloud automation must not silently convert COMPLETE into publish;
+
+persistence and deployment work do not reopen the human-authority architecture established by ADR-017 and ADR-019.
 
 ADR Maintenance Rule
 

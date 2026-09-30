@@ -1,387 +1,321 @@
-Current Architecture
-Document Purpose
-This document is the factual implementation view of the LinkedIn Agentic AI System.
-01_system_overview.md explains the architectural model and design philosophy.
-This file answers a different question:
-What is implemented now, and how are the current components connected?
-It should be updated when the implemented workflow, component boundaries, routing, tooling, state, or runtime limits materially change.
-Current Development Snapshot
-Current automated baseline:
-437 passing tests
-The Human-Centered Conversation Intelligence architecture is now integrated
-through the real LangGraph workflow.
-Implemented and validated component / orchestration milestones:
-Argument Contracts v0.1 --- implemented
-Argument Intelligence v0.1 --- implemented
-Perspective Generation v0.1 --- implemented
-Human Perspective Selection v0.1 --- implemented and integrated as HITL
-Writer / Voice Integration v0.1 --- implemented
-LangGraph Integration --- implemented
-MVP Experience Layer 7.1 --- Editable Theme / Intent --- implemented and validated
-MVP Experience Layer 7.2 --- Content Mode Selection --- implemented and validated
-The current integrated graph contains two sequential Human-in-the-Loop
-boundaries:
-PerspectiveSet
-|
+System Overview
+Purpose
+The LinkedIn Agentic AI System is a controlled, human-centered
+agentic AI system for discovering strategically relevant professional
+conversations, deciding whether they are worth pursuing, researching the
+evidence required for a defensible contribution, expanding that evidence
+into multiple intellectual directions, helping the human choose what is
+worth saying, materializing the selected direction into a draft,
+evaluating its quality, and preserving human authority over publication.
+The system is not designed as an autonomous social-media bot.
+The final MVP experience layer makes the same architecture usable as an
+interactive product. Editable Theme / Intent, explicit Content Mode Selection,
+Final Human Refinement, and on-demand Portuguese translation are now
+implemented and validated end-to-end. Run History / Product Memory is
+implemented and validated with navigable persistence. The local MVP experience
+layer is closed, and the same product is now deployed on Render with durable
+PostgreSQL/Supabase persistence for cloud execution.
+Its purpose is to reduce the manual effort required to move from:
+"Where should I contribute?"
+to:
+"What are the defensible directions here, which one do I want to own,
+and how should it be expressed?"
+The system therefore separates semantic reasoning, deterministic
+governance, workflow orchestration, and human judgment.
+Core Product Principle
+AI expands. Human converges. AI materializes. Human owns.
+AI is used where machine intelligence provides leverage:
+discovery;
+filtering;
+research;
+evidence retrieval;
+synthesis;
+tension mapping;
+perspective generation;
+drafting;
+evaluation.
+Human judgment remains authoritative for:
+intellectual direction;
+perspective selection, rejection, or combination;
+personal context;
+contextual nuance;
+final editorial judgment;
+publication.
+Human-in-the-Loop is therefore not merely a safety gate. It is part of
+the cognitive architecture of the product.
+A second established principle remains:
+Opportunity != Popularity
+A post is not valuable merely because it has high engagement. A useful
+opportunity depends on whether Rodrigo can make a relevant,
+differentiated, professionally valuable, and defensible contribution.
+Frozen MVP Target
+MVP Human-Centered Conversation Intelligence = a system capable of
+finding or receiving an opportunity, qualifying it, researching it,
+transforming evidence into an ArgumentBrief, generating multiple
+defensible perspectives, asking the human for the desired intellectual
+direction, and only then producing and evaluating the final content. The
+final experience-layer increment extends this target without changing the
+core human-centered reasoning principle. Editable Theme / Intent, Content Mode
+Selection, Final Human Refinement, and optional Portuguese translation are
+implemented and validated. Run History / Product Memory is also implemented
+and validated. The complete MVP experience layer is closed, and cloud deployment
+has been validated without reopening the core reasoning architecture.
+The MVP is intentionally narrower than the broader long-term product
+vision.
+Performance Analytics, Feedback Learning, adaptive policy calibration,
+advanced UX, autonomous publication, and other post-MVP capabilities are
+not required to close this MVP.
+Target MVP Architecture
+Human Intent / Editable Theme
+\|
 v
-Human Perspective Selection
-|
+Discovery / Scout
+\|
 v
-SelectedPerspective
-|
-v
-Human Content Mode Selection
-|
-v
-ContentMode
-|
-v
-Writer
-Supported content modes are:
-linkedin_post
-linkedin_reply
-article
-Writer and Quality Evaluator are content-mode-aware.
-Legacy execution paths default to linkedin_reply for backward compatibility.
-Real Streamlit E2E has validated the complete path through both HITL
-interrupt/resume boundaries and into Human Review.
-The next planned product capability is:
-MVP Experience Layer 7.3 --- Final Human Refinement
-Before 7.3, two frontend-only hardening defects observed during real E2E are
-being finalized:
-visual state / phase can lag the backend worker;
-transient Scout / Opportunity text can flicker during Streamlit automatic
-reruns.
-These are presentation/synchronization defects and do not redefine the
-validated graph, component contracts, or reasoning architecture.
-Active Workflow
-The implemented primary workflow is:
-Human Theme / Intent
-|
-v
-Scout
-|
+Target Qualification
+\|
 v
 Opportunity Evaluation
-|
-+-- LOW ------------------------------> END
-|
-+-- MEDIUM --> QUEUED ----------------> END
-|
+\|
++-- LOW -----------------------------\> END
+\|
++-- MEDIUM --\> QUEUED --------------\> END
+\|
 +-- HIGH
-|
-v
-ACCEPTED_FOR_RESEARCH
-|
+\|
 v
 Research
-|
+\|
 v
 ResearchBrief
-|
+\|
 v
 Argument Intelligence
-|
+\|
 v
 ArgumentBrief
-|
+\|
 v
 Perspective Generation
-|
+\|
 v
 PerspectiveSet
-|
+\|
 v
 Human Perspective Selection
-|
+\|
 v
 SelectedPerspective
-|
+\|
 v
 Human Content Mode Selection
-|
-+-- linkedin_post
-+-- linkedin_reply
-+-- article
-|
+(LinkedIn Post / LinkedIn Reply / Article)
+\|
 v
-Writer
-|
+Rodrigo Voice / Writer
+\|
 v
 Quality Evaluator
-|
-+-- PASS -----------------> Human Review
-|
-+-- REVISE --> Writer
-| |
-| +--> Quality Evaluator
-|
-+-- REJECT ---------------------> END
-Publication remains manual and outside autonomous execution.
-The Writer revision loop is bounded by the workflow iteration limit.
-Research, Argument Intelligence, and Perspective Generation are not
-automatically rerun when Writer receives a normal revision request.
-Repository-Level Component Map
-The implementation is organized around the following responsibilities:
-app/
-|
-+-- agents/
-| +-- scout.py
-| +-- research.py
-|
-+-- components/
-| +-- opportunity_evaluator.py
-| +-- argument_intelligence.py
-| +-- perspective_generation.py
-| +-- perspective_selection.py
-| +-- writer.py
-| +-- evaluator.py
-|
-+-- frontend/
-| +-- main.py
-|
-+-- graph/
-| +-- state.py
-| +-- workflow.py
-| +-- nodes/
-| +-- scout_node.py
-| +-- opportunity_evaluator_node.py
-| +-- opportunity_routing_nodes.py
-| +-- research_node.py
-| +-- argument_intelligence_node.py
-| +-- perspective_generation_node.py
-| +-- human_perspective_selection_node.py
-| +-- human_content_mode_selection_node.py
-| +-- writer_node.py
-| +-- evaluator_node.py
-|
-+-- schemas/
-| +-- scout.py
-| +-- opportunity.py
-| +-- research.py
-| +-- argument.py
-| +-- writer.py
-| +-- evaluator.py
-| +-- tools.py
-|
-+-- prompts/
-| +-- perspective_generation.py
-| +-- writer.py
-| +-- evaluator.py
-| +-- rodrigo_voice.py
-|
-+-- tools/
-| +-- web_search.py
-| +-- web_reader.py
-| +-- brave_search.py
-| +-- http_reader.py
-| +-- web_tools.py
-| +-- errors.py
-|
-+-- context_preparation.py
-Exact filenames can evolve, but the responsibility boundaries should remain
-explicit.
-Orchestration Layer
-Global State
-The LangGraph workflow carries shared state across nodes.
-The current state includes concepts such as:
-scout_objective
-post
-opportunity_evaluation
-research_result
-argument_brief
-perspective_set
-selected_perspective
-content_mode
-current_draft
-quality_evaluation
-final_refinement_action
-final_refinement_guidance
-iteration
-next_step
-human_feedback
-status
-Specialist components should not automatically receive this entire state.
-Nodes are responsible for mapping the relevant global state into
-component-specific inputs.
-The current human-centered graph is compiled with checkpointing where
-interrupt/resume behavior is required.
-Human Perspective Selection and Human Content Mode Selection are explicit
-graph nodes rather than hidden frontend-only decisions.
-Scout Node
-The Scout node bridges the global workflow and the bounded Scout agent.
-Conceptually:
-Workflow
-|
+\|
++-- PASS ----------------------------\> Human Final Review
+\|
++-- REVISE --\> Writer --\> Evaluator
+\|
++-- REJECT --------------------------\> END
+\|
 v
-scout_node
-|
-+--> obtain configured SearchTool / ReadTool
-|
-v
-run_scout(...)
-|
-v
-ScoutState
-|
-v
-selected PostCandidate
-|
-v
-workflow state
-Routing after Scout is deterministic.
-Current behavior:
-0 candidates
--> END
-1 candidate
--> Opportunity Evaluation
-1 distinct candidates
--> explicit unsupported-condition failure
-Duplicate selection of the same candidate is controlled rather than treated as multiple independent opportunities.
-Multiple-candidate orchestration remains intentionally unresolved.
-Scout Runtime
-Scout is implemented as a bounded Python agent loop rather than as an internal LangGraph subgraph.
-Action vocabulary:
+Manual Publication
+Publication remains outside autonomous execution.
+The core Human-Centered Conversation Intelligence flow is integrated in
+the LangGraph workflow. The MVP Experience Layer now includes Editable Theme /
+Intent, Content Mode Selection, Final Human Refinement, on-demand Portuguese
+translation, and Run History / Product Memory. All five capabilities are implemented and validated through the real Streamlit
+workflow. Run History is implemented, navigable, and validated both locally and
+through the deployed PostgreSQL/Supabase persistence path.
+Responsibility Layers
+LLM --- Semantic Intelligence
+The LLM handles tasks where interpretation matters, including:
+search strategy;
+source selection;
+topic relevance;
+contribution potential;
+evidence interpretation;
+synthesis;
+tension identification;
+perspective generation;
+writing;
+semantic quality assessment.
+The LLM may expand the intellectual decision space, but it must not
+silently replace the human-selected intellectual direction.
+Python --- Deterministic Governance
+Python owns:
+validation;
+scoring;
+thresholds;
+guardrails;
+action authorization;
+provenance enforcement;
+counters;
+operational limits;
+context budgets;
+factual state mutation;
+validation of explicit human selections.
+Semantic proposals do not automatically become authoritative operational
+state.
+LangGraph --- Workflow Orchestration
+LangGraph coordinates:
+shared workflow state;
+node transitions;
+deterministic routing;
+bounded revision paths;
+Human-in-the-Loop transitions;
+termination.
+LangGraph orchestrates specialist components; it should not absorb their
+business logic.
+Human --- Intellectual and Publication Authority
+The human owns two distinct decision boundaries.
+Intellectual convergence
+AI researches
+-\> AI builds argument space
+-\> AI generates defensible perspectives
+-\> HUMAN SELECTS / REJECTS / COMBINES / GUIDES
+Final ownership
+AI materializes selected direction
+-\> AI evaluates quality
+-\> HUMAN REVIEWS
+-\> HUMAN DECIDES WHETHER TO PUBLISH
+Autonomous LinkedIn publication and commenting remain explicit
+non-goals.
+Discovery / Scout
+Scout is the bounded discovery agent.
+Its action vocabulary is:
 SEARCH
 READ
 SELECT
 FINISH
-Execution pattern:
+Its loop is:
 ScoutState
-|
+\|
 v
-LLM decision
-|
+LLM chooses allowed action
+\|
 v
-ScoutAction
-|
+Structured ScoutAction
+\|
 v
-Python validation / authorization
-|
+Python authorization
+\|
 v
-tool execution
-|
+Tool execution
+\|
 v
-state mutation
-|
-+-------> next bounded decision
-The LLM owns semantic action selection.
-Python owns legal execution.
-Opportunity Evaluator Node
-The Opportunity Evaluator receives a validated PostCandidate.
-The semantic evaluator produces:
-topic_relevance
-positioning_fit
-contribution_potential
-research_cost
-The application then derives:
-research_efficiency = 100 - research_cost
-Current score:
-Contribution Potential × 0.30
-Positioning Fit × 0.25
-Topic Relevance × 0.20
-Engagement Potential × 0.15
-Research Efficiency × 0.10
-Current mandatory LOW guardrails:
-Contribution Potential < 30
-Positioning Fit < 30
-Topic Relevance < 25
-Otherwise:
-HIGH >= 80
-MEDIUM >= 60 and < 80
-LOW < 60
-Where reliable engagement data is unavailable, the current implementation uses a neutral placeholder rather than allowing the model to invent engagement metrics.
-Opportunity Routing
-Routing is deterministic:
-LOW
--> END
-MEDIUM
--> QUEUED
--> END
-HIGH
--> ACCEPTED_FOR_RESEARCH
--> Research
-The semantic model therefore does not directly choose whether the graph enters Research.
-It provides structured signals; deterministic application logic produces the operational classification.
-Research Node
-The Research node is integrated into the HIGH opportunity path.
-Conceptually:
-PostCandidate
-+
+Observation -\> State -\> next bounded decision
+The model decides semantically what it wants to do. Python decides
+whether the action is legal.
+Web Tool Layer
+Scout and Research use provider-neutral contracts:
+SearchTool(query) -\> list(SearchResult)
+ReadTool(url) -\> str
+Two execution modes are supported:
+FAKE MODE -\> deterministic tools for isolated tests
+REAL MODE -\> Brave Search + bounded HTTP reader
+The real reader validates network access and includes controls for URL
+scheme, DNS resolution, localhost/private destinations, redirects,
+timeouts, content type, response size, and controlled external failures.
+Content Preparation
+External pages pass through explicit preparation boundaries:
+HTTP response
+\|
+v
+Main Content Extraction
+\|
++-\> prefer article/main
++-\> density fallback for section/div
+\|
+v
+Editorial text
+\|
+v
+Context Preparation
+\|
++-\> normalize
++-\> remove exact duplicate lines
++-\> count tokens
++-\> enforce component budget
+\|
+v
+PreparedContext
+\|
+v
+LLM-facing input
+This prevents arbitrary raw webpages from being treated as clean,
+unlimited model context.
+Current principal budgets:
+Scout read context \<= 1800 tokens
+Research per-read context \<= 2500 tokens
+Research cumulative read context \<= 8000 tokens
 Opportunity Evaluation
-|
-v
-research_node
-|
-+--> get_web_tools()
-|
-v
-ResearchState
-|
-v
-run_research_loop(...)
-|
-v
-ResearchBrief
-|
-v
-research_result in workflow state
-|
-v
-Argument Intelligence
-The node validates that the required opportunity context exists and that the
-opportunity is eligible for Research before invoking the agent.
-Research output is not sent directly to Writer in the current primary flow.
-It first passes through Argument Intelligence and Perspective Generation,
-followed by explicit human convergence.
-Research Runtime
-Research uses a bounded semantic loop with:
+Opportunity Evaluation answers:
+"Is this opportunity worth pursuing?"
+Current weighted dimensions:
+Dimension Weight
+Contribution Potential 30%
+Positioning Fit 25%
+Topic Relevance 20%
+Engagement Potential 15%
+Research Efficiency 10%
+The LLM produces semantic signals. Python calculates the weighted score,
+applies mandatory guardrails, and produces the operational
+classification.
+HIGH -\> ACCEPTED_FOR_RESEARCH -\> Research
+MEDIUM -\> QUEUED -\> END
+LOW -\> END
+Opportunity Evaluation is a strategic resource-allocation gate. It does
+not determine Rodrigo's final intellectual position.
+Research
+Research transforms an accepted opportunity into the minimum evidence
+package needed for a factual and defensible contribution.
+Actions:
 SEARCH
 READ
 EXTRACT
 FINISH
-The runtime separates discovery, reading, and evidence extraction:
-SEARCH
-|
-v
+Provenance chain:
 SearchResult
-|
+\|
 v
-READ
-|
+Authorized URL
+\|
 v
 ReadSource
-|
-v
-EXTRACT
-|
+\|
 v
 EvidenceItem
-|
+\|
 v
 ResearchBrief
-Only extracted evidence is intended to support Writer-facing factual findings.
-Current operational limits:
+A search result is not automatically evidence. A read page is not
+automatically evidence. Evidence must be explicitly extracted and
+preserve provenance.
+Current principal runtime limits:
 max steps 10
 max decisions 12
 max searches 3
 max reads 5
 max evidence items 6
-Current completion statuses include:
-SUFFICIENT
-INSUFFICIENT
-LIMIT_REACHED
-Differentiated graph routing for all Research completion statuses remains a future hardening decision.
+Research may terminate as SUFFICIENT, INSUFFICIENT, or
+LIMIT_REACHED.
+Research should remain independent from the final editorial direction
+whenever practical so that multiple perspectives can reuse the same
+evidence base.
 Argument Intelligence
-Argument Intelligence is integrated after Research.
-Input:
-ResearchBrief
-Output:
-ArgumentBrief
-Its responsibility is to organize the evidence into an intellectual decision
-artifact rather than write final content.
-Representative content includes:
-original thesis;
+Argument Intelligence sits between Research and final content
+generation.
+Its responsibility is not to write the final LinkedIn contribution.
+It transforms a ResearchBrief into an ArgumentBrief: a compact
+intellectual decision artifact that can expose, where supported by the
+evidence:
+the original thesis;
 relevant context;
 strongest evidence;
 counterevidence;
@@ -389,462 +323,600 @@ tensions and trade-offs;
 uncertainty;
 possible contribution areas;
 source references.
-This boundary separates:
-what the evidence supports
-from:
-what may be worth saying.
-Perspective Generation
-Perspective Generation is integrated after Argument Intelligence.
-Input:
+Conceptually:
+ResearchBrief
+\|
+v
+Argument Intelligence
+\|
+v
 ArgumentBrief
-Output:
+This boundary separates researching what is supported from
+deciding what is worth saying.
+Perspective Generation
+Perspective Generation deliberately preserves divergence before human
+convergence.
+Instead of immediately producing one supposedly "best" answer, the
+system generates a small set of materially distinct and defensible
+intellectual directions grounded in the same ArgumentBrief and
+evidence base.
+Conceptually:
+ArgumentBrief
+\|
+v
+Perspective Generation
+\|
+v
 PerspectiveSet
-The component generates a small set of materially distinct and defensible
-intellectual directions grounded in the same evidence base.
 A perspective represents what could be worth saying.
-It is not merely a tone or wording variation.
-Artificial disagreement should not be manufactured solely to create options.
+It is not merely a change in tone, style, or wording.
+Artificial disagreement should not be created solely to produce multiple
+options.
 Human Perspective Selection
-Human Perspective Selection is an explicit LangGraph interrupt.
-Input:
+Human Perspective Selection is the central convergence boundary of the
+MVP.
+The human may:
+select a perspective;
+reject a proposed direction;
+combine ideas where the contract supports it;
+add guidance or personal context;
+modify the intended direction;
+request another direction through the interaction layer.
+The selected intellectual direction is represented explicitly through
+SelectedPerspective.
+Conceptually:
 PerspectiveSet
-Human decision:
-perspective_id
-optional human_guidance
-Output:
+\|
+v
+Human decision
+\|
+v
 SelectedPerspective
-The frontend presents the alternatives and resumes the graph with the human
-selection.
-SelectedPerspective is authoritative downstream context.
-Human Content Mode Selection
-Human Content Mode Selection is the second sequential LangGraph interrupt.
-It occurs after SelectedPerspective and before Writer.
-Valid values:
-linkedin_post
-linkedin_reply
-article
-The human decision is stored as content_mode in workflow state.
-Content mode changes form, depth, contextual independence, and communication
-behavior.
-It does not change the selected intellectual direction.
-Real Streamlit E2E has validated both HITL interrupt/resume boundaries in
-sequence.
-Writer Node
-Writer materializes the human-selected intellectual direction.
-The current integration follows the component-specific-input principle:
-Global workflow state
-|
-v
-writer_node
-|
-v
-Writer-specific input
-|
-v
+Only after this convergence should the system materialize the complete
+final contribution.
+The human selection is authoritative context. Downstream generation must
+not silently substitute another argument.
+Perspective Is Not Expression
+The architecture explicitly separates:
+Perspective
+What should be said.
+from:
+Expression
+How the selected idea should be communicated.
+A technical perspective can be expressed conversationally. An
+organizational perspective can be expressed humorously. These dimensions
+must not be collapsed into one variable.
+MVP Experience Layer
+The final MVP increment adds a product experience layer without reopening
+the validated core reasoning architecture. Its purpose is to expose the
+existing agentic capabilities through a more flexible and navigable human
+workflow.
+The current capabilities and status are:
+Editable Theme / Intent --- IMPLEMENTED AND VALIDATED
+The human can define the topic to explore instead of relying on a fixed
+Scout objective. The application converts the human theme into the bounded
+Scout objective while preserving the existing discovery guardrails.
+Real Streamlit runs have validated this behavior across different themes,
+demonstrating that the architecture is not hard-coded to a single
+professional domain.
+Content Mode Selection --- IMPLEMENTED AND VALIDATED
+After selecting the intellectual perspective, the human chooses how the
+idea should be materialized. Initial MVP modes are:
+LinkedIn Post;
+LinkedIn Reply / Comment;
+Article.
+Content mode is an expression decision, not an intellectual-position
+decision. The same SelectedPerspective may therefore be materialized in
+different formats without rerunning Research, Argument Intelligence, or
+Perspective Generation. Writer and Quality Evaluator are content-mode-aware,
+and legacy paths default to linkedin_reply for compatibility. Real Streamlit
+E2E has validated both sequential HITL boundaries through Human Final Review.
+Final Human Refinement --- IMPLEMENTED AND VALIDATED
+After a generated draft passes quality evaluation, the human can provide
+additional editorial guidance for final adjustment, such as tone, emphasis,
+length, framing, or closing. This refinement must preserve the selected
+intellectual direction unless the human explicitly changes it.
+Bilingual Presentation --- IMPLEMENTED AND VALIDATED
+The MVP remains English-first internally. Final generated content can be
+presented in English and translated to Portuguese on demand through a
+Translate interaction. Translation is treated as a presentation layer so
+that it does not duplicate the complete reasoning pipeline or increase cost
+unnecessarily.
+Run History / Product Memory --- IMPLEMENTED AND VALIDATED
+The application exposes navigable history for workflow runs so that
+the intellectual work produced by the system does not disappear when a new
+workflow starts. A history entry should preserve, at minimum:
+human theme / intent;
+selected supporting source and link;
+selected perspective;
+content mode;
+final generated response;
+translated response when requested;
+relevant run metadata required to reconstruct the user-facing result.
+This product-facing run history is distinct from Interaction Memory.
+Interaction Memory primarily supports agent behavior such as URL
+canonicalization, novelty, and avoiding repeated content. Run History
+exists so the human can revisit prior intellectual work and generated
+artifacts. Both may use persistent storage, but they have different
+responsibilities.
+The intended experience is therefore:
+Editable Theme
+-\> Discovery / Qualification / Research
+-\> Argument Intelligence
+-\> Perspective Generation
+-\> Human Perspective Selection
+-\> Human Content Mode Selection
+-\> Writer / Quality Evaluation
+-\> Human Final Refinement
+-\> Optional Translation
+-\> Persistent Run History
+-\> Manual Publication
+The core Scout, Opportunity Evaluation, Research, Argument Intelligence,
+Perspective Generation, and scoring behavior should remain frozen during
+this experience-layer increment except where a genuine defect requires a
+change.
+Rodrigo Voice
+Rodrigo Voice is a personalization layer, not a simulator of Rodrigo's
+beliefs.
+Its responsibility is narrower:
+"Given this specific human-selected perspective, how might Rodrigo
+naturally express it?"
+Rodrigo Voice must not independently infer which intellectual position
+Rodrigo should adopt.
+This keeps personalization downstream from human intellectual
+convergence.
 Writer
-|
-v
-current_draft
-Current Writer-facing context includes:
-PostCandidate
+The Writer materializes the human-selected direction into a professional
+contribution draft using the available evidence and personalization
+context.
+Its role is therefore:
+SelectedPerspective
++
+ContentMode
++
 ResearchBrief / evidence context
-SelectedPerspective
-ContentMode
-previous_draft when revising
-revision_instruction when revising
-Writer does not own source authorization, evidence provenance, perspective
-selection, content-mode selection, quality routing, or publication.
-SelectedPerspective is authoritative intellectual context.
-ContentMode controls the expression contract.
-Supported modes:
-linkedin_post
-linkedin_reply
-article
-Legacy paths default to linkedin_reply.
-Normal Writer revision preserves the selected content mode and does not rerun
-the upstream research / argument / perspective pipeline.
-Quality Evaluator Node
-The Quality Evaluator evaluates the current draft against the quality
-contract.
-Conceptually:
-current_draft
 +
-ContentMode
-|
-v
-evaluator_node
-|
-v
-Quality Evaluator
-|
-v
-quality_evaluation
-|
-v
-deterministic route
-Current outcomes:
-PASS
-REVISE
-REJECT
-Routing:
-PASS
--> Human Review
-REVISE
--> Writer
--> Quality Evaluator
-REJECT
--> END
-Revision is bounded by MAX_ITERATIONS.
-The semantic evaluator is content-mode-aware.
-Legacy paths default to linkedin_reply.
-Python remains responsible for deterministic consolidated routing.
-A quality PASS does not authorize publication.
-Web Tool Selection
-The current web-tool factory selects execution mode through configuration.
-Conceptually:
-get_web_tools(mode)
-|
-+-- fake
-| |
-| +--> deterministic web_search
-| +--> deterministic web_reader
-|
-+-- real
-|
-+--> brave_search
-+--> http_reader
-The returned interface is always:
-tuple\(SearchTool, ReadTool\)
-This keeps Scout and Research independent from the concrete provider.
-Search Adapter
-The current real search implementation uses the Brave Search API.
-Important implementation characteristics include:
-bounded query size
-bounded result count
-API-key validation
-request timeout
-structured SearchResult mapping
-controlled HTTP/network errors
-injectable HTTP client for tests
-The agent does not receive provider-specific response objects.
-Provider output is mapped into the internal SearchResult contract.
-HTTP Reader
-The real reader is a bounded network adapter.
-The current safety boundary includes:
-HTTP / HTTPS only
-localhost rejection
-DNS resolution
-private/non-global IP rejection
-manual redirect handling
-redirect revalidation
-redirect limit
-request timeout
-text content-type restriction
-response-size limit
-controlled WebToolError conversion
-This layer is important because READ actions originate from agent decisions.
-The reader must therefore treat requested URLs as untrusted input.
-Main Content Extraction
-For HTML responses, the reader does not simply return the complete rendered page.
-Current extraction behavior:
-ignore common non-content elements
-prefer non-empty
-<article>
-otherwise prefer non-empty
-<main>
-otherwise score section/div candidates
-otherwise fall back to cleaned body text
-Ignored structures include:
-aside
-form
-footer
-head
-header
-nav
-noscript
-script
-style
-Density scoring considers signals such as:
-text length
-paragraph count
-heading count
-list-item count
-link-text density
-positive content hints
-negative navigation/promotion hints
-Semantic article and main containers are authoritative even when short.
-Density thresholds apply to fallback candidates rather than invalidating legitimate short semantic containers.
-Context Preparation
-app/context_preparation.py creates bounded LLM-facing external context.
-The main value object is:
-PreparedContext
-├── content
-├── original_tokens
-├── prepared_tokens
-└── truncated
-Current processing:
-external text
-|
-v
-normalize whitespace
-|
-v
-remove exact duplicate lines
-|
-v
-tokenize / count
-|
-v
-truncate if required
-|
-v
-PreparedContext
-Current token encoding defaults to:
-o200k_base
-with a controlled fallback encoding.
-Current configured budgets:
-SCOUT_READ_CONTEXT_MAX_TOKENS = 1800
-RESEARCH_READ_CONTEXT_MAX_TOKENS = 2500
-RESEARCH_TOTAL_READ_CONTEXT_MAX_TOKENS = 8000
-The cumulative Research budget applies to stored read context, not the complete serialized Research prompt.
-Scout Context Boundary
-Real or fake reader output is prepared before becoming Scout LLM-facing read context.
-Conceptually:
-ReadTool(url)
-|
-v
-raw content
-|
-v
-prepare_context(...)
-|
-v
-bounded content
-|
-v
-ScoutState / next LLM decision
-Raw oversized page content should not bypass this boundary.
-Research Context Boundary
-Research applies both:
-per-read limit
-+
-cumulative stored-read limit
-Conceptually:
-Read 1 -> prepare -> store
-Read 2 -> prepare -> check cumulative budget -> store
-Read N -> bounded by remaining budget
-This creates a deterministic context ceiling independent from the model's semantic decision to continue researching.
-Error Boundary
-External web infrastructure failures use:
-WebToolError
-Scout and Research catch expected external-tool failures at the agent boundary.
-The failure can be recorded in state and the bounded agent may choose a valid recovery action.
-The runtime does not intentionally catch arbitrary programming errors and disguise them as external observations.
-Fake vs Real Execution
-Fake tooling remains a first-class testing capability.
-Unit / integration tests
-|
-v
-deterministic fake tools
-Real tooling is used for explicit real-infrastructure validation:
-Smoke / real workflow validation
-|
-v
-Brave Search + HTTP reader
-This separation provides deterministic automated tests without pretending that fake infrastructure represents production web behavior.
-Current Real Validation
-Scout
-A real Scout smoke execution has demonstrated:
-real LLM decision-making
-real search
-real read
-main-content extraction
-bounded context
-candidate creation
-normal completion
-Research
-A real Research smoke execution has demonstrated:
-approved opportunity
-real search
-real source reading
-evidence extraction
-source provenance
-ResearchBrief synthesis
-SUFFICIENT completion
-The Research run also preserved uncertainty rather than inventing
-supply-chain-specific rules that were not present in the source evidence.
-Integrated Streamlit E2E
-Real Streamlit execution has demonstrated:
-Editable Theme / Intent
-|
-v
-Scout
-|
-v
-Opportunity Evaluation
-|
-v
-HIGH
-|
-v
-Research
-|
-v
-Argument Intelligence
-|
-v
-Perspective Generation
-|
-v
-Human Perspective Selection
-|
-v
-Human Content Mode Selection
-|
+Rodrigo Voice
+\|
 v
 Writer
-|
+\|
 v
+Draft
+Writer does not own:
+discovery;
+opportunity classification;
+unrestricted research;
+perspective selection;
+human belief inference;
+quality routing;
+publication.
+The orchestration layer supplies component-specific input instead of
+exposing the entire global state indiscriminately.
 Quality Evaluator
-|
-v
-Human Review
-Both sequential Human-in-the-Loop interrupt/resume boundaries were exercised
-in the real application.
-A separate real run demonstrated correct LOW termination before Research.
-Automated Test Baseline
-Current full suite:
-437 passing tests
-The active regression surface includes:
+Opportunity Evaluation and Quality Evaluation solve different problems:
+Opportunity Evaluation -\> "Should we invest effort in this conversation?"
+Quality Evaluation -\> "Is the generated contribution good enough?"
+Quality routing:
+PASS -\> Human Final Review
+REVISE -\> Writer -\> Quality Evaluator
+REJECT -\> END
+Revision is bounded and does not automatically rerun Research.
+A quality PASS does not authorize publication.
+Structured Contracts
+Representative typed contracts include:
+PostCandidate
+OpportunitySignals
+OpportunityEvaluation
+ScoutAction
+ScoutSelection
+ScoutState
+SearchResult
+SearchTool
+ReadTool
+ResearchObjective
+ResearchAction
+ReadSource
+EvidenceItem
+ResearchState
+ResearchBriefSynthesis
+ResearchBrief
+ArgumentBrief
+Perspective
+PerspectiveSet
+SelectedPerspective
+Writer contracts
+Quality Evaluation contracts
+LinkedInAgentState
+Pydantic is preferred at machine-to-machine AI boundaries where
+practical.
+The new argument contracts create an explicit data boundary between
+evidence, intellectual alternatives, human convergence, and final
+expression.
+Failure Model
+The architecture distinguishes:
+semantic failure
+operational limit
+external infrastructure failure
+programming failure
+A recoverable web failure can become agent state and permit another
+bounded decision.
+A programming failure should not be silently transformed into
+plausible-looking data.
+A human rejection or request for another intellectual direction is not
+necessarily a system failure; it is a legitimate product outcome.
+Capability Map
+DISCOVERY
+├── bounded Scout loop
+├── structured actions
+├── deterministic authorization
+├── fake and real web tools
+└── bounded failure recovery
+WEB INFRASTRUCTURE
+├── provider-neutral contracts
+├── Brave Search adapter
+├── bounded HTTP reader
+├── network / SSRF guardrails
+├── main-content extraction
+└── content-density fallback
+CONTEXT
+├── normalization
+├── duplicate-line removal
+├── token counting
+├── per-component truncation
+└── cumulative Research read budget
+OPPORTUNITY
+├── semantic signal evaluation
+├── deterministic weighted scoring
+├── mandatory guardrails
+├── HIGH / MEDIUM / LOW
+└── deterministic routing
+RESEARCH
+├── bounded semantic loop
+├── SEARCH / READ / EXTRACT / FINISH
+├── source authorization
+├── evidence provenance
+└── ResearchBrief
+CONVERSATION INTELLIGENCE
+├── ArgumentBrief contracts
+├── Argument Intelligence
+├── Perspective / PerspectiveSet contracts
+├── Perspective Generation
+├── SelectedPerspective contract
+└── Human Perspective Selection boundary
+GENERATION & QUALITY
+├── selected-perspective-aware Writer
+├── content-mode-aware materialization
+├── Rodrigo Voice personalization
+├── Quality Evaluator
+├── bounded revision loop
+└── final human refinement
+EXPERIENCE & MEMORY
+├── editable human theme / intent (IMPLEMENTED)
+├── LinkedIn Post / Reply / Article modes (IMPLEMENTED)
+├── final human refinement (IMPLEMENTED)
+├── on-demand Portuguese translation (IMPLEMENTED)
+├── navigable run history (IMPLEMENTED)
+└── separation of product history from Interaction Memory
+ORCHESTRATION & GOVERNANCE
+├── LangGraph workflow
+├── explicit shared state
+├── deterministic routing
+├── structured contracts
+├── Human-in-the-Loop boundaries
+└── human publication authority
+The core Conversation Intelligence flow and the complete MVP Experience Layer
+are integrated. Editable Theme, Content Mode Selection, Final Human Refinement,
+on-demand Portuguese translation, and navigable Run History are implemented and
+validated. This capability map must therefore be read together with
+02_current_architecture.md for the exact implemented topology and runtime details.
+Validation State
+The project has extensive automated unit and integration coverage,
+deterministic fake-tool validation, and real-tool smoke validation.
+Real-tool smoke validation has demonstrated important infrastructure
+boundaries including:
 Scout
-Opportunity Evaluation
-workflow routing
+OpenAI reasoning
+- real search
+- real reading
+- content extraction
+- bounded context
 Research
-Argument Intelligence
-Perspective Generation
-Human Perspective Selection
-Human Content Mode Selection
-SelectedPerspective-aware Writer
-content-mode-aware Writer
-content-mode-aware Quality Evaluator
-bounded Writer revision
-web tool factory
-Brave Search adapter
-HTTP reader
-web-tool recovery
-context preparation
-Scout context guards
-Research context guards
-main-content extraction
-content-density extraction
-LangGraph HITL interrupt/resume behavior
-upstream non-rerun guarantees for Content Mode Selection
-Automated tests are intentionally isolated from live web/API dependencies
-where deterministic test doubles are more appropriate.
-The 421-test count is a development snapshot rather than an architectural
-invariant.
-Streamlit Experience Layer
-The current interactive product surface is:
-app/frontend/main.py
-Implemented behavior includes:
-Editable Theme / Intent
-real workflow launch
-live workflow presentation
-Opportunity artifact
-Argument / Perspective artifacts
-Human Perspective Selection
-Human Content Mode Selection
-Writer / Quality Evaluator continuation
-Final Human Refinement
-on-demand Portuguese translation
+OpenAI reasoning
+- real search
+- real reading
+- evidence extraction
+- provenance
+- ResearchBrief
+Automated test counts are development snapshots rather than
+architectural invariants and should be recorded in the current
+implementation/audit context rather than treated as a permanent design
+property of this document.
+Current MVP validation snapshot:
+437 automated tests passing;
+Editable Theme / Intent validated in real Streamlit execution;
+LOW Opportunity routing validated in real Streamlit execution;
+HIGH path validated through Research, Argument Intelligence, Perspective
+Generation, Human Perspective Selection, Human Content Mode Selection,
+mode-aware Writer, mode-aware Quality Evaluator, and Human Final Review;
+both sequential LangGraph HITL interrupt/resume boundaries validated;
+publication remains manual.
+Current frontend hardening:
+visual state/phase can lag the backend worker;
+transient Scout / Opportunity text can flicker during automatic Streamlit
+reruns.
+These are presentation-layer defects and must not reopen the validated core
+reasoning architecture.
+Roadmap to MVP
+Increment Delivery Architectural
+Impact
+1 Argument ArgumentBrief, Perspective, PerspectiveSet, Creates the
+Contracts v0.1 SelectedPerspective formal language
+of the new
+architecture
+2 Argument ResearchBrief -\> ArgumentBrief Separates
+Intelligence v0.1 research from
+positioning
+3 Perspective ArgumentBrief -\> 2--4 defensible perspectives Implements AI
+Generation v0.1 expands
+4 Human Perspective Human selects / rejects / combines / guides Implements
+Selection v0.1 perspective Human
+converges
+5 Writer / Voice SelectedPerspective -\> Rodrigo Voice -\> Writer Implements AI
+Integration v0.1 materializes
+6 LangGraph Complete new flow + HITL + routing Transforms
+Integration components into
+an integrated
+system
+7 MVP Experience Editable theme, content mode, final human Converts the
+Layer v1.0 refinement, on-demand translation, run history validated agentic
+workflow into a
+navigable product
+experience
+The roadmap is sequential at the architectural level, even when
+implementation work overlaps between adjacent increments.
+Current resume point:
+7.1 Editable Theme / Intent is complete and validated.
+7.2 Content Mode Selection is complete and validated.
+7.3 Final Human Refinement is complete and E2E validated.
+7.4 Bilingual Presentation is complete and E2E validated.
+7.5 Run History / Product Memory is complete and validated.
+Current automated regression baseline: 437 passing tests.
+Cloud deployment is implemented and smoke validated on Render, with
+Supabase PostgreSQL providing durable cloud persistence.
+Cloud Deployment and Durable Persistence
+The local-first architecture has now been extended into a validated cloud
+runtime without changing the core responsibility model.
+Current deployed topology:
+Browser
+\|
+v
+Render Free Web Service
+\|
++--\> Streamlit frontend
++--\> LangGraph orchestration
++--\> Python deterministic governance
++--\> OpenAI model access
++--\> Brave Search / bounded HTTP reader
+\|
+v
+Supabase PostgreSQL
+The cloud deployment preserves the same separation between semantic
+intelligence, deterministic governance, orchestration, persistence, and human
+authority that exists in local execution.
+Render is the current application runtime.
+Supabase PostgreSQL is the current durable cloud persistence platform.
+The deployment deliberately remains a single application unit because the
+validated MVP does not require distributed microservices, a broker, or a
+container-orchestration platform.
+Persistence Responsibilities
+The deployed system preserves three conceptually distinct persistence domains.
+LangGraph Checkpoint / HITL State
+Purpose:
+preserve authoritative workflow execution state required by LangGraph
+interrupt/resume semantics.
+Local backend:
+InMemorySaver
+Cloud backend:
+PostgresSaver
+Interaction Memory
+Purpose:
+support agent behavior such as canonical URL memory, novelty, visited-content
+tracking, agentic drafts, human-final content, and interaction status.
+Local backend:
+SQLiteInteractionMemoryRepository
+Cloud backend:
+PostgresInteractionMemoryRepository
 Run History / Product Memory
-manual-publication boundary
-The frontend uses a background worker so real Scout and Research execution do
-not block the interactive product experience.
-LangGraph checkpoint/thread state preserves interrupt/resume behavior.
-Current frontend hardening
-Frontend state synchronization and Scout / Opportunity flicker hardening are
-implemented. HITL resume handling also ignores empty interrupt markers and uses
-resume-in-flight protection so stale checkpoint phase cannot reopen an empty
-human-review payload while the graph is continuing.
-These are frontend synchronization concerns.
-They do not reopen the validated core graph or reasoning architecture.
-Run History / Product Memory
-The product now uses a dedicated local SQLite history store:
-data/history/run_history.db
-Run History is distinct from Interaction Memory. It exists to preserve and
-navigate prior user-facing executions and intellectual artifacts. The current
-UX presents recent runs first and opens a selected run into a detailed artifact
-view.
-A real E2E exposed a persistence defect where a completed HIGH run could be
-stored from stale frontend state as No Candidate. The current persistence fix
-prefers authoritative terminal LangGraph state and protects richer completed
-records from later incomplete overwrite. This corrected path is implemented
-but still requires final runtime validation.
-Current Known Gaps
-The remaining local MVP Experience Layer validation item is:
-authoritative COMPLETE -> Run History persistence
-The following remain broader hardening or post-MVP concerns:
-LinkedIn-specific production discovery
-reliable LinkedIn metadata acquisition
-objective Engagement Potential calculation
-multiple distinct candidate orchestration
-production-grade chronological agent telemetry
-production cost/latency telemetry
-cloud deployment architecture
-long-term model routing
-real-world score calibration
-advanced feedback learning
-adaptive policy calibration
-autonomous publication
-The system must not be described as production-ready while these boundaries
-remain unresolved.
-Next Increment
-The next planned product increment is:
-MVP Experience Layer 7.3 --- Final Human Refinement
+Purpose:
+preserve navigable user-facing workflow history and intellectual artifacts
+independently from LangGraph execution checkpoints and Interaction Memory.
+Local backend:
+SQLiteRunHistoryRepository
+Cloud backend:
+PostgresRunHistoryRepository
+The three responsibilities currently share one Supabase PostgreSQL service in
+cloud execution, but they must not be collapsed into one conceptual state model.
+Explicit Backend Selection
+Cloud persistence is selected explicitly through environment configuration.
+DATABASE_URL
+provides PostgreSQL connection information.
+PERSISTENCE_BACKEND
+selects persistence behavior.
+Current rule:
+PERSISTENCE_BACKEND=postgres
++
+DATABASE_URL configured
+-\>
+PostgreSQL persistence enabled
+Otherwise:
+local persistence remains active.
+This separation is deliberate. Possessing cloud database credentials must not
+silently change local development or automated-test semantics.
+The explicit selector was introduced after persistent checkpoint state exposed a
+test-isolation problem when a fixed thread_id recovered state from a previous
+PostgreSQL-backed execution. The resulting architecture keeps local/test
+execution isolated by default while allowing the deployed environment to opt in
+to durable PostgreSQL state.
+Cloud Validation
+The cloud deployment has been validated incrementally rather than inferred from
+a successful build.
+Validated runtime behavior includes:
+Render repository build;
+dependency installation;
+Streamlit startup;
+repository-root package imports through PYTHONPATH;
+public application access;
+OpenAI-backed workflow execution;
+Brave Search real mode;
+Supabase PostgreSQL connectivity;
+deployed Run History navigation.
+Validated LangGraph persistence includes:
+PostgresSaver initialization;
+creation of LangGraph checkpoint tables;
+workflow execution with a known thread_id;
+creation of a new workflow instance;
+recovery of the persisted workflow state using the same thread_id.
+Validated Interaction Memory persistence includes:
+PostgreSQL repository selection;
+record creation;
+has_seen behavior;
+agentic draft persistence;
+human-final persistence;
+status evolution;
+recent-history retrieval.
+Validated Run History persistence includes:
+PostgreSQL repository selection;
+table initialization;
+run creation;
+get by run_id;
+recent-list retrieval;
+UPSERT of an existing run;
+updated field recovery;
+deployed History retrieval;
+survival of Render process restart.
+The current automated regression baseline remains:
+437 passing tests.
+HITL Durability Boundary
+The backend checkpoint foundation is durable, but durable backend state does not
+by itself reconstruct a lost Streamlit browser/session state.
+A deliberate Render restart test was performed while the workflow was waiting at
+Human Perspective Selection.
+Observed behavior:
+PostgresSaver checkpoint -\> survived restart
+Run History -\> survived restart
+Streamlit session_state -\> did not survive restart
+The checkpoint itself therefore remains recoverable when the same thread_id is
+supplied. The current frontend does not yet reconstruct the active thread_id and
+interrupt UI after process/session loss.
+This is not treated as a PostgresSaver failure.
+It is a frontend/product-resilience capability.
+Resume HITL After Session Loss --- BACKLOG
+A future product increment should distinguish terminal historical runs from
+resumable interrupted runs.
 Target behavior:
-Quality Evaluator PASS
-|
+History
+\|
++--\> terminal run
+\| \|
+\| +--\> Open / Inspect
+\|
++--\> resumable HITL run
+\|
++--\> Resume
+\|
 v
-Human Final Review
-|
-+-- accept current draft
-|
-+-- provide bounded editorial guidance
-|
+recover thread_id
+\|
 v
-final refinement
-The refinement must preserve SelectedPerspective unless the human explicitly
-changes the intellectual direction.
-Before beginning 7.3, the current frontend State Sync / Flicker hardening
-should be validated and the complete regression suite should remain green.
-Core Freeze During Experience-Layer Closure
-The following validated core behavior should remain frozen except where a
-genuine defect is discovered:
-Scout
-Opportunity Evaluation
-Research
-Argument Intelligence
-Perspective Generation
-deterministic scoring
+PostgresSaver checkpoint
+\|
+v
+reconstruct interrupt/UI
+\|
+v
+continue human decision
+This capability is explicitly post-MVP backlog and does not reopen the completed
+cloud-deployment milestone.
+Cloud Runtime Configuration
+The deployed Render service currently uses environment-driven configuration,
+including:
+OPENAI_API_KEY
+BRAVE_SEARCH_API_KEY
+WEB_TOOL_MODE=real
+DATABASE_URL
+PERSISTENCE_BACKEND=postgres
+Secrets remain external to Git.
+Current Render runtime configuration uses:
+Build:
+pip install -r requirements.txt
+Start:
+PYTHONPATH=. streamlit run app/frontend/main.py --server.address 0.0.0.0 --server.port \$PORT
+The explicit PYTHONPATH keeps the repository root importable when Streamlit
+executes app/frontend/main.py.
+The Render filesystem must not be treated as the durable cloud system of record.
+Free-tier process sleep/restart is acceptable because durable application state
+belongs in Supabase PostgreSQL.
+Cloud Deployment Scope
+The current deployment should be described as:
+implemented;
+publicly reachable;
+smoke validated;
+durably persisted for the three current persistence responsibilities;
+appropriate for the current portfolio/MVP scope.
+It should not be described as a fully hardened multi-user production platform.
+Post-MVP production hardening still includes concerns such as:
+authentication and authorization;
+production-grade observability;
+formal retention and deletion policy;
+backup/recovery policy;
+schema migration discipline;
+advanced cost and latency telemetry;
+multi-user concurrency hardening;
+automatic Resume Run UX after frontend session loss;
+LinkedIn-native authenticated integration.
+None of these changes the core product rule:
+AI expands. Human converges. AI materializes. Human owns.
+
+Current Architectural Boundaries
+Still intentionally incomplete or unresolved outside the MVP closure
+path:
+production LinkedIn-specific discovery;
+reliable LinkedIn engagement metadata;
+objective Engagement Potential calculation;
+multiple-candidate orchestration;
+production-grade observability;
+production-grade deployment hardening beyond the current Render/Supabase MVP;
+long-term model routing and cost telemetry;
+real-world scoring calibration;
+advanced Human-in-the-Loop UX beyond the MVP Experience Layer;
+Performance Analytics and Feedback Learning;
+adaptive policy calibration;
+autonomous publication.
+These items are post-MVP hardening or expansion concerns and must not be
+confused with the now-closed frozen MVP scope.
+Architectural Direction
+The system is evolving toward:
+semantic intelligence
+-
+deterministic governance
++
+bounded tools
++
+explicit state
++
 evidence provenance
-Human Perspective Selection semantics
-The remaining Experience Layer work should extend the product interaction
-surface rather than redesign the validated reasoning architecture.
-Maintenance Rule
-Update this document whenever any of the following materially changes:
-implemented workflow topology
-node responsibilities
-component integration
-routing behavior
-web tooling implementation
-context boundaries
-runtime limits
-failure handling
-real validation status
-major implemented capability
-Do not use this document as a development diary.
-Historical rationale belongs in 04_decision_log.md.
-Deep capability specifications belong in dedicated architecture documents.
-Recovery/checkpoint state belongs in:
-docs/context/PROJECT_CONTEXT.md
++
+argument intelligence
++
+human intellectual convergence
++
+personalized materialization
++
+quality evaluation
++
+human ownership
+The architecture is not optimized for maximum autonomy.
+It is optimized for useful autonomy under explicit human control,
+with AI expanding the decision space and the human retaining authority
+over both intellectual direction and publication.
