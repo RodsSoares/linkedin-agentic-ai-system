@@ -96,10 +96,10 @@ flowchart TD
     S --> C[PostCandidate]
     C --> OE[Opportunity Evaluation]
 
-    OE -->|LOW| END1[End]
-    OE -->|MEDIUM| Q[Queued Opportunity]
+    OE -->|"LOW"| END1[End]
+    OE -->|"MEDIUM"| Q[Queued Opportunity]
     Q --> END2[End]
-    OE -->|HIGH| R[Research]
+    OE -->|"HIGH"| R[Research]
 
     R --> RB[ResearchBrief]
     RB --> AI[Argument Intelligence]
@@ -115,13 +115,13 @@ flowchart TD
     CM --> W[Writer]
     W --> QE[Quality Evaluator]
 
-    QE -->|REJECT| END3[End]
-    QE -->|REVISE| W
-    QE -->|PASS| HFR[Human Final Refinement]
+    QE -->|"REJECT"| END3[End]
+    QE -->|"REVISE"| W
+    QE -->|"PASS"| HFR[Human Final Refinement]
 
-    HFR -->|REFINE| FW[Final Writer Pass]
+    HFR -->|"REFINE"| FW[Final Writer Pass]
     FW --> WC[Workflow Complete]
-    HFR -->|ACCEPT| WC
+    HFR -->|"ACCEPT"| WC
 
     WC --> T[Translation on Demand]
     WC --> MP[Manual Publication]
