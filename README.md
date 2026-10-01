@@ -38,6 +38,16 @@ retains final editorial and publication authority.
 
 **AI expands → Human converges → AI materializes → Human owns**
 
+## System in Action
+
+Watch the human-centered agentic workflow in action — from opportunity discovery and research to human decision-making, content generation, and final review.
+
+<p align="center">
+  <img src="docs/images/my-linkedin-agentic-ai-system-demo.gif"
+       alt="My LinkedIn Agentic AI System — human-centered agentic workflow demonstration"
+       width="900">
+</p>
+
 ## Why This Project Exists
 
 Strategic interaction on LinkedIn involves much more than generating
@@ -88,52 +98,107 @@ responsible research effort.
 
 ## Current Architecture
 
-The active architecture is built around a controlled, human-centered LangGraph workflow. The diagram below makes the orchestration explicit, including deterministic opportunity routing, bounded quality revision, and the Human-in-the-Loop decision boundaries.
+The active architecture is built around a controlled, human-centered
+pipeline:
 
-```mermaid
-flowchart TD
-    H[Human Theme / Intent] --> S[Scout Agent]
-    S --> C[PostCandidate]
-    C --> OE[Opportunity Evaluation]
-
-    OE -->|LOW| END1[End]
-    OE -->|MEDIUM| Q[Queued Opportunity]
-    Q --> END2[End]
-    OE -->|HIGH| R[Research]
-
-    R --> RB[ResearchBrief]
-    RB --> AI[Argument Intelligence]
-    AI --> AB[ArgumentBrief]
-    AB --> PG[Perspective Generation]
-    PG --> PS[PerspectiveSet]
-
-    PS --> HPS[Human Perspective Selection]
-    HPS --> SP[SelectedPerspective]
-    SP --> HCM[Human Content Mode Selection]
-    HCM --> CM[ContentMode]
-
-    CM --> W[Writer]
-    W --> QE[Quality Evaluator]
-
-    QE -->|REJECT| END3[End]
-    QE -->|REVISE| W
-    QE -->|PASS| HFR[Human Final Refinement]
-
-    HFR -->|REFINE| FW[Final Writer Pass]
-    FW --> WC[Workflow Complete]
-    HFR -->|ACCEPT| WC
-
-    WC --> T[Translation on Demand]
-    WC --> MP[Manual Publication]
+``` text
+Human Theme / Intent
+        │
+        ▼
+Candidate Sources / Web
+        │
+        ▼
+      SCOUT
+        │
+        ▼
+   PostCandidate
+        │
+        ▼
+OPPORTUNITY EVALUATION
+        │
+   ┌────┼───────────────┐
+   │    │               │
+  LOW  MEDIUM           HIGH
+   │    │               │
+   ▼    ▼               ▼
+  END  QUEUED   ACCEPTED_FOR_RESEARCH
+                        │
+                        ▼
+                     RESEARCH
+                        │
+                        ▼
+                  ResearchBrief
+                        │
+                        ▼
+              ARGUMENT INTELLIGENCE
+                        │
+                        ▼
+                   ArgumentBrief
+                        │
+                        ▼
+              PERSPECTIVE GENERATION
+                        │
+                        ▼
+                  PerspectiveSet
+                        │
+                        ▼
+          HUMAN PERSPECTIVE SELECTION
+                        │
+                        ▼
+                SelectedPerspective
+                        │
+                        ▼
+          HUMAN CONTENT MODE SELECTION
+                        │
+                        ▼
+                   ContentMode
+                        │
+                        ▼
+                      WRITER
+                        │
+                        ▼
+                QUALITY EVALUATOR
+                        │
+             ┌──────────┼──────────┐
+             ▼          ▼          ▼
+           PASS       REVISE     REJECT
+             │          │          │
+             │          └─► WRITER ▼
+             │               │     END
+             │               └─► QUALITY EVALUATOR
+             ▼
+          HUMAN FINAL REFINEMENT
+             │                 │
+           ACCEPT            REFINE
+             │                 │
+             │                 └─► WRITER
+             │                       │
+             └───────────┬───────────┘
+                         ▼
+                 WORKFLOW COMPLETE
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+    TRANSLATION ON DEMAND      MANUAL PUBLICATION
+    presentation layer only    outside autonomy
 ```
 
-The HIGH path is integrated through Research, Argument Intelligence, Perspective Generation, explicit human intellectual convergence, Writer, Quality Evaluator, and Final Human Refinement.
+The HIGH path is integrated through Research, Argument Intelligence,
+Perspective Generation, explicit human intellectual convergence, Writer,
+Quality Evaluator, and Final Human Refinement.
 
-The quality revision loop is bounded. A `REVISE` decision returns to Writer rather than rerunning Research.
+The quality revision loop is bounded. A `REVISE` decision returns to
+Writer rather than rerunning Research.
 
-Final Human Refinement is a separate Human-in-the-Loop boundary. `ACCEPT` completes with the approved draft. `REFINE` provides bounded final editorial guidance for one final Writer pass and then completes the workflow; it does not create another automatic Quality Evaluator loop.
+Final Human Refinement is a separate Human-in-the-Loop boundary.
+`ACCEPT` completes with the approved draft. `REFINE` provides bounded
+final editorial guidance for one final Writer pass and then completes
+the workflow; it does not create another automatic Quality Evaluator
+loop.
 
-Translation is an on-demand presentation capability. The canonical reasoning pipeline remains English-first, and translation does not mutate reasoning artifacts or workflow routing.
+Translation is an on-demand presentation capability. The canonical
+reasoning pipeline remains English-first, and translation does not
+mutate reasoning artifacts or workflow routing.
 
 Publication remains outside autonomous execution.
 
