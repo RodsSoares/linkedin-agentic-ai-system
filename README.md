@@ -38,6 +38,16 @@ retains final editorial and publication authority.
 
 **AI expands → Human converges → AI materializes → Human owns**
 
+## System in Action
+
+Watch the human-centered agentic workflow in action — from opportunity discovery and research to human decision-making, content generation, and final review.
+
+<p align="center">
+  <img src="docs/images/my-linkedin-agentic-ai-system-demo.gif"
+       alt="My LinkedIn Agentic AI System — human-centered agentic workflow demonstration"
+       width="900">
+</p>
+
 ## Why This Project Exists
 
 Strategic interaction on LinkedIn involves much more than generating
