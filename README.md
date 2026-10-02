@@ -1,19 +1,11 @@
 # My LinkedIn Agentic AI System
 
-A controlled, human-centered agentic AI system for discovering
-strategically relevant professional conversations, gathering evidence,
-developing defensible intellectual directions, materializing
-human-selected perspectives into content, evaluating quality, and
-preserving human intellectual and publication authority.
+🚀 **Current Release:** Human-Centered Conversation Intelligence MVP  
+🌐 **Live Application:** [Launch My LinkedIn Agentic AI System](https://linkedin-agentic-ai-system.onrender.com/)
 
-**Current stage:** Human-Centered Conversation Intelligence MVP
-implemented with editable Theme / Intent, Argument Intelligence,
-Perspective Generation, Human Perspective Selection, Human Content Mode
-Selection, Final Human Refinement, bilingual presentation, Run History /
-Product Memory, and a **437-test automated baseline**. A real HIGH
-end-to-end path has been validated through workflow completion. Cloud
-Deployment is implemented and smoke validated on Render with durable
-Supabase PostgreSQL persistence.
+A controlled, human-centered agentic AI system for discovering strategically relevant professional conversations, gathering evidence, developing defensible intellectual directions, materializing human-selected perspectives into content, evaluating quality, and preserving human intellectual and publication authority.
+
+**Current stage:** Human-Centered Conversation Intelligence MVP implemented with editable Theme / Intent, Argument Intelligence, Perspective Generation, Human Perspective Selection, Human Content Mode Selection, Final Human Refinement, bilingual presentation, Run History / Product Memory, and a 437-test automated baseline. A real HIGH end-to-end path has been validated through workflow completion. Cloud Deployment is implemented and smoke validated on Render with durable Supabase PostgreSQL persistence.
 
 ## Architecture Overview
 
